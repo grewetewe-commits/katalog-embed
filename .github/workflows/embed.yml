@@ -2,12 +2,12 @@ name: Otak Katalog Praktis
 
 on:
   schedule:
-    - cron: "17 19 * * *"
+    - cron: "17 7,19 * * *"
   workflow_dispatch:
     inputs:
       menit_panen:
-        description: "Menit untuk panen outfit (default 70)"
-        default: "70"
+        description: "Menit sejak mulai sampai panen outfit berhenti (default 170)"
+        default: "170"
 
 permissions:
   contents: write
@@ -50,7 +50,7 @@ jobs:
 
       - name: Jalankan otak (panen, mata, belajar, ekspor)
         env:
-          MENIT_PANEN: ${{ github.event.inputs.menit_panen || '70' }}
+          MENIT_PANEN: ${{ github.event.inputs.menit_panen || '170' }}
           HF_HUB_DISABLE_TELEMETRY: "1"
         run: python otak.py 2>&1 | tee otak_log.txt
 

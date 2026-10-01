@@ -529,6 +529,7 @@ def panen(http, st, antre):
         for seed in hasil_kreator:
             if seed["H"] not in st["outfit"]:
                 seed["T"] = int(time.time())
+                seed["K"] = hash_kreator(uid)[:6]  # untuk membagi uji per kreator (bukan identitas)
                 st["outfit"][seed["H"]] = seed
                 n_outfit += 1
         st["kreator"][hash_kreator(uid)] = int(time.time())
@@ -819,8 +820,13 @@ def latih(st, emb, slot_of, rng_seed=1):
     if len(outfits) < 60:
         log(f"BELAJAR dilewati: baru {len(outfits)} outfit berembedding (perlu >= 60)")
         return None
-    val = [o for o in outfits if int(o[0][:4], 16) % 100 < 15]
-    trn = [o for o in outfits if int(o[0][:4], 16) % 100 >= 15]
+    # bagi latih/uji PER KREATOR (outfit satu kreator sering berbagi item -> kalau tercampur, nilai uji bocor/terlalu
+    # bagus). Outfit lama tanpa tanda kreator dibagi per hash outfit.
+    kunci_bagi = {h: (st["outfit"][h].get("K") or h) for h, _ in outfits}
+    def uji(h):
+        return int(hashlib.md5(kunci_bagi[h].encode()).hexdigest()[:4], 16) % 100 < 15
+    val = [o for o in outfits if uji(o[0])]
+    trn = [o for o in outfits if not uji(o[0])]
     log(f"BELAJAR: {len(ids_all)} item, outfit latih {len(trn)}, uji {len(val)}")
     # rata-rata per slot dari item latih (menetralkan "jenis slot", supaya yang dipelajari gaya)
     mu = {s: X[slot_idx[s]].mean(axis=0) for s in slot_list}
@@ -1038,6 +1044,10 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
     for s, kh, g, inti_ok, n_beli in nilai:
         if not inti_ok or n_beli < 3:
             n_tolak_beli += 1
+            continue
+        nama_item = " ".join((st["meta"].get(str(i)) or {}).get("n", "").lower() for i in ids_seed(s))
+        if len(ids_seed(s)) < 4 or "invis" in nama_item or "headless" in nama_item:
+            n_tolak_beli += 1  # bukan outfit jadi (terlalu sedikit item / item troll)
             continue
         q = persentil(kh)
         if kh is not None and q < 10:

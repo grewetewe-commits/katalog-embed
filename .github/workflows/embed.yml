@@ -2,7 +2,7 @@ name: Otak Katalog Praktis
 
 on:
   schedule:
-    - cron: "17 7,19 * * *"
+    - cron: "17 */6 * * *"
   workflow_dispatch:
     inputs:
       menit_panen:

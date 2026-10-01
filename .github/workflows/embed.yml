@@ -1,0 +1,54 @@
+name: Hitung sidik jari visual
+
+on:
+  workflow_dispatch:
+    inputs:
+      batas:
+        description: "Jumlah item (20 = uji kecil, 0 = semua item)"
+        default: "20"
+
+permissions:
+  contents: write
+
+jobs:
+  embed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Ambil kode
+        uses: actions/checkout@v4
+
+      - name: Pasang Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Simpan unduhan model di cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-clip-vit-b32-v1
+
+      - name: Pasang dependensi
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install "numpy<2" "transformers>=4.40,<4.50" pillow requests
+
+      - name: Hitung sidik jari visual
+        env:
+          BATAS: ${{ github.event.inputs.batas }}
+          HF_HUB_DISABLE_TELEMETRY: "1"
+        run: python embed.py
+
+      - name: Simpan hasil ke repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add out
+          if git diff --staged --quiet; then
+            echo "Tidak ada perubahan hasil."
+          else
+            git commit -m "Hasil sidik jari visual"
+            git push
+          fi

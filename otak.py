@@ -35,11 +35,12 @@ from datetime import datetime, timezone
 import numpy as np
 
 STUB = os.environ.get("STUB") == "1"
-MENIT_PANEN = float(os.environ.get("MENIT_PANEN", "70") or 70)
-MENIT_MATA = float(os.environ.get("MENIT_MATA", "100") or 100)
+MENIT_PANEN = float(os.environ.get("MENIT_PANEN", "170") or 170)  # batas akhir panen kreator (menit sejak mulai)
+MENIT_MATA = float(os.environ.get("MENIT_MATA", "45") or 45)  # waktu MATA tambahan setelah panen
+MENIT_CARI = 15
 MAKS_KREATOR = int(os.environ.get("MAKS_KREATOR", "600") or 600)
 MAKS_ITEM_BARU = int(os.environ.get("MAKS_ITEM_BARU", "25000") or 25000)
-MAKS_OUTFIT_PER_KREATOR = 14
+MAKS_OUTFIT_PER_KREATOR = 8
 KATA_PER_PUTARAN = 160
 CACHE_DIR = os.environ.get("CACHE_DIR", "cache")
 P_STATE = "data/panen.json.gz"
@@ -137,87 +138,119 @@ def hash_kreator(uid):
 # HTTP sopan (jeda per host, mundur saat 429, CSRF untuk POST katalog)
 # ---------------------------------------------------------------------------------------------
 class Http:
+    """Klien HTTP sopan & adaptif per host. Roblox membatasi IP datacenter (runner GitHub) cukup ketat, jadi:
+    jeda per host yang membesar saat 429 (hormati Retry-After) dan mengecil saat lancar, percobaan ulang sedikit,
+    statistik per host dicatat supaya batasnya kelihatan di log. Aman dipakai beberapa thread (kunci per host)."""
     def __init__(self):
         import requests
+        import threading
+        self.threading = threading
         self.s = requests.Session()
         self.s.headers.update(HEADERS)
+        adapter = requests.adapters.HTTPAdapter(pool_connections=8, pool_maxsize=16)
+        self.s.mount("https://", adapter)
         self.jeda = {}
         self.terakhir = {}
+        self.kunci = {}
+        self.kunci_global = threading.Lock()
+        self.stat = {}
         self.csrf = None
         self.n = 0
         self.n429 = 0
         self.gagal = 0
 
-    def _tunggu(self, host):
-        j = self.jeda.get(host, 0.35)
-        dt = time.time() - self.terakhir.get(host, 0)
-        if dt < j:
-            time.sleep(j - dt)
-        self.terakhir[host] = time.time()
-
     def _host(self, url):
         return url.split("/")[2]
 
-    def get(self, url, params=None, coba=5):
+    def _st(self, host):
+        with self.kunci_global:
+            if host not in self.stat:
+                self.stat[host] = {"n": 0, "ok": 0, "429": 0, "err": 0, "kode": {}}
+                self.kunci[host] = self.threading.Lock()
+                self.jeda.setdefault(host, 0.4)
+            return self.stat[host]
+
+    def _tunggu(self, host):
+        self._st(host)
+        with self.kunci[host]:
+            dt = time.time() - self.terakhir.get(host, 0)
+            if dt < self.jeda[host]:
+                time.sleep(self.jeda[host] - dt)
+            self.terakhir[host] = time.time()
+
+    def _kirim(self, metode, url, coba, **kw):
         host = self._host(url)
+        st = self._st(host)
         for k in range(coba):
             self._tunggu(host)
             try:
-                r = self.s.get(url, params=params, timeout=30)
-                self.n += 1
-                if r.status_code == 200:
-                    self.jeda[host] = max(0.35, self.jeda.get(host, 0.35) * 0.97)
-                    return r.json()
-                if r.status_code == 429 or r.status_code >= 500:
-                    self.n429 += r.status_code == 429
-                    self.jeda[host] = min(6.0, self.jeda.get(host, 0.35) * 1.6 + 0.3)
-                    time.sleep(min(90, 4 * (2 ** k)))
-                    continue
-                self.gagal += 1
-                return None
+                r = self.s.request(metode, url, timeout=20, **kw)
             except Exception:
-                time.sleep(2 ** k)
+                st["err"] += 1
+                time.sleep(3)
+                continue
+            st["n"] += 1
+            self.n += 1
+            if r.status_code == 200:
+                st["ok"] += 1
+                self.jeda[host] = max(0.4, self.jeda[host] * 0.93)
+                return r
+            if r.status_code == 403 and r.headers.get("x-csrf-token") and metode == "POST":
+                self.csrf = r.headers["x-csrf-token"]
+                kw.setdefault("headers", {})["x-csrf-token"] = self.csrf
+                continue
+            if r.status_code == 429:
+                st["429"] += 1
+                self.n429 += 1
+                self.jeda[host] = min(20.0, self.jeda[host] * 1.5 + 0.5)
+                ra = r.headers.get("Retry-After", "")
+                tunggu = float(ra) if ra.replace(".", "", 1).isdigit() else self.jeda[host] * 2
+                time.sleep(min(60.0, tunggu))
+                continue
+            st["kode"][str(r.status_code)] = st["kode"].get(str(r.status_code), 0) + 1
+            if r.status_code >= 500:
+                time.sleep(3)
+                continue
+            self.gagal += 1
+            return None
         self.gagal += 1
         return None
 
-    def post_katalog(self, body, coba=5):
-        url = "https://catalog.roblox.com/v1/catalog/items/details"
-        host = self._host(url)
-        for k in range(coba):
-            self._tunggu(host)
-            try:
-                h = {"Content-Type": "application/json"}
-                if self.csrf:
-                    h["x-csrf-token"] = self.csrf
-                r = self.s.post(url, data=json.dumps(body), headers=h, timeout=30)
-                self.n += 1
-                if r.status_code == 403 and r.headers.get("x-csrf-token"):
-                    self.csrf = r.headers["x-csrf-token"]
-                    continue
-                if r.status_code == 200:
-                    return r.json()
-                if r.status_code == 429 or r.status_code >= 500:
-                    self.n429 += r.status_code == 429
-                    self.jeda[host] = min(6.0, self.jeda.get(host, 0.35) * 1.6 + 0.3)
-                    time.sleep(min(90, 4 * (2 ** k)))
-                    continue
-                self.gagal += 1
-                return None
-            except Exception:
-                time.sleep(2 ** k)
-        self.gagal += 1
-        return None
+    def get(self, url, params=None, coba=3):
+        r = self._kirim("GET", url, coba, params=params)
+        if r is None:
+            return None
+        try:
+            return r.json()
+        except Exception:
+            return None
+
+    def post_katalog(self, body, coba=4):
+        h = {"Content-Type": "application/json"}
+        if self.csrf:
+            h["x-csrf-token"] = self.csrf
+        r = self._kirim("POST", "https://catalog.roblox.com/v1/catalog/items/details", coba, data=json.dumps(body), headers=h)
+        if r is None:
+            return None
+        try:
+            return r.json()
+        except Exception:
+            return None
 
     def gambar(self, url):
         for k in range(3):
             try:
-                r = self.s.get(url, timeout=30)
+                r = self.s.get(url, timeout=20)
                 if r.status_code == 200 and r.content:
                     return r.content
             except Exception:
                 pass
             time.sleep(1.5 * (k + 1))
         return None
+
+    def ringkas(self):
+        return " | ".join(f"{h.split('.')[0]}: ok {v['ok']}/{v['n']}, 429 {v['429']}, jeda {self.jeda.get(h, 0):.1f}s, kode {v['kode']}"
+                          for h, v in sorted(self.stat.items()))
 
 
 class HttpStub:
@@ -263,6 +296,9 @@ class HttpStub:
     def post_katalog(self, body, coba=5):
         self.n += 1
         return {"data": [self._item(x["id"]) for x in body["items"]]}
+
+    def ringkas(self):
+        return f"stub n={self.n}"
 
     def gambar(self, url):
         from PIL import Image
@@ -408,8 +444,8 @@ def jaccard(a, b):
 # ---------------------------------------------------------------------------------------------
 # 1. PANEN
 # ---------------------------------------------------------------------------------------------
-def panen(http, st):
-    batas_waktu = T0 + MENIT_PANEN * 60
+def cari_kreator(http, st):
+    """Cari item per kata kunci (catalog) -> item + meta + daftar kreator. Maks MENIT_CARI menit."""
     putaran = st["putaran"]
     rng = random.Random(putaran * 7919 + 13)
     kata = KATA_KUNCI[:]
@@ -418,9 +454,10 @@ def panen(http, st):
     kata = (kata + kata)[mulai:mulai + KATA_PER_PUTARAN]
     kreator_user, kreator_grup = {}, {}
     n_item_cari = 0
+    k_i = 0
     for k_i, kw in enumerate(kata):
-        if time.time() > T0 + MENIT_PANEN * 60 * 0.30:
-            break  # maks 30% waktu panen untuk mencari kreator
+        if time.time() > T0 + MENIT_CARI * 60:
+            break
         for kategori in ("1", "3"):
             js = http.get("https://catalog.roblox.com/v2/search/items/details",
                           {"Keyword": kw, "Category": kategori, "Limit": "120", "SortType": "0"})
@@ -430,8 +467,7 @@ def panen(http, st):
                 i = e.get("id")
                 if not isinstance(i, int):
                     continue
-                at = e.get("assetType")
-                if at in ASET_KE_SLOT:
+                if e.get("assetType") in ASET_KE_SLOT:
                     st["meta"][str(i)] = meta_dari_katalog(e)
                     n_item_cari += 1
                 cid = e.get("creatorTargetId")
@@ -441,32 +477,43 @@ def panen(http, st):
                     kreator_user[cid] = kreator_user.get(cid, 0) + 1
                 elif e.get("creatorType") == "Group":
                     kreator_grup[cid] = kreator_grup.get(cid, 0) + 1
+        if k_i % 20 == 19:
+            log(f"  cari {k_i + 1} kata | item {n_item_cari} | kreator user {len(kreator_user)} grup {len(kreator_grup)} | {http.ringkas()}")
     log(f"pencarian: {k_i + 1} kata kunci, {n_item_cari} item katalog, kreator user {len(kreator_user)}, grup {len(kreator_grup)}")
-
-    # pemilik grup = desainer di balik toko grup
-    for gid, _ in sorted(kreator_grup.items(), key=lambda x: -x[1])[:250]:
-        if time.time() > T0 + MENIT_PANEN * 60 * 0.40:
+    # pemilik grup = desainer di balik toko grup (maks 5 menit)
+    batas = time.time() + 5 * 60
+    for gid, _ in sorted(kreator_grup.items(), key=lambda x: -x[1])[:150]:
+        if time.time() > batas:
             break
-        js = http.get(f"https://groups.roblox.com/v1/groups/{gid}")
+        js = http.get(f"https://groups.roblox.com/v1/groups/{gid}", coba=2)
         uid = ((js or {}).get("owner") or {}).get("userId")
         if isinstance(uid, int):
             kreator_user[uid] = kreator_user.get(uid, 0) + kreator_grup[gid]
-
     antre = [u for u, _ in sorted(kreator_user.items(), key=lambda x: -x[1]) if hash_kreator(u) not in st["kreator"]]
-    log(f"kreator baru untuk dibaca: {len(antre)} (sudah pernah: {len(st['kreator'])})")
-    n_kreator = n_outfit = n_tolak = n_mirip = 0
+    log(f"kreator baru untuk dibaca: {len(antre)} (sudah pernah: {len(st['kreator'])}) | {http.ringkas()}")
+    return antre
+
+
+def panen(http, st, antre):
+    batas_waktu = T0 + MENIT_PANEN * 60
+    n_kreator = n_outfit = n_tolak = n_mirip = n_kosong = 0
+    t_log = time.time()
     for uid in antre[:MAKS_KREATOR]:
         if time.time() > batas_waktu:
             log("batas waktu panen tercapai, sisanya putaran berikutnya")
             break
         hasil_kreator = []
         js = http.get(f"https://avatar.roblox.com/v2/avatar/users/{uid}/outfits",
-                      {"page": "1", "itemsPerPage": "50", "isEditable": "true"})
+                      {"page": "1", "itemsPerPage": "50", "isEditable": "true"}, coba=2)
         daftar = [o for o in (js or {}).get("data", []) or [] if o.get("outfitType", "Avatar") == "Avatar"]
+        if not daftar:
+            n_kosong += 1
         sumber = [f"https://avatar.roblox.com/v1/outfits/{o['id']}/details" for o in daftar[:MAKS_OUTFIT_PER_KREATOR]]
         sumber.append(f"https://avatar.roblox.com/v1/users/{uid}/avatar")
         for url in sumber:
-            d = http.get(url)
+            if time.time() > batas_waktu:
+                break
+            d = http.get(url, coba=2)
             seed = seed_dari_avatar(d)
             if not seed:
                 n_tolak += 1
@@ -483,11 +530,13 @@ def panen(http, st):
                 n_outfit += 1
         st["kreator"][hash_kreator(uid)] = int(time.time())
         n_kreator += 1
-        if n_kreator % 50 == 0:
-            log(f"  kreator {n_kreator}: +{n_outfit} outfit (ditolak saring {n_tolak}, kembar {n_mirip}) | http {http.n}, 429 {http.n429}")
+        if n_kreator % 10 == 0:
             simpan_state(st)
-    log(f"PANEN selesai: {n_kreator} kreator dibaca, +{n_outfit} outfit baru, total bank {len(st['outfit'])}")
-    return {"kreator": n_kreator, "outfit_baru": n_outfit, "ditolak": n_tolak, "kembar": n_mirip}
+        if time.time() - t_log > 180:
+            t_log = time.time()
+            log(f"  kreator {n_kreator}: +{n_outfit} outfit (tolak {n_tolak}, kembar {n_mirip}, tanpa outfit {n_kosong}) | {http.ringkas()}")
+    log(f"PANEN selesai: {n_kreator} kreator dibaca, +{n_outfit} outfit baru, total bank {len(st['outfit'])} | {http.ringkas()}")
+    return {"kreator": n_kreator, "outfit_baru": n_outfit, "ditolak": n_tolak, "kembar": n_mirip, "tanpa_outfit": n_kosong}
 
 
 # ---------------------------------------------------------------------------------------------
@@ -505,7 +554,7 @@ def lengkapi_meta(http, st):
     log(f"meta perlu dilengkapi/diperbarui: {len(perlu)} item")
     n = 0
     for a in range(0, len(perlu), 100):
-        if time.time() > T0 + (MENIT_PANEN + 25) * 60:
+        if time.time() > T0 + (MENIT_PANEN + 15) * 60:
             log("  batas waktu meta, sisanya putaran berikutnya")
             break
         potong = perlu[a:a + 100]
@@ -623,29 +672,26 @@ def warna_dominan(rgba):
     return "%02x%02x%02x" % tuple(int(x) for x in m)
 
 
-def mata(http, st, embedder):
+def mata(http, st, embedder, emb, warna, batas, gagal_baru, label="MATA"):
+    """Thumbnail -> CLIP untuk item yang belum punya embedding. Aman jalan di thread (tidak menulis st)."""
     from PIL import Image
-    emb, warna = muat_emb()
-    universe = set()
-    for s in st["outfit"].values():
-        universe.update(ids_seed(s))
-    for k, m in st["meta"].items():
+    di_outfit = set()
+    for s in list(st["outfit"].values()):
+        di_outfit.update(ids_seed(s))
+    universe = set(di_outfit)
+    for k, m in list(st["meta"].items()):
         if m.get("t") in ASET_KE_SLOT:
             universe.add(int(k))
-    gagal = st.setdefault("gagal_thumb", {})
-    target = [i for i in universe if i not in emb and str(i) not in gagal]
-    # prioritas: item yang ada di outfit dulu
-    di_outfit = set()
-    for s in st["outfit"].values():
-        di_outfit.update(ids_seed(s))
-    target.sort(key=lambda i: (0 if i in di_outfit else 1, i))
+    gagal_lama = st.get("gagal_thumb", {})
+    target = [i for i in universe if i not in emb and str(i) not in gagal_lama and str(i) not in gagal_baru]
+    target.sort(key=lambda i: (0 if i in di_outfit else 1, i))  # item yang ada di outfit dulu
     target = target[:MAKS_ITEM_BARU]
-    log(f"MATA: universe {len(universe)} item, sudah ada {len(emb)}, akan dihitung {len(target)}")
-    batas = T0 + (MENIT_PANEN + 25 + MENIT_MATA) * 60
+    log(f"{label}: universe {len(universe)} item, sudah ada {len(emb)}, akan dihitung {len(target)}")
     md5_hitung = {}
+    t_log = time.time()
     for a in range(0, len(target), 50):
         if time.time() > batas:
-            log("  batas waktu MATA, sisanya putaran berikutnya")
+            log(f"  {label}: batas waktu, sisanya putaran berikutnya")
             break
         potong = target[a:a + 50]
         js = http.get("https://thumbnails.roblox.com/v1/assets", {"assetIds": ",".join(map(str, potong)), "returnPolicy": "PlaceHolder",
@@ -660,7 +706,7 @@ def mata(http, st, embedder):
                 h = hashlib.md5(b).hexdigest()
                 md5_hitung[h] = md5_hitung.get(h, 0) + 1
                 if md5_hitung[h] >= 4:
-                    gagal[str(i)] = 1  # placeholder
+                    gagal_baru[str(i)] = 1  # placeholder
                     continue
                 try:
                     im = Image.open(io.BytesIO(b)).convert("RGBA")
@@ -672,16 +718,16 @@ def mata(http, st, embedder):
                 ims.append(alas.convert("RGB"))
                 ids_ok.append(i)
             elif e.get("state") in ("Blocked", "Error"):
-                gagal[str(i)] = 1
+                gagal_baru[str(i)] = 1
         for b0 in range(0, len(ims), 32):
             f = embedder.gambar(ims[b0:b0 + 32])
             for k, i in enumerate(ids_ok[b0:b0 + 32]):
                 emb[i] = f[k]
-        if (a // 50) % 40 == 0:
-            log(f"  {a + len(potong)}/{len(target)} | total embedding {len(emb)}")
+        if time.time() - t_log > 240:
+            t_log = time.time()
+            log(f"  {label}: {a + len(potong)}/{len(target)} | total embedding {len(emb)}")
             simpan_emb(emb, warna)
     simpan_emb(emb, warna)
-    return emb, warna
 
 
 # ---------------------------------------------------------------------------------------------
@@ -1070,16 +1116,27 @@ def laporan(info, http):
 
 
 def main():
+    import threading
     st = muat_state()
     st["putaran"] = st.get("putaran", 0) + 1
     log(f"putaran {st['putaran']} | bank {len(st['outfit'])} outfit | meta {len(st['meta'])} | STUB={STUB}")
     http = HttpStub() if STUB else Http()
-    statistik = panen(http, st)
-    simpan_state(st)
-    lengkapi_meta(http, st)
-    simpan_state(st)
     embedder = EmbedderStub() if STUB else EmbedderCLIP()
-    emb, warna = mata(http, st, embedder)
+    emb, warna = muat_emb()
+    antre = cari_kreator(http, st)
+    simpan_state(st)
+    # MATA jalan paralel dengan panen: host berbeda (thumbnails vs avatar) punya batas sendiri-sendiri
+    gagal_baru = {}
+    utas = threading.Thread(target=mata, args=(http, st, embedder, emb, warna, T0 + MENIT_PANEN * 60, gagal_baru, "MATA-1"), daemon=True)
+    utas.start()
+    try:
+        statistik = panen(http, st, antre)
+    finally:
+        simpan_state(st)
+    utas.join()
+    lengkapi_meta(http, st)
+    mata(http, st, embedder, emb, warna, time.time() + MENIT_MATA * 60, gagal_baru, "MATA-2")
+    st.setdefault("gagal_thumb", {}).update(gagal_baru)
     simpan_state(st)
     slot_of = slot_semua_item(st)
     ids_zs = sorted(i for i in emb if i in slot_of)
@@ -1092,7 +1149,7 @@ def main():
     hasil_latih = latih(st, emb, slot_of)
     info = ekspor(st, emb, warna, slot_of, (nama_gaya, p_gaya, nama_atr, p_atr, p_fem, ids_zs), hasil_latih, statistik)
     laporan(info, http)
-    log(f"SELESAI: bank {info['n_bank']} outfit, {info['n_item']} item, layak={info['layak']}, AUC gender {info['auc_gender_vs_nama']}")
+    log(f"SELESAI: bank {info['n_bank']} outfit, {info['n_item']} item, layak={info['layak']}, AUC gender {info['auc_gender_vs_nama']} | {http.ringkas()}")
 
 
 if __name__ == "__main__":

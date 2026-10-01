@@ -160,7 +160,10 @@ class Http:
         self.gagal = 0
 
     def _host(self, url):
-        return url.split("/")[2]
+        # kunci jeda per ENDPOINT (host + 2 segmen path): kalau Roblox membatasi per endpoint, endpoint lain tidak
+        # ikut menunggu; kalau per host, mundur adaptif tiap kunci tetap menjaga laju di bawah batas
+        bag = url.split("/")
+        return "/".join(bag[2:5])
 
     def _st(self, host):
         with self.kunci_global:
@@ -193,7 +196,7 @@ class Http:
             self.n += 1
             if r.status_code == 200:
                 st["ok"] += 1
-                self.jeda[host] = max(0.4, self.jeda[host] * 0.93)
+                self.jeda[host] = max(0.4, self.jeda[host] * 0.88)
                 return r
             if r.status_code == 403 and r.headers.get("x-csrf-token") and metode == "POST":
                 self.csrf = r.headers["x-csrf-token"]
@@ -202,7 +205,7 @@ class Http:
             if r.status_code == 429:
                 st["429"] += 1
                 self.n429 += 1
-                self.jeda[host] = min(20.0, self.jeda[host] * 1.5 + 0.5)
+                self.jeda[host] = min(12.0, self.jeda[host] * 1.4 + 0.5)
                 ra = r.headers.get("Retry-After", "")
                 tunggu = float(ra) if ra.replace(".", "", 1).isdigit() else self.jeda[host] * 2
                 time.sleep(min(60.0, tunggu))
@@ -249,7 +252,7 @@ class Http:
         return None
 
     def ringkas(self):
-        return " | ".join(f"{h.split('.')[0]}: ok {v['ok']}/{v['n']}, 429 {v['429']}, jeda {self.jeda.get(h, 0):.1f}s, kode {v['kode']}"
+        return " | ".join(f"{h.replace('.roblox.com', '')}: ok {v['ok']}/{v['n']}, 429 {v['429']}, jeda {self.jeda.get(h, 0):.1f}s, kode {v['kode']}"
                           for h, v in sorted(self.stat.items()))
 
 

@@ -1,0 +1,26 @@
+{
+ "peringatan": [],
+ "gagal_keras": [],
+ "presisi": {
+  "gaya": {
+   "presisi": 0.3035,
+   "dasar_acak": 0.114,
+   "sumber": 400
+  },
+  "mentah": {
+   "presisi": 0.245,
+   "dasar_acak": 0.1115,
+   "sumber": 400
+  }
+ },
+ "auc_tema_lintas_slot_terbaik": 0.60469484375,
+ "auc_kreator_lintas_slot_terbaik": 0.68595009375,
+ "ringkas_auc": {
+  "Tema, LINTAS slot (relevan untuk outfit) | mentah (CLIP apa adanya)": 0.5444189375,
+  "Tema, dalam slot yang sama | mentah (CLIP apa adanya)": 0.62722340625,
+  "Kreator/set, LINTAS slot | mentah (CLIP apa adanya)": 0.68595009375,
+  "Tema, LINTAS slot (relevan untuk outfit) | gaya (slot dinetralkan)": 0.60469484375,
+  "Tema, dalam slot yang sama | gaya (slot dinetralkan)": 0.71119809375,
+  "Kreator/set, LINTAS slot | gaya (slot dinetralkan)": 0.647377421875
+ }
+}

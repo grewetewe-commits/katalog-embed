@@ -1,3 +1,64 @@
 [  0.0m] putaran 1 | bank 0 outfit | meta 0 | STUB=False
-[ 21.1m] pencarian: 107 kata kunci, 23822 item katalog, kreator user 425, grup 2394
-[ 28.1m] kreator baru untuk dibaca: 463 (sudah pernah: 0)
+[  0.1m] embedding dimuat dari out/raw.npz: 1321
+[  4.5m]   cari 20 kata | item 4038 | kreator user 132 grup 683 | catalog: ok 37/46, 429 9, jeda 8.9s, kode {}
+[  8.9m]   cari 40 kata | item 8558 | kreator user 227 grup 1103 | catalog: ok 76/89, 429 13, jeda 3.6s, kode {}
+[ 13.6m]   cari 60 kata | item 12663 | kreator user 288 grup 1551 | catalog: ok 114/135, 429 21, jeda 11.4s, kode {}
+[ 15.0m] pencarian: 66 kata kunci, 13681 item katalog, kreator user 298, grup 1619
+[ 20.1m] kreator baru untuk dibaca: 322 (sudah pernah: 0) | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {}
+[ 20.1m] MATA-1: universe 6914 item, sudah ada 1321, akan dihitung 6873
+[ 24.0m]   kreator 9: +15 outfit (tolak 9, kembar 1, tanpa outfit 7) | avatar: ok 28/40, 429 12, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 16/16, 429 0, jeda 0.4s, kode {}
+[ 24.1m]   MATA-1: 800/6873 | total embedding 2121
+[ 28.3m]   MATA-1: 1600/6873 | total embedding 2921
+[ 29.6m]   kreator 13: +20 outfit (tolak 13, kembar 4, tanpa outfit 10) | avatar: ok 40/60, 429 20, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 37/37, 429 0, jeda 0.4s, kode {}
+[ 32.5m]   MATA-1: 2400/6873 | total embedding 3721
+[ 33.4m]   kreator 16: +23 outfit (tolak 16, kembar 4, tanpa outfit 12) | avatar: ok 46/72, 429 26, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 52/52, 429 0, jeda 0.4s, kode {}
+[ 36.6m]   MATA-1: 3200/6873 | total embedding 4521
+[ 37.3m]   kreator 20: +23 outfit (tolak 20, kembar 4, tanpa outfit 16) | avatar: ok 50/84, 429 34, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 67/67, 429 0, jeda 0.4s, kode {}
+[ 40.7m]   MATA-1: 4000/6873 | total embedding 5321
+[ 41.0m]   kreator 22: +25 outfit (tolak 28, kembar 4, tanpa outfit 17) | avatar: ok 60/98, 429 38, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 81/81, 429 0, jeda 0.4s, kode {}
+[ 44.9m]   MATA-1: 4750/6873 | total embedding 6071
+[ 46.4m]   kreator 24: +35 outfit (tolak 36, kembar 4, tanpa outfit 17) | avatar: ok 78/120, 429 42, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 101/101, 429 0, jeda 0.4s, kode {}
+[ 49.2m]   MATA-1: 5550/6873 | total embedding 6871
+[ 50.3m]   kreator 28: +35 outfit (tolak 40, kembar 4, tanpa outfit 21) | avatar: ok 82/132, 429 50, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 116/116, 429 0, jeda 0.4s, kode {}
+[ 53.5m]   MATA-1: 6200/6873 | total embedding 7521
+[ 54.1m]   kreator 30: +36 outfit (tolak 49, kembar 4, tanpa outfit 22) | avatar: ok 92/146, 429 54, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 126/126, 429 0, jeda 0.4s, kode {}
+[ 57.7m]   MATA-1: 6750/6873 | total embedding 8071
+[ 57.8m]   kreator 33: +37 outfit (tolak 53, kembar 5, tanpa outfit 24) | avatar: ok 98/158, 429 60, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 136/136, 429 0, jeda 0.4s, kode {}
+[ 62.0m]   kreator 37: +37 outfit (tolak 58, kembar 5, tanpa outfit 27) | avatar: ok 103/171, 429 68, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[ 67.4m]   kreator 39: +49 outfit (tolak 64, kembar 5, tanpa outfit 27) | avatar: ok 121/193, 429 72, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[ 71.3m]   kreator 43: +49 outfit (tolak 68, kembar 5, tanpa outfit 31) | avatar: ok 125/205, 429 80, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[ 74.5m]   kreator 45: +50 outfit (tolak 76, kembar 5, tanpa outfit 32) | avatar: ok 135/217, 429 82, jeda 10.4s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[ 77.7m]   kreator 52: +68 outfit (tolak 83, kembar 6, tanpa outfit 36) | avatar: ok 165/253, 429 88, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[ 83.4m]   kreator 56: +75 outfit (tolak 88, kembar 6, tanpa outfit 39) | avatar: ok 177/273, 429 96, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[ 89.0m]   kreator 60: +83 outfit (tolak 92, kembar 6, tanpa outfit 42) | avatar: ok 189/293, 429 104, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[ 92.7m]   kreator 62: +85 outfit (tolak 95, kembar 11, tanpa outfit 43) | avatar: ok 199/307, 429 108, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[ 98.2m]   kreator 65: +95 outfit (tolak 99, kembar 11, tanpa outfit 44) | avatar: ok 213/327, 429 114, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[103.6m]   kreator 67: +109 outfit (tolak 101, kembar 13, tanpa outfit 44) | avatar: ok 231/349, 429 118, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[107.6m]   kreator 71: +109 outfit (tolak 105, kembar 13, tanpa outfit 48) | avatar: ok 235/361, 429 126, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[111.3m]   kreator 73: +117 outfit (tolak 107, kembar 13, tanpa outfit 49) | avatar: ok 245/375, 429 130, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[115.0m]   kreator 75: +119 outfit (tolak 115, kembar 13, tanpa outfit 50) | avatar: ok 255/389, 429 134, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[120.6m]   kreator 79: +127 outfit (tolak 119, kembar 13, tanpa outfit 53) | avatar: ok 267/409, 429 142, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[123.8m]   kreator 82: +128 outfit (tolak 122, kembar 13, tanpa outfit 55) | avatar: ok 271/419, 429 148, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[129.3m]   kreator 84: +139 outfit (tolak 125, kembar 17, tanpa outfit 55) | avatar: ok 289/441, 429 152, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[134.6m]   kreator 88: +148 outfit (tolak 128, kembar 17, tanpa outfit 58) | avatar: ok 302/460, 429 158, jeda 9.7s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[137.6m]   kreator 96: +168 outfit (tolak 132, kembar 17, tanpa outfit 64) | avatar: ok 331/495, 429 164, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[141.5m]   kreator 100: +168 outfit (tolak 136, kembar 17, tanpa outfit 68) | avatar: ok 335/507, 429 172, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[147.0m]   kreator 104: +174 outfit (tolak 140, kembar 18, tanpa outfit 71) | avatar: ok 346/526, 429 180, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[150.9m]   kreator 108: +174 outfit (tolak 144, kembar 18, tanpa outfit 75) | avatar: ok 350/538, 429 188, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[154.6m]   kreator 110: +182 outfit (tolak 146, kembar 18, tanpa outfit 76) | avatar: ok 360/552, 429 192, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[158.5m]   kreator 114: +182 outfit (tolak 150, kembar 18, tanpa outfit 80) | avatar: ok 364/564, 429 200, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[162.2m]   kreator 116: +190 outfit (tolak 152, kembar 18, tanpa outfit 81) | avatar: ok 374/578, 429 204, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[167.9m]   kreator 120: +195 outfit (tolak 159, kembar 18, tanpa outfit 84) | avatar: ok 386/598, 429 212, jeda 20.0s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[170.1m] batas waktu panen tercapai, sisanya putaran berikutnya
+[170.1m] PANEN selesai: 123 kreator dibaca, +195 outfit baru, total bank 195 | avatar: ok 389/605, 429 216, jeda 18.6s, kode {} | catalog: ok 124/145, 429 21, jeda 5.5s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 138/138, 429 0, jeda 0.4s, kode {}
+[170.1m] meta perlu dilengkapi/diperbarui: 1189 item
+[181.0m] meta diperbarui: 1141
+[181.0m] MATA-2: universe 8103 item, sudah ada 8194, akan dihitung 1185
+[185.0m]   MATA-2: 950/1185 | total embedding 9127
+[186.1m] BELAJAR: 8082 item, outfit latih 169, uji 25
+[186.1m]   FITB baseline: mentah 0.411 | netral-slot 0.639 | acak 0.25 | 180 soal
+[186.6m]   model linear: FITB uji 0.822 (loss akhir 0.009)
+[187.7m]   model mlp: FITB uji 0.789 (loss akhir 0.029)
+[187.7m]   pembanding CLIP PCA-32: FITB 0.606
+[187.7m]   DIPAKAI linear: FITB 0.822 -> layak=True | AUC koherensi 0.9032
+[187.7m] SELESAI: bank 103 outfit, 8082 item, layak=True, AUC gender 0.8443300933866972 | avatar: ok 389/605, 429 216, jeda 18.6s, kode {} | catalog: ok 136/182, 429 45, jeda 18.6s, kode {} | groups: ok 29/38, 429 9, jeda 10.2s, kode {} | thumbnails: ok 162/162, 429 0, jeda 0.4s, kode {}

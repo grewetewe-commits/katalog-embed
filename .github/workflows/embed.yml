@@ -1,19 +1,25 @@
-name: Hitung sidik jari visual
+name: Otak Katalog Praktis
 
 on:
+  schedule:
+    - cron: "17 19 * * *"
   workflow_dispatch:
     inputs:
-      batas:
-        description: "Jumlah item (20 = uji kecil, 0 = semua item)"
-        default: "20"
+      menit_panen:
+        description: "Menit untuk panen outfit (default 70)"
+        default: "70"
 
 permissions:
   contents: write
 
+concurrency:
+  group: otak
+  cancel-in-progress: false
+
 jobs:
-  embed:
+  otak:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 330
     steps:
       - name: Ambil kode
         uses: actions/checkout@v4
@@ -23,11 +29,18 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Simpan unduhan model di cache
+      - name: Cache model CLIP
         uses: actions/cache@v4
         with:
           path: ~/.cache/huggingface
           key: hf-clip-vit-b32-v1
+
+      - name: Pulihkan sidik jari (embedding)
+        uses: actions/cache/restore@v4
+        with:
+          path: cache
+          key: emb-v2-${{ github.run_id }}
+          restore-keys: emb-v2-
 
       - name: Pasang dependensi
         run: |
@@ -35,25 +48,32 @@ jobs:
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install "numpy<2" "transformers>=4.40,<4.50" pillow requests
 
-      - name: Hitung sidik jari visual
+      - name: Jalankan otak (panen, mata, belajar, ekspor)
         env:
-          BATAS: ${{ github.event.inputs.batas }}
+          MENIT_PANEN: ${{ github.event.inputs.menit_panen || '70' }}
           HF_HUB_DISABLE_TELEMETRY: "1"
-        run: python embed.py
+        run: python otak.py 2>&1 | tee otak_log.txt
 
-      - name: Verifikasi hasil (pengoreksi)
-        run: python verifikasi.py
+      - name: Simpan sidik jari ke cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: cache
+          key: emb-v2-${{ github.run_id }}
 
       - name: Simpan hasil ke repo
         if: always()
         run: |
+          tail -n 120 otak_log.txt > LOG_TERAKHIR.txt 2>/dev/null || echo "log tidak ada" > LOG_TERAKHIR.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add out
+          for p in model bank meta data LAPORAN_OTAK.md LOG_TERAKHIR.txt; do
+            if [ -e "$p" ]; then git add "$p"; fi
+          done
           if git diff --staged --quiet; then
             echo "Tidak ada perubahan hasil."
           else
-            git commit -m "Hasil sidik jari visual + laporan verifikasi"
+            git commit -m "Otak: panen + model kecocokan (putaran otomatis)"
             git pull --rebase origin main || true
             git push
           fi

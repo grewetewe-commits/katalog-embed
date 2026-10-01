@@ -41,7 +41,11 @@ jobs:
           HF_HUB_DISABLE_TELEMETRY: "1"
         run: python embed.py
 
+      - name: Verifikasi hasil (pengoreksi)
+        run: python verifikasi.py
+
       - name: Simpan hasil ke repo
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -49,6 +53,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "Tidak ada perubahan hasil."
           else
-            git commit -m "Hasil sidik jari visual"
+            git commit -m "Hasil sidik jari visual + laporan verifikasi"
+            git pull --rebase origin main || true
             git push
           fi

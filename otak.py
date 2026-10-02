@@ -94,6 +94,13 @@ GAYA = {
     "y2k": "a y2k 2000s glittery pink style avatar item",
     "horror": "a horror scary bloody creepy style avatar item",
     "elegant": "a formal elegant suit or dress style avatar item",
+    # kosakata desainer tambahan (ditambah di AKHIR supaya indeks bit lama tetap sama)
+    "workwear": "a rugged workwear uniform or utility style avatar item",
+    "coquette": "a coquette soft feminine bows and ribbons style avatar item",
+    "baddie": "a trendy baddie bold fashion style avatar item",
+    "grunge": "a grunge emo dark distressed style avatar item",
+    "fairy": "a fairycore whimsical nature fairy style avatar item",
+    "cute_animal": "a cute animal ears or plush creature style avatar item",
 }
 ATRIBUT = {
     "sayap": ("an avatar item with wings", "an avatar item without wings"),
@@ -357,8 +364,19 @@ def meta_dari_katalog(e):
             bisa = False
     if status == "Free":
         price = 0
-    return {"n": (e.get("name") or "")[:80], "p": int(price) if isinstance(price, (int, float)) else -1,
-            "s": 1 if bisa else 0, "c": (e.get("creatorName") or "")[:40], "t": at, "w": int(time.time())}
+    m = {"n": (e.get("name") or "")[:80], "p": int(price) if isinstance(price, (int, float)) else -1,
+         "s": 1 if bisa else 0, "c": (e.get("creatorName") or "")[:40], "t": at, "w": int(time.time())}
+    # bahan TREN: jumlah favorit + umur item (item baru yang cepat difavoritkan = sedang naik daun)
+    fav = e.get("favoriteCount")
+    if isinstance(fav, int) and fav >= 0:
+        m["f"] = fav
+    dibuat = e.get("itemCreatedUtc")
+    if isinstance(dibuat, str) and len(dibuat) >= 10:
+        try:
+            m["d"] = int(datetime.strptime(dibuat[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc).timestamp() // 86400)
+        except Exception:
+            pass
+    return m
 
 
 def seed_dari_avatar(js):
@@ -995,6 +1013,26 @@ def tulis_json(p, obj):
         json.dump(obj, f, ensure_ascii=False, separators=(",", ":"))
 
 
+MAKS_ITEM_EKSPOR = 40000
+
+
+def skor_tren(st):
+    """0-100 per item: persentil gabungan popularitas (log favorit) + laju (favorit per hari sejak dibuat)."""
+    hari_ini = int(time.time() // 86400)
+    mentah = {}
+    for k, m in st["meta"].items():
+        f = m.get("f")
+        if not isinstance(f, int):
+            continue
+        umur = max(7, hari_ini - m.get("d", hari_ini - 365))
+        mentah[int(k)] = math.log10(f + 1) + 0.6 * math.log10(f / umur + 1)
+    if not mentah:
+        return {}
+    urut = sorted(mentah.values())
+    import bisect
+    return {i: int(round(100 * bisect.bisect_left(urut, v) / len(urut))) for i, v in mentah.items()}
+
+
 def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
     versi = int(time.time())
     nama_gaya, p_gaya, nama_atr, p_atr, p_fem, ids_zs = zs
@@ -1003,8 +1041,20 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
     if hasil_latih:
         fz, idx_of = hasil_latih["fz"], hasil_latih["idx_of"]
     # --- item: [slot, gender(0-100), hex, gayaBits, atrBits, v1..v32]
+    tren = skor_tren(st)
+    # RINGAN SELAMANYA: yang dikirim ke server dibatasi MAKS_ITEM_EKSPOR (prioritas: item di outfit bank, lalu item
+    # yang bisa dibeli, lalu yang paling tren). Latihan tetap memakai SEMUA item.
+    di_bank = set()
+    for s0 in st["outfit"].values():
+        di_bank.update(ids_seed(s0))
+    def prioritas(i):
+        m = st["meta"].get(str(i)) or {}
+        return (0 if i in di_bank else 1, 0 if m.get("s") == 1 else 1, -tren.get(i, 0))
+    ids_kirim = set(sorted(ids_zs, key=prioritas)[:MAKS_ITEM_EKSPOR])
     shard = [dict() for _ in range(SHARD_ITEM)]
     for i in ids_zs:
+        if i not in ids_kirim:
+            continue
         k = pos_zs[i]
         g_bits = 0
         urut = np.argsort(-p_gaya[k])[:2]
@@ -1089,7 +1139,7 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
     for e in kandidat:
         ids_meta.update(ids_seed(e))
     # + semua item bervektor yang bisa dibeli: bahan KOMPOSISI otak di server (bukan cuma bank)
-    for i in ids_zs:
+    for i in ids_kirim:
         m = st["meta"].get(str(i))
         if m and m.get("s") == 1 and m.get("p", -1) >= 0 and m.get("t", 0) in ASET_KE_SLOT:
             ids_meta.add(i)
@@ -1097,7 +1147,7 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
         if True:
             m = st["meta"].get(str(i))
             if m:
-                mshard[i % SHARD_ITEM][str(i)] = [m.get("n", ""), m.get("p", -1), m.get("s", 0), m.get("c", ""), m.get("t", 0), m.get("w", 0)]
+                mshard[i % SHARD_ITEM][str(i)] = [m.get("n", ""), m.get("p", -1), m.get("s", 0), m.get("c", ""), m.get("t", 0), m.get("w", 0), tren.get(i, -1)]
     for s in range(SHARD_ITEM):
         tulis_json(f"meta/harga_{s}.json", {"versi": versi, "d": mshard[s]})
 
@@ -1117,7 +1167,7 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
         "versi": versi, "dibuat": datetime.now(timezone.utc).isoformat(), "putaran": st["putaran"],
         "model": MODEL_ID, "dim": DIM if hasil_latih else 0, "layak": bool(hl.get("layak")),
         "metrik": hl, "auc_gender_vs_nama": auc_gender, "n_label_gender": [len(pos), len(neg)],
-        "n_item": len(ids_zs), "n_outfit_panen": len(st["outfit"]), "n_bank": len(kandidat),
+        "n_item": len(ids_kirim), "n_item_dipelajari": len(ids_zs), "n_outfit_panen": len(st["outfit"]), "n_bank": len(kandidat),
         "bank_tolak_tidak_bisa_dibeli": n_tolak_beli, "bank_tolak_tidak_koheren": n_tolak_koh,
         "shard_item": SHARD_ITEM, "shard_bank": SHARD_BANK, "shard_meta": SHARD_ITEM,
         "slot_kode": SLOT_KODE, "gaya": nama_gaya, "atribut": nama_atr, "panen": statistik,

@@ -775,6 +775,16 @@ def zero_shot(embedder, ids, X, slot_of):
         lf = 100 * X[idx] @ tf
         lm = 100 * X[idx] @ tm
         p_fem[idx] = 1 / (1 + np.exp(-(lf - lm)))
+    # panjang rambut (khusus slot Hair): ikut menentukan kesan gender & gaya
+    global P_RAMBUT_PANJANG
+    P_RAMBUT_PANJANG = np.full(len(ids), 0.5, dtype="float32")
+    idx = np.where(slots == "Hair")[0]
+    if len(idx):
+        tp = embedder.teks(["a long hairstyle for an avatar", "long flowing hair", "very long hair past the shoulders"]).mean(axis=0)
+        ts = embedder.teks(["a short hairstyle for an avatar", "short cropped hair", "a buzz cut or short haircut"]).mean(axis=0)
+        tp /= np.linalg.norm(tp)
+        ts /= np.linalg.norm(ts)
+        P_RAMBUT_PANJANG[idx] = 1 / (1 + np.exp(-(100 * X[idx] @ tp - 100 * X[idx] @ ts)))
     return nama_gaya, p_gaya, nama_atr, p_atr, p_fem
 
 
@@ -827,6 +837,8 @@ def latih(st, emb, slot_of, rng_seed=1):
         return int(hashlib.md5(kunci_bagi[h].encode()).hexdigest()[:4], 16) % 100 < 15
     val = [o for o in outfits if uji(o[0])]
     trn = [o for o in outfits if not uji(o[0])]
+    # outfit yang DIFAVORITKAN/DIBELI pemain sungguhan = sinyal paling berharga -> bobot 3x saat latih
+    trn += [o for o in trn if st["outfit"][o[0]].get("S") == "sinyal"] * 2
     log(f"BELAJAR: {len(ids_all)} item, outfit latih {len(trn)}, uji {len(val)}")
     # rata-rata per slot dari item latih (menetralkan "jenis slot", supaya yang dipelajari gaya)
     mu = {s: X[slot_idx[s]].mean(axis=0) for s in slot_list}
@@ -1003,6 +1015,12 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
         for j in range(len(nama_atr)):
             if p_atr[k][j] >= 0.80:
                 a_bits |= 1 << j
+        if slot_of.get(i) == "Hair":
+            pr = float(P_RAMBUT_PANJANG[k])
+            if pr >= 0.65:
+                a_bits |= 1 << 9   # rambut panjang
+            elif pr <= 0.35:
+                a_bits |= 1 << 10  # rambut pendek
         baris = [SLOT_KODE.get(slot_of.get(i, ""), 0), int(round(float(p_fem[k]) * 100)), warna.get(i, ""), g_bits, a_bits]
         if fz is not None and i in idx_of:
             baris += [int(round(float(x) * 127)) for x in fz[idx_of[i]]]
@@ -1067,8 +1085,16 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
 
     # --- meta harga snapshot untuk semua item di bank (server tetap validasi live, TTL)
     mshard = [dict() for _ in range(SHARD_ITEM)]
+    ids_meta = set()
     for e in kandidat:
-        for i in ids_seed(e):
+        ids_meta.update(ids_seed(e))
+    # + semua item bervektor yang bisa dibeli: bahan KOMPOSISI otak di server (bukan cuma bank)
+    for i in ids_zs:
+        m = st["meta"].get(str(i))
+        if m and m.get("s") == 1 and m.get("p", -1) >= 0 and m.get("t", 0) in ASET_KE_SLOT:
+            ids_meta.add(i)
+    for i in sorted(ids_meta):
+        if True:
             m = st["meta"].get(str(i))
             if m:
                 mshard[i % SHARD_ITEM][str(i)] = [m.get("n", ""), m.get("p", -1), m.get("s", 0), m.get("c", ""), m.get("t", 0), m.get("w", 0)]
@@ -1095,7 +1121,14 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
         "bank_tolak_tidak_bisa_dibeli": n_tolak_beli, "bank_tolak_tidak_koheren": n_tolak_koh,
         "shard_item": SHARD_ITEM, "shard_bank": SHARD_BANK, "shard_meta": SHARD_ITEM,
         "slot_kode": SLOT_KODE, "gaya": nama_gaya, "atribut": nama_atr, "panen": statistik,
+        "n_sinyal_pemain": sum(1 for x in st["outfit"].values() if x.get("S") == "sinyal"),
+        "n_dasar_lokal": sum(1 for x in st["outfit"].values() if x.get("S") == "lokal"),
     }
+    rw = st.setdefault("riwayat", [])
+    rw.append({"putaran": st["putaran"], "waktu": info["dibuat"][:16], "outfit": len(st["outfit"]), "item": len(ids_zs),
+               "fitb": round(float(hl.get("fitb_dipakai") or 0), 3), "sinyal": info["n_sinyal_pemain"]})
+    st["riwayat"] = rw[-60:]
+    info["riwayat"] = st["riwayat"][-12:]
     tulis_json("model/info.json", info)
     return info
 
@@ -1117,6 +1150,11 @@ def laporan(info, http):
         f"- Dipakai: **{m.get('dipakai', '-')}** | soal uji {m.get('soal_uji', '-')} | outfit latih {m.get('outfit_latih', '-')}, uji {m.get('outfit_uji', '-')}",
         f"- AUC koherensi (outfit asli vs setengah-diacak): model {f(m.get('auc_koherensi_model'))}, CLIP {f(m.get('auc_koherensi_clip'))}",
         f"- **LAYAK DIPAKAI SERVER: {'YA' if info['layak'] else 'BELUM'}** (syarat: FITB >= 0,38 dengan >= 150 soal; acak = 0,25)", "",
+        f"- Sinyal pemain (outfit difavoritkan/dibeli di map): **{info.get('n_sinyal_pemain', 0)}** | outfit dasar dari server Roblox: {info.get('n_dasar_lokal', 0)}", "",
+        "## Perkembangan otak (makin banyak data = makin pintar)", "",
+        "| Putaran | Waktu (UTC) | Outfit dipelajari | Item dikenal | FITB | Sinyal pemain |", "|---|---|---|---|---|---|",
+    ] + [f"| {r['putaran']} | {r['waktu']} | {r['outfit']} | {r['item']} | {r['fitb']} | {r['sinyal']} |" for r in info.get("riwayat", [])] + [
+        "",
         "## Gender visual (zero-shot CLIP) dicek dengan kata di nama item",
         f"- AUC = {f(info['auc_gender_vs_nama'])} pada {info['n_label_gender'][0]} item berlabel wanita & {info['n_label_gender'][1]} pria",
         "  (0,5 = acak; >= 0,80 baru dipakai keras oleh server)", "",
@@ -1128,6 +1166,84 @@ def laporan(info, http):
         open(ring, "a", encoding="utf-8").write("\n".join(baris) + "\n")
 
 
+P_RAMBUT_PANJANG = None
+
+
+def ambil_dari_roblox(st):
+    """OPSIONAL (butuh secret ROBLOX_API_KEY, dibuat pemilik di Creator Dashboard; izin baca DataStore).
+    Lewat Roblox Open Cloud (GET /cloud/v2/universes/{id}/data-stores/{store}/entries/{entry}):
+      - KatalogOutfitDasar_v1 shard_0..15 : outfit dasar yang dipanen server Roblox (cepat, tanpa limit IP)
+      - KatalogSinyalOtak_v1  pos_0..7    : outfit yang DIFAVORITKAN/DIBELI pemain (anonim) -> sinyal terkuat
+    Tanpa secret: dilewati diam-diam (otak tetap belajar dari panen GitHub)."""
+    kunci = os.environ.get("ROBLOX_API_KEY", "").strip()
+    uni = os.environ.get("UNIVERSE_ID", "").strip()
+    if STUB or not kunci or not uni:
+        log("sumber Roblox (Open Cloud) dilewati: secret ROBLOX_API_KEY belum dipasang")
+        return
+    import requests
+    from urllib.parse import quote
+    def ambil(store, entri):
+        url = f"https://apis.roblox.com/cloud/v2/universes/{uni}/data-stores/{quote(store)}/entries/{quote(entri)}"
+        for k in range(3):
+            try:
+                r = requests.get(url, headers={"x-api-key": kunci}, timeout=30)
+                if r.status_code == 200:
+                    v = r.json().get("value")
+                    if isinstance(v, str):
+                        try:
+                            v = json.loads(v)
+                        except Exception:
+                            return None
+                    return v
+                if r.status_code == 404:
+                    return None
+                if r.status_code in (401, 403):
+                    log(f"  Open Cloud {r.status_code}: cek izin API key (data store read) & universe")
+                    return None
+            except Exception:
+                pass
+            time.sleep(3 * (k + 1))
+        return None
+
+    def masukkan(daftar, sumber):
+        n = 0
+        for s in daftar:
+            if not isinstance(s, dict):
+                continue
+            acc = []
+            for a in s.get("A") or []:
+                if isinstance(a, list) and len(a) == 2 and all(isinstance(x, int) for x in a):
+                    acc.append([a[0], a[1]])
+            js = {"assets": []}
+            for f, at in (("Sh", 11), ("Pa", 12), ("Gt", 2)):
+                if isinstance(s.get(f), int):
+                    js["assets"].append({"id": s[f], "assetType": {"id": at}})
+            for i, t in acc:
+                if t in ACC_KE_ASET:
+                    js["assets"].append({"id": i, "assetType": {"id": ACC_KE_ASET[t]}})
+            seed = seed_dari_avatar(js)
+            if not seed:
+                continue
+            seed["S"] = sumber
+            seed["K"] = sumber[:3] + seed["H"][:3]
+            if sumber == "sinyal" or seed["H"] not in st["outfit"]:
+                seed["T"] = int(time.time())
+                st["outfit"][seed["H"]] = seed
+                n += 1
+        return n
+
+    n_lokal = n_sinyal = 0
+    for i in range(16):
+        d = ambil("KatalogOutfitDasar_v1", f"shard_{i}")
+        if isinstance(d, dict) and isinstance(d.get("seeds"), dict):
+            n_lokal += masukkan(list(d["seeds"].values()), "lokal")
+    for i in range(8):
+        d = ambil("KatalogSinyalOtak_v1", f"pos_{i}")
+        if isinstance(d, dict) and isinstance(d.get("outfit"), list):
+            n_sinyal += masukkan(d["outfit"], "sinyal")
+    log(f"sumber Roblox: +{n_lokal} outfit dasar server, {n_sinyal} outfit sinyal pemain")
+
+
 def main():
     import threading
     st = muat_state()
@@ -1136,6 +1252,7 @@ def main():
     http = HttpStub() if STUB else Http()
     embedder = EmbedderStub() if STUB else EmbedderCLIP()
     emb, warna = muat_emb()
+    ambil_dari_roblox(st)
     antre = cari_kreator(http, st)
     simpan_state(st)
     # MATA jalan paralel dengan panen: host berbeda (thumbnails vs avatar) punya batas sendiri-sendiri

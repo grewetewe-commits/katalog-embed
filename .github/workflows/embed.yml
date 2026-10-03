@@ -53,6 +53,7 @@ jobs:
           MENIT_PANEN: ${{ github.event.inputs.menit_panen || '170' }}
           HF_HUB_DISABLE_TELEMETRY: "1"
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           UNIVERSE_ID: "10753176264"
         run: python otak.py 2>&1 | tee otak_log.txt
 

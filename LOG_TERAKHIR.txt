@@ -1,49 +1,41 @@
-[  0.0m] putaran 7 | bank 4997 outfit | meta 47183 | STUB=False
-[  0.1m] embedding dimuat dari cache/emb.npz: 53019
+[  0.0m] putaran 8 | bank 7082 outfit | meta 51546 | STUB=False
+[  0.1m] embedding dimuat dari cache/emb.npz: 57667
 [  0.1m] embedding dimuat dari out/raw.npz: 1321
-[  0.2m] sumber Roblox: +45 outfit dasar server, 6 outfit sinyal pemain
-[  0.4m] GAYA: 450 grup komunitas fashion ditemukan | groups/v1/groups: ok 34/34, 429 0, jeda 0.4s, kode {}
-[  1.3m] GAYA: 12012 pemain baru untuk dibaca (sudah pernah: 6000)
-[  4.4m]   GAYA: dibaca 250, masuk 67 (nilai Gemini 0), tolak 169 | avatar/v2/avatar: ok 250/250, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 5/5, 429 0, jeda 0.4s, kode {}
-[  7.5m]   GAYA: dibaca 500, masuk 160 (nilai Gemini 0), tolak 308 | avatar/v2/avatar: ok 500/500, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 10/10, 429 0, jeda 0.4s, kode {}
-[ 11.2m]   GAYA: dibaca 800, masuk 256 (nilai Gemini 0), tolak 498 | avatar/v2/avatar: ok 800/800, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 16/16, 429 0, jeda 0.4s, kode {}
-[ 14.3m]   GAYA: dibaca 1050, masuk 354 (nilai Gemini 0), tolak 636 | avatar/v2/avatar: ok 1050/1050, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 21/21, 429 0, jeda 0.4s, kode {}
-[ 17.5m]   GAYA: dibaca 1300, masuk 453 (nilai Gemini 0), tolak 775 | avatar/v2/avatar: ok 1300/1300, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 26/26, 429 0, jeda 0.4s, kode {}
-[ 20.6m]   GAYA: dibaca 1550, masuk 542 (nilai Gemini 0), tolak 928 | avatar/v2/avatar: ok 1550/1550, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 31/31, 429 0, jeda 0.4s, kode {}
-[ 23.6m]   GAYA: dibaca 1800, masuk 628 (nilai Gemini 0), tolak 1076 | avatar/v2/avatar: ok 1800/1800, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 36/36, 429 0, jeda 0.4s, kode {}
-[ 26.7m]   GAYA: dibaca 2050, masuk 716 (nilai Gemini 0), tolak 1211 | avatar/v2/avatar: ok 2050/2050, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 41/41, 429 0, jeda 0.4s, kode {}
-[ 29.8m]   GAYA: dibaca 2300, masuk 802 (nilai Gemini 0), tolak 1353 | avatar/v2/avatar: ok 2300/2300, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 46/46, 429 0, jeda 0.4s, kode {}
-[ 33.0m]   GAYA: dibaca 2550, masuk 897 (nilai Gemini 0), tolak 1489 | avatar/v2/avatar: ok 2550/2550, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 51/51, 429 0, jeda 0.4s, kode {}
-[ 36.1m]   GAYA: dibaca 2800, masuk 994 (nilai Gemini 0), tolak 1619 | avatar/v2/avatar: ok 2800/2800, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 56/56, 429 0, jeda 0.4s, kode {}
-[ 39.7m]   GAYA: dibaca 3100, masuk 1090 (nilai Gemini 0), tolak 1803 | avatar/v2/avatar: ok 3100/3100, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 62/62, 429 0, jeda 0.4s, kode {}
-[ 42.8m]   GAYA: dibaca 3350, masuk 1178 (nilai Gemini 0), tolak 1943 | avatar/v2/avatar: ok 3350/3350, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 67/67, 429 0, jeda 0.4s, kode {}
-[ 46.0m]   GAYA: dibaca 3600, masuk 1255 (nilai Gemini 0), tolak 2097 | avatar/v2/avatar: ok 3600/3600, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 72/72, 429 0, jeda 0.4s, kode {}
-[ 49.0m]   GAYA: dibaca 3850, masuk 1339 (nilai Gemini 0), tolak 2247 | avatar/v2/avatar: ok 3850/3850, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 77/77, 429 0, jeda 0.4s, kode {}
-[ 52.1m]   GAYA: dibaca 4100, masuk 1434 (nilai Gemini 0), tolak 2386 | avatar/v2/avatar: ok 4100/4100, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 82/82, 429 0, jeda 0.4s, kode {}
-[ 55.2m]   GAYA: dibaca 4350, masuk 1519 (nilai Gemini 0), tolak 2539 | avatar/v2/avatar: ok 4350/4350, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 87/87, 429 0, jeda 0.4s, kode {}
-[ 58.4m]   GAYA: dibaca 4600, masuk 1598 (nilai Gemini 0), tolak 2692 | avatar/v2/avatar: ok 4600/4600, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 92/92, 429 0, jeda 0.4s, kode {}
-[ 61.4m]   GAYA: dibaca 4850, masuk 1682 (nilai Gemini 0), tolak 2845 | avatar/v2/avatar: ok 4850/4850, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 97/97, 429 0, jeda 0.4s, kode {}
-[ 64.5m]   GAYA: dibaca 5100, masuk 1768 (nilai Gemini 0), tolak 2985 | avatar/v2/avatar: ok 5100/5100, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 102/102, 429 0, jeda 0.4s, kode {}
-[ 67.7m]   GAYA: dibaca 5350, masuk 1844 (nilai Gemini 0), tolak 3143 | avatar/v2/avatar: ok 5350/5350, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 107/107, 429 0, jeda 0.4s, kode {}
-[ 70.7m]   GAYA: dibaca 5600, masuk 1915 (nilai Gemini 0), tolak 3313 | avatar/v2/avatar: ok 5600/5600, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 112/112, 429 0, jeda 0.4s, kode {}
-[ 74.3m]   GAYA: dibaca 5900, masuk 2006 (nilai Gemini 0), tolak 3504 | avatar/v2/avatar: ok 5900/5900, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 118/118, 429 0, jeda 0.4s, kode {}
-[ 75.5m] GAYA selesai: dibaca 6000 pemain, +2040 outfit bergaya, dinilai Gemini 0, ditolak 3562
-[ 75.5m] pencarian: 1 kata kunci, 0 item katalog, kreator user 0, grup 0
-[ 75.5m] kreator baru untuk dibaca: 0 (sudah pernah: 999) | avatar/v2/avatar: ok 6000/6000, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 120/120, 429 0, jeda 0.4s, kode {}
-[ 75.5m] PANEN selesai: 0 kreator dibaca, +0 outfit baru, total bank 7082 | avatar/v2/avatar: ok 6000/6000, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/users: ok 120/120, 429 0, jeda 0.4s, kode {}
-[ 75.5m] MATA-1: universe 55746 item, sudah ada 53019, akan dihitung 4650
-[ 79.6m]   MATA-1: 900/4650 | total embedding 53915
-[ 83.9m]   MATA-1: 1850/4650 | total embedding 54865
-[ 88.0m]   MATA-1: 2900/4650 | total embedding 55911
-[ 92.1m]   MATA-1: 3950/4650 | total embedding 56957
-[ 94.7m] meta perlu dilengkapi/diperbarui: 8563 item
-[137.0m] meta diperbarui: 4142
-[137.0m] MATA-2: universe 55746 item, sudah ada 57655, akan dihitung 13
-[137.2m]   contoh negatif dari jempol bawah pemain: 5 outfit
-[137.2m] BELAJAR: 55550 item, outfit latih 6045, uji 1023
-[137.2m]   FITB baseline: mentah 0.369 | netral-slot 0.536 | acak 0.25 | 6441 soal
-[138.3m]   model linear: FITB uji 0.713 (loss akhir 1.191)
-[141.1m]   model mlp: FITB uji 0.724 (loss akhir 1.407)
-[141.1m]   pembanding CLIP PCA-32: FITB 0.509
-[141.1m]   DIPAKAI mlp: FITB 0.724 -> layak=True | AUC koherensi 0.8207770639896267
-[141.1m] SELESAI: bank 2429 outfit, 40000 item, layak=True, AUC gender 0.8685768657426496 | avatar/v2/avatar: ok 6000/6000, 429 0, jeda 0.4s, kode {} | catalog/v1/catalog: ok 44/223, 429 177, jeda 10.6s, kode {} | groups/v1/groups: ok 162/172, 429 0, jeda 0.4s, kode {'400': 10} | thumbnails/v1/assets: ok 94/94, 429 0, jeda 0.4s, kode {} | thumbnails/v1/users: ok 120/120, 429 0, jeda 0.4s, kode {}
+[  0.2m] sumber Roblox: +0 outfit dasar server, 6 outfit sinyal pemain
+[  0.4m] GAYA: 451 grup komunitas fashion ditemukan | groups/v1/groups: ok 34/34, 429 0, jeda 0.4s, kode {}
+[  1.5m] GAYA: 12054 pemain baru untuk dibaca (sudah pernah: 12000)
+[  4.7m]   GAYA: dibaca 350, masuk 136 (nilai Gemini 0), tolak 195 | avatar/v2/avatar: ok 350/350, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 7/7, 429 0, jeda 0.4s, kode {}
+[  7.7m]   GAYA: dibaca 700, masuk 239 (nilai Gemini 0), tolak 421 | avatar/v2/avatar: ok 700/700, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 14/14, 429 0, jeda 0.4s, kode {}
+[ 10.9m]   GAYA: dibaca 1050, masuk 367 (nilai Gemini 0), tolak 626 | avatar/v2/avatar: ok 1050/1050, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 21/21, 429 0, jeda 0.4s, kode {}
+[ 14.0m]   GAYA: dibaca 1400, masuk 492 (nilai Gemini 0), tolak 830 | avatar/v2/avatar: ok 1400/1400, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 28/28, 429 0, jeda 0.4s, kode {}
+[ 17.1m]   GAYA: dibaca 1750, masuk 615 (nilai Gemini 0), tolak 1033 | avatar/v2/avatar: ok 1750/1750, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 35/35, 429 0, jeda 0.4s, kode {}
+[ 20.2m]   GAYA: dibaca 2100, masuk 726 (nilai Gemini 0), tolak 1251 | avatar/v2/avatar: ok 2100/2100, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 42/42, 429 0, jeda 0.4s, kode {}
+[ 23.3m]   GAYA: dibaca 2450, masuk 841 (nilai Gemini 0), tolak 1465 | avatar/v2/avatar: ok 2450/2450, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 49/49, 429 0, jeda 0.4s, kode {}
+[ 26.5m]   GAYA: dibaca 2800, masuk 969 (nilai Gemini 0), tolak 1671 | avatar/v2/avatar: ok 2800/2800, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 56/56, 429 0, jeda 0.4s, kode {}
+[ 29.6m]   GAYA: dibaca 3150, masuk 1107 (nilai Gemini 0), tolak 1856 | avatar/v2/avatar: ok 3150/3150, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 63/63, 429 0, jeda 0.4s, kode {}
+[ 32.7m]   GAYA: dibaca 3500, masuk 1218 (nilai Gemini 0), tolak 2078 | avatar/v2/avatar: ok 3500/3500, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 70/70, 429 0, jeda 0.4s, kode {}
+[ 35.8m]   GAYA: dibaca 3850, masuk 1349 (nilai Gemini 0), tolak 2264 | avatar/v2/avatar: ok 3850/3850, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 77/77, 429 0, jeda 0.4s, kode {}
+[ 39.0m]   GAYA: dibaca 4200, masuk 1468 (nilai Gemini 0), tolak 2481 | avatar/v2/avatar: ok 4200/4200, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 84/84, 429 0, jeda 0.4s, kode {}
+[ 42.1m]   GAYA: dibaca 4550, masuk 1593 (nilai Gemini 0), tolak 2687 | avatar/v2/avatar: ok 4550/4550, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 91/91, 429 0, jeda 0.4s, kode {}
+[ 45.3m]   GAYA: dibaca 4900, masuk 1728 (nilai Gemini 0), tolak 2882 | avatar/v2/avatar: ok 4900/4900, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 98/98, 429 0, jeda 0.4s, kode {}
+[ 48.5m]   GAYA: dibaca 5250, masuk 1874 (nilai Gemini 0), tolak 3065 | avatar/v2/avatar: ok 5250/5250, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 105/105, 429 0, jeda 0.4s, kode {}
+[ 51.6m]   GAYA: dibaca 5600, masuk 1986 (nilai Gemini 0), tolak 3289 | avatar/v2/avatar: ok 5600/5600, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 112/112, 429 0, jeda 0.4s, kode {}
+[ 54.7m]   GAYA: dibaca 5950, masuk 2119 (nilai Gemini 0), tolak 3489 | avatar/v2/avatar: ok 5950/5950, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 119/119, 429 0, jeda 0.4s, kode {}
+[ 55.1m] GAYA selesai: dibaca 6000 pemain, +2136 outfit bergaya, dinilai Gemini 0, ditolak 3518
+[ 55.2m] pencarian: 1 kata kunci, 0 item katalog, kreator user 0, grup 0
+[ 55.2m] kreator baru untuk dibaca: 0 (sudah pernah: 999) | avatar/v2/avatar: ok 6000/6000, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 120/120, 429 0, jeda 0.4s, kode {}
+[ 55.2m] PANEN selesai: 0 kreator dibaca, +0 outfit baru, total bank 9217 | avatar/v2/avatar: ok 6000/6000, 429 0, jeda 0.4s, kode {} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/users: ok 120/120, 429 0, jeda 0.4s, kode {}
+[ 55.2m] MATA-1: universe 59672 item, sudah ada 57667, akan dihitung 3914
+[ 59.2m]   MATA-1: 1950/3914 | total embedding 59612
+[ 63.2m]   MATA-1: 3700/3914 | total embedding 61361
+[ 63.9m] meta perlu dilengkapi/diperbarui: 8126 item
+[104.0m] meta diperbarui: 3848
+[104.0m] MATA-2: universe 59672 item, sudah ada 61574, akan dihitung 6
+[104.1m]   contoh negatif dari jempol bawah pemain: 5 outfit
+[104.1m] BELAJAR: 59475 item, outfit latih 7876, uji 1326
+[104.1m]   FITB baseline: mentah 0.359 | netral-slot 0.524 | acak 0.25 | 8156 soal
+[104.9m]   model linear: FITB uji 0.726 (loss akhir 1.475)
+[106.5m]   model mlp: FITB uji 0.745 (loss akhir 1.394)
+[106.6m]   pembanding CLIP PCA-32: FITB 0.500
+[106.6m]   DIPAKAI mlp: FITB 0.745 -> layak=True | AUC koherensi 0.8176102614151589
+[106.6m] SELESAI: bank 3418 outfit, 40000 item, layak=True, AUC gender 0.8654115624638854 | avatar/v2/avatar: ok 6000/6000, 429 0, jeda 0.4s, kode {} | catalog/v1/catalog: ok 41/211, 429 166, jeda 10.6s, kode {'503': 1} | groups/v1/groups: ok 176/196, 429 0, jeda 0.4s, kode {'400': 20} | thumbnails/v1/assets: ok 80/80, 429 0, jeda 0.4s, kode {} | thumbnails/v1/users: ok 120/120, 429 0, jeda 0.4s, kode {}

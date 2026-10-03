@@ -41,6 +41,23 @@ MENIT_CARI = 15
 MAKS_KREATOR = int(os.environ.get("MAKS_KREATOR", "600") or 600)
 MAKS_ITEM_BARU = int(os.environ.get("MAKS_ITEM_BARU", "25000") or 25000)
 MAKS_OUTFIT_PER_KREATOR = 8
+# v5 PANEN GAYA: avatar pemain sungguhan dari komunitas fashion (anggota grup toko baju / aesthetic / gaya), BUKAN
+# hanya kreator UGC (yang sering memakai kostum pajangan barangnya sendiri -> hasil terasa jelek/aneh)
+MENIT_GAYA = float(os.environ.get("MENIT_GAYA", "80") or 80)
+MAKS_PEMAIN_GAYA = int(os.environ.get("MAKS_PEMAIN_GAYA", "6000") or 6000)
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
+MAKS_GEMINI = int(os.environ.get("MAKS_GEMINI", "700") or 700)
+KATA_GRUP_GAYA = """aesthetic outfits|outfit ideas|clothing store|clothes store|fashion|streetwear|y2k clothing|baddie|preppy|
+emo clothing|kawaii clothing|cottagecore|grunge clothing|soft girl|e-girl|e-boy|korean fashion|old money|techwear|
+gothic clothing|vintage clothing|alt fashion|layered clothing|3d clothing|aesthetic clothes|cute outfits|drip|
+fashion famous|royale high|dress to impress|outfit codes|ugc fashion|designer clothing|luxury clothing""".replace("\n", "").split("|")
+PROMPT_BAGUS = ["a stylish fashionable roblox avatar wearing a cohesive trendy outfit",
+                "a well dressed roblox character with matching clothes, hair and accessories",
+                "an aesthetic roblox avatar with a coordinated color palette"]
+PROMPT_JELEK = ["a messy roblox avatar wearing random mismatched items",
+                "a roblox avatar in a silly joke costume",
+                "a plain default roblox avatar with no style",
+                "a cluttered roblox avatar covered in too many accessories"]
 KATA_PER_PUTARAN = 160
 CACHE_DIR = os.environ.get("CACHE_DIR", "cache")
 P_STATE = "data/panen.json.gz"
@@ -325,6 +342,11 @@ class HttpStub:
 # ---------------------------------------------------------------------------------------------
 # State (repo: data/panen.json.gz) -- bisa dilanjutkan antar-putaran
 # ---------------------------------------------------------------------------------------------
+def muat_state_v5(st):
+    st.setdefault("pemain", {})
+    return st
+
+
 def muat_state():
     if os.path.exists(P_STATE):
         try:
@@ -559,6 +581,222 @@ def panen(http, st, antre):
             log(f"  kreator {n_kreator}: +{n_outfit} outfit (tolak {n_tolak}, kembar {n_mirip}, tanpa outfit {n_kosong}) | {http.ringkas()}")
     log(f"PANEN selesai: {n_kreator} kreator dibaca, +{n_outfit} outfit baru, total bank {len(st['outfit'])} | {http.ringkas()}")
     return {"kreator": n_kreator, "outfit_baru": n_outfit, "ditolak": n_tolak, "kembar": n_mirip, "tanpa_outfit": n_kosong}
+
+
+# ---------------------------------------------------------------------------------------------
+# 1b. PANEN GAYA (v5) + NILAI ESTETIKA
+# ---------------------------------------------------------------------------------------------
+class Penilai:
+    """Menilai foto avatar 0-100. CLIP zero-shot selalu ada (gratis, offline). Bila secret GEMINI_API_KEY dipasang,
+    foto yang lolos CLIP dinilai lagi oleh Gemini (gratis, kuota harian dibatasi MAKS_GEMINI) -> penilaian gaya
+    jauh lebih manusiawi. Tanpa key: CLIP saja."""
+    def __init__(self, embedder):
+        self.e = embedder
+        self.tb = embedder.teks(PROMPT_BAGUS).mean(axis=0)
+        self.tj = embedder.teks(PROMPT_JELEK).mean(axis=0)
+        self.riwayat = []
+        self.n_gemini = 0
+        self.model_gemini = None
+        self.gemini_mati = not GEMINI_KEY
+        self.t_gemini = 0.0
+
+    def clip(self, ims):
+        f = self.e.gambar(ims)
+        raw = f @ self.tb - f @ self.tj
+        return [float(x) for x in raw]
+
+    def persen(self, raw):
+        # persentil terhadap semua skor yang pernah dilihat putaran ini (skala relatif, stabil antar batch)
+        self.riwayat.append(raw)
+        r = sorted(self.riwayat[-5000:])
+        import bisect
+        return int(round(100 * bisect.bisect_left(r, raw) / max(1, len(r))))
+
+    def _pilih_model(self, http):
+        import requests
+        try:
+            r = requests.get("https://generativelanguage.googleapis.com/v1beta/models", params={"key": GEMINI_KEY, "pageSize": 200}, timeout=30)
+            daftar = r.json().get("models", []) if r.status_code == 200 else []
+        except Exception:
+            daftar = []
+        calon = [m["name"] for m in daftar if "generateContent" in (m.get("supportedGenerationMethods") or [])
+                 and "flash" in m.get("name", "") and "image" not in m.get("name", "") and "tts" not in m.get("name", "")
+                 and "live" not in m.get("name", "") and "exp" not in m.get("name", "")]
+        def kunci(n):
+            angka = re.findall(r"(\d+(?:\.\d+)?)", n)
+            v = float(angka[0]) if angka else 0
+            return (v, "lite" not in n, "preview" not in n)
+        calon.sort(key=kunci, reverse=True)
+        self.model_gemini = calon[0] if calon else None
+        log(f"  Gemini: model dipilih {self.model_gemini} dari {len(calon)} calon")
+        if not self.model_gemini:
+            self.gemini_mati = True
+
+    def gemini(self, http, png):
+        if self.gemini_mati or self.n_gemini >= MAKS_GEMINI:
+            return None
+        if self.model_gemini is None:
+            self._pilih_model(http)
+            if self.gemini_mati:
+                return None
+        import requests, base64
+        jeda = 6.5 - (time.time() - self.t_gemini)  # aman di bawah ~10 permintaan/menit kuota gratis
+        if jeda > 0:
+            time.sleep(jeda)
+        self.t_gemini = time.time()
+        prompt = ("You are a strict Roblox avatar fashion judge. Rate this avatar's OUTFIT from 1 to 10 for style: cohesion, "
+                  "color harmony, trendiness and completeness (hair, top, bottom, shoes, tasteful accessories). Joke items, "
+                  "mascot costumes, random mismatched pieces, clutter or a default look must score 1-4. Only genuinely stylish, "
+                  "put-together outfits score 8-10. Reply ONLY with JSON: {\"skor\": <integer 1-10>, \"gaya\": \"<2-3 word style name>\"}")
+        body = {"contents": [{"parts": [{"text": prompt}, {"inline_data": {"mime_type": "image/png", "data": base64.b64encode(png).decode()}}]}],
+                "generationConfig": {"temperature": 0.1, "maxOutputTokens": 60}}
+        for k in range(2):
+            try:
+                r = requests.post(f"https://generativelanguage.googleapis.com/v1beta/{self.model_gemini}:generateContent",
+                                  params={"key": GEMINI_KEY}, json=body, timeout=60)
+            except Exception:
+                time.sleep(5)
+                continue
+            if r.status_code == 429:
+                log("  Gemini: kuota habis/terbatas (429) -> sisa putaran memakai CLIP saja")
+                self.gemini_mati = True
+                return None
+            if r.status_code in (400, 401, 403, 404):
+                log(f"  Gemini: ditolak {r.status_code} -> CLIP saja. {r.text[:160]}")
+                self.gemini_mati = True
+                return None
+            if r.status_code != 200:
+                time.sleep(5)
+                continue
+            self.n_gemini += 1
+            try:
+                teks = r.json()["candidates"][0]["content"]["parts"][0]["text"]
+                m = re.search(r"\{.*\}", teks, re.S)
+                d = json.loads(m.group(0)) if m else {}
+                v = int(d.get("skor"))
+                if 1 <= v <= 10:
+                    return v, str(d.get("gaya", ""))[:30]
+            except Exception:
+                return None
+        return None
+
+
+def cari_pemain_gaya(http, st):
+    """Grup komunitas fashion -> anggota terbaru (pemain aktif yang peduli gaya). Hanya hash yang disimpan."""
+    rng = random.Random(st["putaran"] * 31 + 7)
+    kata = KATA_GRUP_GAYA[:]
+    rng.shuffle(kata)
+    grup = {}
+    batas = time.time() + 6 * 60
+    for kw in kata:
+        if time.time() > batas:
+            break
+        js = http.get("https://groups.roblox.com/v1/groups/search", {"keyword": kw, "prioritizeExactMatch": "false", "limit": "25"}, coba=2)
+        for g in (js or {}).get("data", []) or []:
+            if isinstance(g.get("id"), int) and (g.get("memberCount") or 0) >= 2000:
+                grup[g["id"]] = g.get("memberCount") or 0
+    log(f"GAYA: {len(grup)} grup komunitas fashion ditemukan | {http.ringkas()}")
+    pemain = {}
+    batas = time.time() + 10 * 60
+    daftar_grup = list(grup)
+    rng.shuffle(daftar_grup)
+    for gid in daftar_grup:
+        if time.time() > batas or len(pemain) >= MAKS_PEMAIN_GAYA * 2:
+            break
+        kursor = ""
+        for _ in range(2):
+            p = {"limit": "100", "sortOrder": "Desc"}
+            if kursor:
+                p["cursor"] = kursor
+            js = http.get(f"https://groups.roblox.com/v1/groups/{gid}/users", p, coba=2)
+            for u in (js or {}).get("data", []) or []:
+                uid = ((u.get("user") or {}).get("userId"))
+                if isinstance(uid, int) and hash_kreator(uid) not in st["pemain"]:
+                    pemain[uid] = 1
+            kursor = (js or {}).get("nextPageCursor") or ""
+            if not kursor:
+                break
+    antre = list(pemain)
+    rng.shuffle(antre)
+    log(f"GAYA: {len(antre)} pemain baru untuk dibaca (sudah pernah: {len(st['pemain'])})")
+    return antre[:MAKS_PEMAIN_GAYA]
+
+
+def panen_gaya(http, st, antre, penilai):
+    """Avatar pemain (v2, endpoint yang tidak kena batas ketat) -> seed. Fotonya dinilai (CLIP, lalu Gemini untuk yang
+    menjanjikan). Hanya seed + nilai yang disimpan; userId TIDAK disimpan."""
+    from PIL import Image
+    batas = time.time() + MENIT_GAYA * 60
+    n_baca = n_masuk = n_tolak = n_gemini = 0
+    t_log = time.time()
+    for a in range(0, len(antre), 50):
+        if time.time() > batas:
+            log("GAYA: batas waktu, sisanya putaran berikutnya")
+            break
+        potong = antre[a:a + 50]
+        calon = {}
+        for uid in potong:
+            if time.time() > batas:
+                break
+            d = http.get(f"https://avatar.roblox.com/v2/avatar/users/{uid}/avatar", coba=2)
+            st["pemain"][hash_kreator(uid)] = int(time.time())
+            n_baca += 1
+            seed = seed_dari_avatar(d)
+            if not seed or seed["H"] in st["outfit"]:
+                n_tolak += 1
+                continue
+            calon[uid] = seed
+        if not calon:
+            continue
+        js = http.get("https://thumbnails.roblox.com/v1/users/avatar", {"userIds": ",".join(map(str, calon)), "size": "352x352",
+                                                                      "format": "Png", "isCircular": "false"})
+        foto = {}
+        for e in (js or {}).get("data", []) or []:
+            uid = e.get("targetId")
+            if uid in calon and e.get("state") == "Completed" and e.get("imageUrl"):
+                b = http.gambar(e["imageUrl"])
+                if b:
+                    foto[uid] = b
+        ims, uids = [], []
+        for uid, b in foto.items():
+            try:
+                im = Image.open(io.BytesIO(b)).convert("RGBA")
+                alas = Image.new("RGBA", im.size, (235, 235, 235, 255))
+                alas.alpha_composite(im)
+                ims.append(alas.convert("RGB"))
+                uids.append(uid)
+            except Exception:
+                pass
+        if not ims:
+            continue
+        raw = penilai.clip(ims)
+        for k, uid in enumerate(uids):
+            seed = calon[uid]
+            pc = penilai.persen(raw[k])
+            nilai = pc
+            if pc >= 55:  # hanya yang menjanjikan dikirim ke Gemini (hemat kuota)
+                g = penilai.gemini(http, foto[uid])
+                if g:
+                    n_gemini += 1
+                    nilai = int(round(0.7 * g[0] * 10 + 0.3 * pc))
+                    seed["NG"] = g[0]
+                    if g[1]:
+                        seed["GY"] = g[1]
+            if nilai < 45:
+                n_tolak += 1
+                continue
+            seed["S"] = "gaya"
+            seed["N"] = nilai
+            seed["T"] = int(time.time())
+            seed["K"] = "g" + hash_kreator(uid)[:5]
+            st["outfit"][seed["H"]] = seed
+            n_masuk += 1
+        if time.time() - t_log > 180:
+            t_log = time.time()
+            log(f"  GAYA: dibaca {n_baca}, masuk {n_masuk} (nilai Gemini {n_gemini}), tolak {n_tolak} | {http.ringkas()}")
+            simpan_state(st)
+    log(f"GAYA selesai: dibaca {n_baca} pemain, +{n_masuk} outfit bergaya, dinilai Gemini {n_gemini}, ditolak {n_tolak}")
+    return {"gaya_dibaca": n_baca, "gaya_masuk": n_masuk, "gaya_gemini": n_gemini}
 
 
 # ---------------------------------------------------------------------------------------------
@@ -1137,11 +1375,16 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
         if kh is not None and q < 10:
             n_tolak_koh += 1  # 10% paling tidak koheren menurut model: dibuang
             continue
-        e = {k: v for k, v in s.items() if k in ("Sh", "Pa", "Gt", "A", "F", "BCn", "SC", "R", "H", "S")}
+        n_est = s.get("N")
+        if n_est is not None and n_est < 45:
+            n_tolak_koh += 1  # dinilai jelek oleh mata estetika (CLIP/Gemini)
+            continue
+        e = {k: v for k, v in s.items() if k in ("Sh", "Pa", "Gt", "A", "F", "BCn", "SC", "R", "H", "S", "N", "GY")}
         e["Q"] = q
         e["G"] = g
         kandidat.append(e)
-    kandidat.sort(key=lambda e: -e["Q"])
+    # v5: outfit pemain bergaya yang dinilai bagus diutamakan; outfit kreator lama (tanpa nilai) dianggap 40
+    kandidat.sort(key=lambda e: -(0.55 * (e.get("N") if e.get("N") is not None else 40) + 0.45 * e["Q"]))
     kandidat = kandidat[:MAKS_BANK]
     bshard = [[] for _ in range(SHARD_BANK)]
     for e in kandidat:
@@ -1328,7 +1571,16 @@ def main():
     http = HttpStub() if STUB else Http()
     embedder = EmbedderStub() if STUB else EmbedderCLIP()
     emb, warna = muat_emb()
+    muat_state_v5(st)
     ambil_dari_roblox(st)
+    # v5: PANEN GAYA lebih dulu (outfit pemain sungguhan dari komunitas fashion, dinilai CLIP + Gemini)
+    stat_gaya = {}
+    try:
+        penilai = Penilai(embedder)
+        stat_gaya = panen_gaya(http, st, cari_pemain_gaya(http, st), penilai)
+    except Exception as ex:
+        log("GAYA gagal (dilewati):", repr(ex)[:200])
+    simpan_state(st)
     antre = cari_kreator(http, st)
     simpan_state(st)
     # MATA jalan paralel dengan panen: host berbeda (thumbnails vs avatar) punya batas sendiri-sendiri
@@ -1353,6 +1605,7 @@ def main():
     X /= np.linalg.norm(X, axis=1, keepdims=True)
     nama_gaya, p_gaya, nama_atr, p_atr, p_fem = zero_shot(embedder, ids_zs, X, slot_of)
     hasil_latih = latih(st, emb, slot_of)
+    statistik.update(stat_gaya)
     info = ekspor(st, emb, warna, slot_of, (nama_gaya, p_gaya, nama_atr, p_atr, p_fem, ids_zs), hasil_latih, statistik)
     laporan(info, http)
     log(f"SELESAI: bank {info['n_bank']} outfit, {info['n_item']} item, layak={info['layak']}, AUC gender {info['auc_gender_vs_nama']} | {http.ringkas()}")

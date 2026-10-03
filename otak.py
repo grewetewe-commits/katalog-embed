@@ -857,6 +857,12 @@ def latih(st, emb, slot_of, rng_seed=1):
     trn = [o for o in outfits if not uji(o[0])]
     # outfit yang DIFAVORITKAN/DIBELI pemain sungguhan = sinyal paling berharga -> bobot 3x saat latih
     trn += [o for o in trn if st["outfit"][o[0]].get("S") == "sinyal"] * 2
+    tolak = []
+    for h, s in sorted(st.get("tolak", {}).items()):
+        it = [idx_of[i] for i, sl in slot_item_seed(s) if i in idx_of and sl not in ("Alis",)]
+        if len(it) >= 3:
+            tolak.append(it)
+    log(f"  contoh negatif dari jempol bawah pemain: {len(tolak)} outfit")
     log(f"BELAJAR: {len(ids_all)} item, outfit latih {len(trn)}, uji {len(val)}")
     # rata-rata per slot dari item latih (menetralkan "jenis slot", supaya yang dipelajari gaya)
     mu = {s: X[slot_idx[s]].mean(axis=0) for s in slot_list}
@@ -965,6 +971,16 @@ def latih(st, emb, slot_of, rng_seed=1):
             ln = torch.einsum("bd,bkd->bk", c, zn)
             logits = torch.cat([lp, ln], dim=1) * suhu
             loss = torch.nn.functional.cross_entropy(logits, torch.zeros(len(pos), dtype=torch.long))
+            if tolak:
+                # outfit yang pemain tidak sukai: kemiripan antar itemnya didorong turun (di bawah 0,1)
+                pilih = [tolak[int(r.integers(len(tolak)))] for _ in range(min(32, len(tolak)))]
+                kn = []
+                for it in pilih:
+                    zt = model(Xt[it])
+                    m = zt @ zt.T
+                    n = len(it)
+                    kn.append((m.sum() - m.diagonal().sum()) / (n * (n - 1)))
+                loss = loss + 0.5 * torch.relu(torch.stack(kn) - 0.1).mean()
             opt.zero_grad()
             loss.backward()
             opt.step()
@@ -1172,6 +1188,7 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
         "shard_item": SHARD_ITEM, "shard_bank": SHARD_BANK, "shard_meta": SHARD_ITEM,
         "slot_kode": SLOT_KODE, "gaya": nama_gaya, "atribut": nama_atr, "panen": statistik,
         "n_sinyal_pemain": sum(1 for x in st["outfit"].values() if x.get("S") == "sinyal"),
+        "n_tolak_pemain": len(st.get("tolak", {})),
         "n_dasar_lokal": sum(1 for x in st["outfit"].values() if x.get("S") == "lokal"),
     }
     rw = st.setdefault("riwayat", [])
@@ -1273,6 +1290,15 @@ def ambil_dari_roblox(st):
                     js["assets"].append({"id": i, "assetType": {"id": ACC_KE_ASET[t]}})
             seed = seed_dari_avatar(js)
             if not seed:
+                continue
+            if sumber == "sinyal" and s.get("J") == "tidak":
+                # jempol bawah pemain = contoh outfit yang TIDAK disukai -> dipakai sebagai negatif saat latih
+                seed["S"] = "tolak"
+                seed["T"] = int(time.time())
+                st.setdefault("tolak", {})[seed["H"]] = seed
+                st["outfit"].pop(seed["H"], None)
+                continue
+            if seed["H"] in st.get("tolak", {}):
                 continue
             seed["S"] = sumber
             seed["K"] = sumber[:3] + seed["H"][:3]

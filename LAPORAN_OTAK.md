@@ -1,24 +1,24 @@
 # Laporan OTAK Katalog Praktis
 
-- Dibuat: 2026-10-04T07:39:26.003383+00:00 | putaran ke-9
-- Outfit nyata terkumpul: **11216** | masuk bank (lolos saring): **4441**
-  (ditolak karena item inti tidak bisa dibeli: 6293, tidak koheren: 482)
+- Dibuat: 2026-10-04T14:08:20.240235+00:00 | putaran ke-10
+- Outfit nyata terkumpul: **13317** | masuk bank (lolos saring): **5454**
+  (ditolak karena item inti tidak bisa dibeli: 7234, tidak koheren: 629)
 - Item dengan sidik jari visual: **40000**
-- Panen putaran ini: {"kreator": 0, "outfit_baru": 0, "ditolak": 0, "kembar": 0, "tanpa_outfit": 0, "gaya_dibaca": 6000, "gaya_masuk": 1999, "gaya_gemini": 0} | permintaan HTTP 6594, kena 429: 165, gagal 55
+- Panen putaran ini: {"kreator": 0, "outfit_baru": 0, "ditolak": 0, "kembar": 0, "tanpa_outfit": 0, "gaya_dibaca": 6000, "gaya_masuk": 2101, "gaya_gemini": 0} | permintaan HTTP 6606, kena 429: 154, gagal 53
 
 ## Model kecocokan (FITB: tebak item asli di antara 4 kandidat satu slot, pada outfit yang TIDAK dilatih)
 
 | Metode | Akurasi |
 |---|---|
 | Acak | 0.250 |
-| CLIP mentah | 0.359 |
+| CLIP mentah | 0.363 |
 | CLIP netral-slot | 0.522 |
-| CLIP PCA-32 (tanpa belajar) | 0.505 |
-| Model linear (dilatih) | 0.731 |
-| Model MLP (dilatih) | 0.749 |
+| CLIP PCA-32 (tanpa belajar) | 0.499 |
+| Model linear (dilatih) | 0.737 |
+| Model MLP (dilatih) | 0.761 |
 
-- Dipakai: **mlp** | soal uji 9829 | outfit latih 9594, uji 1602
-- AUC koherensi (outfit asli vs setengah-diacak): model 0.809, CLIP 0.730
+- Dipakai: **mlp** | soal uji 11623 | outfit latih 11372, uji 1924
+- AUC koherensi (outfit asli vs setengah-diacak): model 0.811, CLIP 0.729
 - **LAYAK DIPAKAI SERVER: YA** (syarat: FITB >= 0,38 dengan >= 150 soal; acak = 0,25)
 
 - Sinyal pemain (outfit difavoritkan/dibeli di map): **5** | outfit dasar dari server Roblox: 527
@@ -27,10 +27,10 @@
 
 | Putaran | Waktu (UTC) | Outfit dipelajari | Item dikenal | FITB | Sinyal pemain |
 |---|---|---|---|---|---|
-| 9 | 2026-10-04T07:39 | 11216 | 63178 | 0.749 | 5 |
+| 10 | 2026-10-04T14:08 | 13317 | 66866 | 0.761 | 5 |
 
 ## Gender visual (zero-shot CLIP) dicek dengan kata di nama item
-- AUC = 0.863 pada 4327 item berlabel wanita & 997 pria
+- AUC = 0.861 pada 4539 item berlabel wanita & 1088 pria
   (0,5 = acak; >= 0,80 baru dipakai keras oleh server)
 
 _Catatan jujur: angka ini mengukur apakah model menangkap pola outfit buatan manusia. Enak-tidaknya hasil di mata pemain tetap diuji lewat penilaian pemilik._

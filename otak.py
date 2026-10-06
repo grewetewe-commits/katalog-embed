@@ -14,8 +14,13 @@ Alur satu putaran:
                 dibanding item lain di slot yang sama (contrastive, negatif satu slot).
                 Diuji jujur dengan FITB (fill-in-the-blank) pada outfit yang TIDAK ikut dilatih.
   5. EKSPOR   : model/ (vektor gaya 32 angka per item + gender + warna + tag), bank/ (outfit dasar lolos
-                saring + skor koherensi), meta/ (harga snapshot). Server Roblox mengunduh lewat
-                raw.githubusercontent.com dan tetap memvalidasi harga live.
+                saring + skor koherensi), meta/ (harga snapshot). Server Roblox mengunduh lewat CDN jsDelivr
+                (cadangan raw.githubusercontent.com) dan tetap memvalidasi harga live item yang ditampilkan.
+
+Jadwal waktu satu putaran (v6, target +-70 menit, dulu +-155 menit):
+  menit 0  : META (utas sendiri, host katalog, laju adaptif AIMD) + MATA-1 (host thumbnail) + PANEN GAYA (host avatar)
+             berjalan BERSAMAAN -- dulu META serial setelah panen dan 80% permintaannya terbuang kena HTTP 429.
+  ~menit 50: KREATOR (hanya bila antrean META kosong) -> MATA-2 (item baru) -> BELAJAR -> EKSPOR.
 
 Variabel lingkungan: STUB=1 (uji alur tanpa jaringan/model), MENIT_PANEN, MAKS_KREATOR, MAKS_ITEM_BARU,
                      MENIT_MATA, CACHE_DIR.
@@ -35,15 +40,21 @@ from datetime import datetime, timezone
 import numpy as np
 
 STUB = os.environ.get("STUB") == "1"
-MENIT_PANEN = float(os.environ.get("MENIT_PANEN", "170") or 170)  # batas akhir panen kreator (menit sejak mulai)
+MENIT_PANEN = float(os.environ.get("MENIT_PANEN", "75") or 75)  # batas akhir panen kreator (menit sejak mulai)
 MENIT_MATA = float(os.environ.get("MENIT_MATA", "45") or 45)  # waktu MATA tambahan setelah panen
-MENIT_CARI = 15
+MENIT_CARI = float(os.environ.get("MENIT_CARI", "8") or 8)  # dihitung dari AWAL fase cari (dulu dari T0 -> fase mati)
+# META (harga/status jual) jalan di utas sendiri SEJAK AWAL, paralel dengan panen (host catalog.roblox.com beda dari
+# avatar.roblox.com). Dulu fase ini serial SETELAH panen: 65 menit untuk 46% item karena 267 dari 336 permintaan kena 429.
+MENIT_META = float(os.environ.get("MENIT_META", "45") or 45)
+TTL_META_JUAL = 5 * 86400     # item yang bisa dibeli: dicek ulang tiap 5 hari (server Roblox tetap cek live item yang tampil)
+TTL_META_TIDAK = 14 * 86400   # item tidak dijual/dihapus jarang kembali dijual: cukup tiap 14 hari
+MAKS_DIMINTA = 6000           # item tak dikenal yang diminta pemain di map (kunci "itembaru" di DataStore)
 MAKS_KREATOR = int(os.environ.get("MAKS_KREATOR", "600") or 600)
 MAKS_ITEM_BARU = int(os.environ.get("MAKS_ITEM_BARU", "25000") or 25000)
 MAKS_OUTFIT_PER_KREATOR = 8
 # v5 PANEN GAYA: avatar pemain sungguhan dari komunitas fashion (anggota grup toko baju / aesthetic / gaya), BUKAN
 # hanya kreator UGC (yang sering memakai kostum pajangan barangnya sendiri -> hasil terasa jelek/aneh)
-MENIT_GAYA = float(os.environ.get("MENIT_GAYA", "80") or 80)
+MENIT_GAYA = float(os.environ.get("MENIT_GAYA", "40") or 40)
 MAKS_PEMAIN_GAYA = int(os.environ.get("MAKS_PEMAIN_GAYA", "6000") or 6000)
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 MAKS_GEMINI = int(os.environ.get("MAKS_GEMINI", "700") or 700)
@@ -182,6 +193,7 @@ class Http:
         self.n = 0
         self.n429 = 0
         self.gagal = 0
+        self.blok = {}
 
     def _host(self, url):
         # kunci jeda per ENDPOINT (host + 2 segmen path): kalau Roblox membatasi per endpoint, endpoint lain tidak
@@ -189,17 +201,27 @@ class Http:
         bag = url.split("/")
         return "/".join(bag[2:5])
 
+    # jeda minimum per host: catalog.roblox.com membatasi IP datacenter jauh lebih ketat dari host lain
+    JEDA_DASAR = {"catalog.roblox.com": 1.0}
+
+    def _dasar(self, host):
+        return self.JEDA_DASAR.get(host.split("/")[0], 0.4)
+
     def _st(self, host):
         with self.kunci_global:
             if host not in self.stat:
                 self.stat[host] = {"n": 0, "ok": 0, "429": 0, "err": 0, "kode": {}}
                 self.kunci[host] = self.threading.Lock()
-                self.jeda.setdefault(host, 0.4)
+                self.jeda.setdefault(host, self._dasar(host))
             return self.stat[host]
 
     def _tunggu(self, host):
         self._st(host)
         with self.kunci[host]:
+            # cooldown bersama setelah 429: SEMUA utas berhenti menembak host ini sampai jendelanya lewat
+            blok = self.blok.get(host, 0) - time.time()
+            if blok > 0:
+                time.sleep(blok)
             dt = time.time() - self.terakhir.get(host, 0)
             if dt < self.jeda[host]:
                 time.sleep(self.jeda[host] - dt)
@@ -220,7 +242,9 @@ class Http:
             self.n += 1
             if r.status_code == 200:
                 st["ok"] += 1
-                self.jeda[host] = max(0.4, self.jeda[host] * 0.88)
+                # AIMD: turun pelan (aditif) saat lancar -- dulu x0,88 tiap sukses membuat jeda cepat kembali ke 0,4 dtk
+                # lalu kena 429 lagi (gergaji): 267 dari 336 permintaan katalog terbuang
+                self.jeda[host] = max(self._dasar(host), self.jeda[host] - 0.05)
                 return r
             if r.status_code == 403 and r.headers.get("x-csrf-token") and metode == "POST":
                 self.csrf = r.headers["x-csrf-token"]
@@ -229,10 +253,10 @@ class Http:
             if r.status_code == 429:
                 st["429"] += 1
                 self.n429 += 1
-                self.jeda[host] = min(12.0, self.jeda[host] * 1.4 + 0.5)
+                self.jeda[host] = min(20.0, self.jeda[host] * 1.5 + 1.0)
                 ra = r.headers.get("Retry-After", "")
-                tunggu = float(ra) if ra.replace(".", "", 1).isdigit() else self.jeda[host] * 2
-                time.sleep(min(60.0, tunggu))
+                tunggu = float(ra) if ra.replace(".", "", 1).isdigit() else self.jeda[host] * 3
+                self.blok[host] = time.time() + min(90.0, tunggu)
                 continue
             st["kode"][str(r.status_code)] = st["kode"].get(str(r.status_code), 0) + 1
             if r.status_code >= 500:
@@ -299,8 +323,16 @@ class HttpStub:
         if "search/items" in url:
             base = abs(hash(params.get("Keyword", ""))) % 5000
             return {"data": [self._item(10000 + (base + k) % 3000) for k in range(30)]}
+        if "groups/search" in url:
+            return {"data": [{"id": 7000 + k, "memberCount": 5000} for k in range(3)]}
+        if "/users" in url and "/groups/" in url:
+            gid = int(url.split("/groups/")[1].split("/")[0])
+            return {"data": [{"user": {"userId": gid * 10 + k}} for k in range(40)], "nextPageCursor": None}
         if "/groups/" in url:
             return {"owner": {"userId": 900 + int(url.rstrip("/").split("/")[-1]) % 50}}
+        if "thumbnails" in url and "userIds" in (params or {}):
+            ids = [int(x) for x in params["userIds"].split(",")]
+            return {"data": [{"targetId": i, "state": "Completed", "imageUrl": f"stub://{10000 + i % 3000}"} for i in ids]}
         if "/outfits?" in url or url.endswith("/outfits"):
             return {"data": [{"id": int(url.split("/users/")[1].split("/")[0]) * 100 + k, "outfitType": "Avatar"} for k in range(6)]}
         if "/outfits/" in url and url.endswith("/details") or "/avatar" in url:
@@ -359,10 +391,15 @@ def muat_state():
     return {"versi": 2, "putaran": 0, "kreator": {}, "outfit": {}, "meta": {}, "gagal_thumb": {}}
 
 
+import threading as _threading
+KUNCI_ST = _threading.RLock()  # st["meta"] ditulis utas meta, st disimpan utas utama -> wajib bergiliran
+
+
 def simpan_state(st):
     os.makedirs(os.path.dirname(P_STATE), exist_ok=True)
-    with gzip.open(P_STATE + ".tmp", "wt", encoding="utf-8") as f:
-        json.dump(st, f, separators=(",", ":"))
+    with KUNCI_ST:
+        with gzip.open(P_STATE + ".tmp", "wt", encoding="utf-8") as f:
+            json.dump(st, f, separators=(",", ":"))
     os.replace(P_STATE + ".tmp", P_STATE)
 
 
@@ -498,8 +535,9 @@ def cari_kreator(http, st):
     kreator_user, kreator_grup = {}, {}
     n_item_cari = 0
     k_i = 0
+    mulai_fase = time.time()
     for k_i, kw in enumerate(kata):
-        if time.time() > T0 + MENIT_CARI * 60:
+        if time.time() > mulai_fase + MENIT_CARI * 60:
             break
         for kategori in ("1", "3"):
             js = http.get("https://catalog.roblox.com/v2/search/items/details",
@@ -511,7 +549,8 @@ def cari_kreator(http, st):
                 if not isinstance(i, int):
                     continue
                 if e.get("assetType") in ASET_KE_SLOT:
-                    st["meta"][str(i)] = meta_dari_katalog(e)
+                    with KUNCI_ST:
+                        st["meta"][str(i)] = meta_dari_katalog(e)
                     n_item_cari += 1
                 cid = e.get("creatorTargetId")
                 if not isinstance(cid, int) or cid == 1:
@@ -523,8 +562,8 @@ def cari_kreator(http, st):
         if k_i % 20 == 19:
             log(f"  cari {k_i + 1} kata | item {n_item_cari} | kreator user {len(kreator_user)} grup {len(kreator_grup)} | {http.ringkas()}")
     log(f"pencarian: {k_i + 1} kata kunci, {n_item_cari} item katalog, kreator user {len(kreator_user)}, grup {len(kreator_grup)}")
-    # pemilik grup = desainer di balik toko grup (maks 5 menit)
-    batas = time.time() + 5 * 60
+    # pemilik grup = desainer di balik toko grup (maks 3 menit)
+    batas = time.time() + 3 * 60
     for gid, _ in sorted(kreator_grup.items(), key=lambda x: -x[1])[:150]:
         if time.time() > batas:
             break
@@ -687,7 +726,7 @@ def cari_pemain_gaya(http, st):
     kata = KATA_GRUP_GAYA[:]
     rng.shuffle(kata)
     grup = {}
-    batas = time.time() + 6 * 60
+    batas = time.time() + 3 * 60
     for kw in kata:
         if time.time() > batas:
             break
@@ -697,7 +736,7 @@ def cari_pemain_gaya(http, st):
                 grup[g["id"]] = g.get("memberCount") or 0
     log(f"GAYA: {len(grup)} grup komunitas fashion ditemukan | {http.ringkas()}")
     pemain = {}
-    batas = time.time() + 10 * 60
+    batas = time.time() + 5 * 60
     daftar_grup = list(grup)
     rng.shuffle(daftar_grup)
     for gid in daftar_grup:
@@ -802,37 +841,90 @@ def panen_gaya(http, st, antre, penilai):
 # ---------------------------------------------------------------------------------------------
 # 2. META untuk item di outfit yang belum punya meta (atau meta > 3 hari)
 # ---------------------------------------------------------------------------------------------
-def lengkapi_meta(http, st):
-    perlu = set()
-    batas = time.time() - 3 * 86400
-    for s in st["outfit"].values():
-        for i in ids_seed(s):
-            m = st["meta"].get(str(i))
-            if not m or m.get("w", 0) < batas:
-                perlu.add(i)
-    perlu = sorted(perlu)
-    log(f"meta perlu dilengkapi/diperbarui: {len(perlu)} item")
-    n = 0
-    for a in range(0, len(perlu), 100):
-        if time.time() > T0 + (MENIT_PANEN + 15) * 60:
-            log("  batas waktu meta, sisanya putaran berikutnya")
-            break
-        potong = perlu[a:a + 100]
-        js = http.post_katalog({"items": [{"itemType": "Asset", "id": i} for i in potong]})
-        dapat = set()
-        if js is None:
-            continue  # permintaan gagal: JANGAN tandai apa pun, coba lagi putaran berikutnya
-        for e in js.get("data", []) or []:
-            i = e.get("id")
-            if isinstance(i, int):
-                st["meta"][str(i)] = meta_dari_katalog(e)
-                dapat.add(i)
-                n += 1
-        for i in potong:
-            if i not in dapat and str(i) not in st["meta"]:
-                # tidak ada di katalog (dihapus/disembunyikan) -> tandai tidak bisa dibeli
-                st["meta"][str(i)] = {"n": "", "p": -1, "s": 0, "c": "", "t": 0, "w": int(time.time())}
-    log(f"meta diperbarui: {n}")
+def perlu_meta(st, ids, sekarang=None):
+    """Item yang metanya belum ada / sudah lewat TTL berjenjang. Urut: belum ada dulu, lalu yang paling basi."""
+    sekarang = sekarang or time.time()
+    baru, basi = [], []
+    for i in ids:
+        m = st["meta"].get(str(i))
+        if not m:
+            baru.append(i)
+            continue
+        ttl = TTL_META_JUAL if m.get("s") == 1 else TTL_META_TIDAK
+        umur = sekarang - m.get("w", 0)
+        if umur > ttl:
+            basi.append((umur, i))
+    basi.sort(reverse=True)
+    return baru, [i for _, i in basi]
+
+
+class PekerjaMeta:
+    """Utas META: antrean berprioritas (item yang diminta pemain & item outfit baru di depan), satu host, laju adaptif.
+    Hasil ditulis ke st["meta"] di bawah KUNCI_ST. Antrean bisa ditambah utas utama selama panen berjalan."""
+    def __init__(self, http, st, batas_waktu):
+        self.http, self.st, self.batas = http, st, batas_waktu
+        self.antre_depan, self.antre = [], []
+        self.lihat = set()
+        self.kunci = _threading.Lock()
+        self.n_diminta = self.n_dapat = self.n_hilang = 0
+        self.panen_selesai = False
+        self.utas = _threading.Thread(target=self.jalan, daemon=True)
+
+    def tambah(self, ids, depan=False):
+        with self.kunci:
+            for i in ids:
+                if i not in self.lihat:
+                    self.lihat.add(i)
+                    (self.antre_depan if depan else self.antre).append(i)
+
+    def _ambil(self, n):
+        with self.kunci:
+            out = self.antre_depan[:n]
+            self.antre_depan = self.antre_depan[n:]
+            if len(out) < n:
+                k = n - len(out)
+                out += self.antre[:k]
+                self.antre = self.antre[k:]
+            return out
+
+    def sisa(self):
+        with self.kunci:
+            return len(self.antre_depan) + len(self.antre)
+
+    def jalan(self):
+        while time.time() < self.batas:
+            potong = self._ambil(100)
+            if not potong:
+                if self.panen_selesai:
+                    break
+                time.sleep(2)
+                continue
+            self.n_diminta += len(potong)
+            js = self.http.post_katalog({"items": [{"itemType": "Asset", "id": i} for i in potong]})
+            if js is None:
+                self.tambah_ulang(potong)  # gagal jaringan/429: JANGAN tandai apa pun, coba lagi nanti
+                continue
+            dapat = {}
+            for e in js.get("data", []) or []:
+                i = e.get("id")
+                if isinstance(i, int):
+                    dapat[i] = meta_dari_katalog(e)
+            with KUNCI_ST:
+                for i, m in dapat.items():
+                    self.st["meta"][str(i)] = m
+                for i in potong:
+                    if i not in dapat:
+                        # tidak ada di katalog (dihapus/disembunyikan) -> tandai tidak bisa dibeli (dicek ulang 14 hari lagi)
+                        self.st["meta"][str(i)] = {"n": "", "p": -1, "s": 0, "c": "", "t": 0, "w": int(time.time())}
+                        self.n_hilang += 1
+            self.n_dapat += len(dapat)
+
+    def tambah_ulang(self, ids):
+        with self.kunci:
+            self.antre = list(ids) + self.antre
+
+    def ringkas(self):
+        return {"diminta": self.n_diminta, "diperbarui": self.n_dapat, "hilang": self.n_hilang, "sisa_antre": self.sisa()}
 
 
 # ---------------------------------------------------------------------------------------------
@@ -939,7 +1031,9 @@ def mata(http, st, embedder, emb, warna, batas, gagal_baru, label="MATA"):
     for s in list(st["outfit"].values()):
         di_outfit.update(ids_seed(s))
     universe = set(di_outfit)
-    for k, m in list(st["meta"].items()):
+    with KUNCI_ST:
+        daftar_meta = list(st["meta"].items())
+    for k, m in daftar_meta:
         if m.get("t") in ASET_KE_SLOT:
             universe.add(int(k))
     gagal_lama = st.get("gagal_thumb", {})
@@ -1301,9 +1395,10 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
     di_bank = set()
     for s0 in st["outfit"].values():
         di_bank.update(ids_seed(s0))
+    diminta = set(int(k) for k in st.get("diminta", {}))
     def prioritas(i):
         m = st["meta"].get(str(i)) or {}
-        return (0 if i in di_bank else 1, 0 if m.get("s") == 1 else 1, -tren.get(i, 0))
+        return (0 if (i in di_bank or i in diminta) else 1, 0 if m.get("s") == 1 else 1, -tren.get(i, 0))
     ids_kirim = set(sorted(ids_zs, key=prioritas)[:MAKS_ITEM_EKSPOR])
     shard = [dict() for _ in range(SHARD_ITEM)]
     for i in ids_zs:
@@ -1433,6 +1528,8 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
         "n_sinyal_pemain": sum(1 for x in st["outfit"].values() if x.get("S") == "sinyal"),
         "n_tolak_pemain": len(st.get("tolak", {})),
         "n_dasar_lokal": sum(1 for x in st["outfit"].values() if x.get("S") == "lokal"),
+        "n_diminta_pemain": len(st.get("diminta", {})),
+        "durasi_menit": round((time.time() - T0) / 60, 1),
     }
     rw = st.setdefault("riwayat", [])
     rw.append({"putaran": st["putaran"], "waktu": info["dibuat"][:16], "outfit": len(st["outfit"]), "item": len(ids_zs),
@@ -1460,7 +1557,8 @@ def laporan(info, http):
         f"- Dipakai: **{m.get('dipakai', '-')}** | soal uji {m.get('soal_uji', '-')} | outfit latih {m.get('outfit_latih', '-')}, uji {m.get('outfit_uji', '-')}",
         f"- AUC koherensi (outfit asli vs setengah-diacak): model {f(m.get('auc_koherensi_model'))}, CLIP {f(m.get('auc_koherensi_clip'))}",
         f"- **LAYAK DIPAKAI SERVER: {'YA' if info['layak'] else 'BELUM'}** (syarat: FITB >= 0,38 dengan >= 150 soal; acak = 0,25)", "",
-        f"- Sinyal pemain (outfit difavoritkan/dibeli di map): **{info.get('n_sinyal_pemain', 0)}** | outfit dasar dari server Roblox: {info.get('n_dasar_lokal', 0)}", "",
+        f"- Sinyal pemain (outfit difavoritkan/dibeli di map): **{info.get('n_sinyal_pemain', 0)}** | outfit dasar dari server Roblox: {info.get('n_dasar_lokal', 0)} | item baru diminta pemain: {info.get('n_diminta_pemain', 0)}",
+        f"- Durasi putaran: **{info.get('durasi_menit', '-')} menit** | META: {json.dumps(info.get('panen', {}).get('meta', {}))}", "",
         "## Perkembangan otak (makin banyak data = makin pintar)", "",
         "| Putaran | Waktu (UTC) | Outfit dipelajari | Item dikenal | FITB | Sinyal pemain |", "|---|---|---|---|---|---|",
     ] + [f"| {r['putaran']} | {r['waktu']} | {r['outfit']} | {r['item']} | {r['fitb']} | {r['sinyal']} |" for r in info.get("riwayat", [])] + [
@@ -1560,7 +1658,19 @@ def ambil_dari_roblox(st):
         d = ambil("KatalogSinyalOtak_v1", f"pos_{i}")
         if isinstance(d, dict) and isinstance(d.get("outfit"), list):
             n_sinyal += masukkan(d["outfit"], "sinyal")
-    log(f"sumber Roblox: +{n_lokal} outfit dasar server, {n_sinyal} outfit sinyal pemain")
+    # item yang dipilih pemain di map tapi belum dikenal otak -> diprioritaskan META & MATA putaran ini
+    d = ambil("KatalogSinyalOtak_v1", "itembaru")
+    n_diminta = 0
+    if isinstance(d, dict) and isinstance(d.get("ids"), list):
+        dim = st.setdefault("diminta", {})
+        for x in d["ids"]:
+            if isinstance(x, int) and x > 0 and str(x) not in dim:
+                dim[str(x)] = int(time.time())
+                n_diminta += 1
+        if len(dim) > MAKS_DIMINTA:
+            for k, _ in sorted(dim.items(), key=lambda kv: kv[1])[:len(dim) - MAKS_DIMINTA]:
+                dim.pop(k, None)
+    log(f"sumber Roblox: +{n_lokal} outfit dasar server, {n_sinyal} outfit sinyal pemain, {n_diminta} item baru diminta pemain")
 
 
 def main():
@@ -1573,27 +1683,54 @@ def main():
     emb, warna = muat_emb()
     muat_state_v5(st)
     ambil_dari_roblox(st)
-    # v5: PANEN GAYA lebih dulu (outfit pemain sungguhan dari komunitas fashion, dinilai CLIP + Gemini)
+    # 1) META sejak menit 0, utas sendiri: item diminta pemain -> item outfit tanpa meta -> item paling basi
+    meta = PekerjaMeta(http, st, T0 + MENIT_META * 60)
+    semua_id = set()
+    for s0 in st["outfit"].values():
+        semua_id.update(ids_seed(s0))
+    diminta = [int(k) for k in st.get("diminta", {}) if k not in st["meta"]]
+    baru, basi = perlu_meta(st, semua_id)
+    meta.tambah(diminta, depan=True)
+    meta.tambah(baru, depan=True)
+    meta.tambah(basi)
+    log(f"META: {len(diminta)} item diminta pemain, {len(baru)} belum punya meta, {len(basi)} basi (TTL 5/14 hari) -> antre")
+    meta.utas.start()
+    # 2) MATA-1 paralel (host thumbnails): item lama yang belum punya sidik jari visual
+    gagal_baru = {}
+    mata1 = threading.Thread(target=mata, args=(http, st, embedder, emb, warna, T0 + (MENIT_GAYA + 10) * 60, gagal_baru, "MATA-1"), daemon=True)
+    mata1.start()
+    # 3) PANEN GAYA (host avatar): outfit pemain sungguhan dari komunitas fashion, dinilai CLIP (+ Gemini)
     stat_gaya = {}
     try:
         penilai = Penilai(embedder)
+        n_outfit_awal = set(st["outfit"])
         stat_gaya = panen_gaya(http, st, cari_pemain_gaya(http, st), penilai)
+        ids_baru = set()
+        for h in set(st["outfit"]) - n_outfit_awal:
+            ids_baru.update(ids_seed(st["outfit"][h]))
+        b2, _ = perlu_meta(st, ids_baru)
+        meta.tambah(b2, depan=True)
+        log(f"META: +{len(b2)} item dari outfit gaya baru masuk antrean depan")
     except Exception as ex:
         log("GAYA gagal (dilewati):", repr(ex)[:200])
     simpan_state(st)
-    antre = cari_kreator(http, st)
+    # 4) KREATOR (opsional, sisa waktu): pencarian katalog memakai host yang sama dengan META -> hanya bila antrean
+    #    META sudah kosong, supaya kuota katalog dipakai untuk harga dulu
+    statistik = {"kreator": 0, "outfit_baru": 0, "ditolak": 0, "kembar": 0, "tanpa_outfit": 0}
+    meta.panen_selesai = True
+    meta.utas.join(timeout=max(0, T0 + MENIT_META * 60 - time.time()))
+    if meta.sisa() == 0 and time.time() < T0 + (MENIT_META + 5) * 60:
+        try:
+            antre = cari_kreator(http, st)
+            mata1.join(timeout=1)
+            statistik = panen(http, st, antre[:150])
+        except Exception as ex:
+            log("KREATOR gagal (dilewati):", repr(ex)[:200])
     simpan_state(st)
-    # MATA jalan paralel dengan panen: host berbeda (thumbnails vs avatar) punya batas sendiri-sendiri
-    gagal_baru = {}
-    utas = threading.Thread(target=mata, args=(http, st, embedder, emb, warna, T0 + MENIT_PANEN * 60, gagal_baru, "MATA-1"), daemon=True)
-    utas.start()
-    try:
-        statistik = panen(http, st, antre)
-    finally:
-        simpan_state(st)
-    utas.join()
-    lengkapi_meta(http, st)
-    mata(http, st, embedder, emb, warna, time.time() + MENIT_MATA * 60, gagal_baru, "MATA-2")
+    mata1.join(timeout=max(0, T0 + (MENIT_GAYA + 10) * 60 - time.time()))
+    log(f"META selesai: {meta.ringkas()} | {http.ringkas()}")
+    # 5) MATA-2: item baru (outfit gaya + item yang diminta pemain yang kini sudah punya meta)
+    mata(http, st, embedder, emb, warna, time.time() + 15 * 60, gagal_baru, "MATA-2")
     st.setdefault("gagal_thumb", {}).update(gagal_baru)
     simpan_state(st)
     slot_of = slot_semua_item(st)
@@ -1606,9 +1743,10 @@ def main():
     nama_gaya, p_gaya, nama_atr, p_atr, p_fem = zero_shot(embedder, ids_zs, X, slot_of)
     hasil_latih = latih(st, emb, slot_of)
     statistik.update(stat_gaya)
+    statistik["meta"] = meta.ringkas()
     info = ekspor(st, emb, warna, slot_of, (nama_gaya, p_gaya, nama_atr, p_atr, p_fem, ids_zs), hasil_latih, statistik)
     laporan(info, http)
-    log(f"SELESAI: bank {info['n_bank']} outfit, {info['n_item']} item, layak={info['layak']}, AUC gender {info['auc_gender_vs_nama']} | {http.ringkas()}")
+    log(f"SELESAI {info['durasi_menit']} menit: bank {info['n_bank']} outfit, {info['n_item']} item, layak={info['layak']}, AUC gender {info['auc_gender_vs_nama']} | {http.ringkas()}")
 
 
 if __name__ == "__main__":

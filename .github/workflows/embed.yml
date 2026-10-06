@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
     inputs:
       menit_panen:
-        description: "Menit sejak mulai sampai panen outfit berhenti (default 170)"
-        default: "170"
+        description: "Menit sejak mulai sampai panen outfit berhenti (default 75)"
+        default: "75"
 
 permissions:
   contents: write
@@ -19,7 +19,7 @@ concurrency:
 jobs:
   otak:
     runs-on: ubuntu-latest
-    timeout-minutes: 330
+    timeout-minutes: 150
     steps:
       - name: Ambil kode
         uses: actions/checkout@v4
@@ -50,7 +50,7 @@ jobs:
 
       - name: Jalankan otak (panen, mata, belajar, ekspor)
         env:
-          MENIT_PANEN: ${{ github.event.inputs.menit_panen || '170' }}
+          MENIT_PANEN: ${{ github.event.inputs.menit_panen || '75' }}
           HF_HUB_DISABLE_TELEMETRY: "1"
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -80,3 +80,13 @@ jobs:
             git pull --rebase origin main || true
             git push
           fi
+
+      # Server Roblox mengunduh shard besar lewat CDN jsDelivr (gratis, tahan ribuan server). Cache cabang @main di CDN
+      # dibersihkan supaya versi baru langsung terlihat (server tetap mengecek versi tiap shard & jatuh ke raw GitHub).
+      - name: Segarkan cache CDN jsDelivr
+        if: always()
+        continue-on-error: true
+        run: |
+          for f in model/info.json model/item_{0..7}.json meta/harga_{0..7}.json bank/outfit_{0..3}.json; do
+            curl -s -m 20 -o /dev/null -w "%{http_code} $f\n" "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/$f" || true
+          done

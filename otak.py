@@ -1581,7 +1581,8 @@ def ambil_dari_roblox(st):
     """OPSIONAL (butuh secret ROBLOX_API_KEY, dibuat pemilik di Creator Dashboard; izin baca DataStore).
     Lewat Roblox Open Cloud (GET /cloud/v2/universes/{id}/data-stores/{store}/entries/{entry}):
       - KatalogOutfitDasar_v1 shard_0..15 : outfit dasar yang dipanen server Roblox (cepat, tanpa limit IP)
-      - KatalogSinyalOtak_v1  pos_0..7    : outfit yang DIFAVORITKAN/DIBELI pemain (anonim) -> sinyal terkuat
+      - KatalogSinyalOtak_v1  pos_{0..7}_{0..3} (+ pos_0..7 lama) : outfit yang DIFAVORITKAN/DIBELI pemain (anonim)
+      - KatalogSinyalOtak_v1  itembaru_{0..7} (+ itembaru lama)    : item pilihan pemain yang belum dikenal otak
     Tanpa secret: dilewati diam-diam (otak tetap belajar dari panen GitHub)."""
     kunci = os.environ.get("ROBLOX_API_KEY", "").strip()
     uni = os.environ.get("UNIVERSE_ID", "").strip()
@@ -1649,27 +1650,34 @@ def ambil_dari_roblox(st):
                 n += 1
         return n
 
+    # semua kunci dibaca PARALEL (kunci "ember" per server sejak 7 Okt 2026: pos_{i}_{b}, itembaru_{b};
+    # kunci lama tanpa ember tetap dibaca untuk data sebelum perubahan)
+    from concurrent.futures import ThreadPoolExecutor
+    daftar_kunci = [("KatalogOutfitDasar_v1", f"shard_{i}") for i in range(16)]
+    daftar_kunci += [("KatalogSinyalOtak_v1", f"pos_{i}") for i in range(8)]
+    daftar_kunci += [("KatalogSinyalOtak_v1", f"pos_{i}_{b}") for i in range(8) for b in range(4)]
+    daftar_kunci += [("KatalogSinyalOtak_v1", "itembaru")] + [("KatalogSinyalOtak_v1", f"itembaru_{b}") for b in range(8)]
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        nilai = dict(zip(daftar_kunci, ex.map(lambda sk: ambil(sk[0], sk[1]), daftar_kunci)))
     n_lokal = n_sinyal = 0
-    for i in range(16):
-        d = ambil("KatalogOutfitDasar_v1", f"shard_{i}")
-        if isinstance(d, dict) and isinstance(d.get("seeds"), dict):
+    for (store, entri), d in nilai.items():
+        if store == "KatalogOutfitDasar_v1" and isinstance(d, dict) and isinstance(d.get("seeds"), dict):
             n_lokal += masukkan(list(d["seeds"].values()), "lokal")
-    for i in range(8):
-        d = ambil("KatalogSinyalOtak_v1", f"pos_{i}")
-        if isinstance(d, dict) and isinstance(d.get("outfit"), list):
+        elif entri.startswith("pos_") and isinstance(d, dict) and isinstance(d.get("outfit"), list):
             n_sinyal += masukkan(d["outfit"], "sinyal")
     # item yang dipilih pemain di map tapi belum dikenal otak -> diprioritaskan META & MATA putaran ini
-    d = ambil("KatalogSinyalOtak_v1", "itembaru")
     n_diminta = 0
-    if isinstance(d, dict) and isinstance(d.get("ids"), list):
-        dim = st.setdefault("diminta", {})
+    dim = st.setdefault("diminta", {})
+    for (store, entri), d in nilai.items():
+        if not (entri.startswith("itembaru") and isinstance(d, dict) and isinstance(d.get("ids"), list)):
+            continue
         for x in d["ids"]:
             if isinstance(x, int) and x > 0 and str(x) not in dim:
                 dim[str(x)] = int(time.time())
                 n_diminta += 1
-        if len(dim) > MAKS_DIMINTA:
-            for k, _ in sorted(dim.items(), key=lambda kv: kv[1])[:len(dim) - MAKS_DIMINTA]:
-                dim.pop(k, None)
+    if len(dim) > MAKS_DIMINTA:
+        for k, _ in sorted(dim.items(), key=lambda kv: kv[1])[:len(dim) - MAKS_DIMINTA]:
+            dim.pop(k, None)
     log(f"sumber Roblox: +{n_lokal} outfit dasar server, {n_sinyal} outfit sinyal pemain, {n_diminta} item baru diminta pemain")
 
 

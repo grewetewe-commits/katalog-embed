@@ -1388,6 +1388,52 @@ def skor_tren(st):
     return {i: int(round(100 * bisect.bisect_left(urut, v) / len(urut))) for i, v in mentah.items()}
 
 
+# v7 (7 Okt 2026, uji visual di Roblox): bank lama ternyata 72% berisi baju/rambut BAWAAN Roblox (Pal Hair, Dark Green
+# Jeans, ...) karena N (estetika CLIP) dan Q (koherensi) justru tertinggi untuk outfit "noob" itu (Q>=75: 100% berisi item
+# Roblox, Q<60: 35%). Akibatnya hanya ~1.700 dari 9.215 outfit modern yang terkumpul masuk bank. Sekarang: outfit dengan
+# item inti bawaan Roblox dibuang, dan urutan memakai ciri "modern" (pakaian 3D layered, item baru, tren, aksesori cukup).
+KATA_KAKI_TANGAN = {"shoe", "shoes", "boot", "boots", "slipper", "slippers", "sneaker", "sneakers", "heel", "heels", "sock",
+                    "socks", "sandal", "sandals", "nail", "nails", "bracelet", "bracelets", "bangle", "bangles", "glove",
+                    "gloves", "warmer", "warmers", "watch", "cuff", "cuffs", "ring", "rings"}
+KATA_KOSTUM_BANK = {"costume", "cosplay", "pajama", "pajamas", "mascot", "ninja", "pixel", "minecraft", "elytra",
+                    "creeper", "fursuit", "onesie", "inflatable", "uniform", "police", "sheriff", "prisoner", "noob"}
+
+
+def info_modern(s, meta, tren):
+    """-> (ada_item_inti_bawaan_roblox, jumlah_item_roblox, skor_modern). Murni dari meta (tanpa jaringan)."""
+    n_rob = 0
+    basic_inti = False
+    n_lapis = n_kostum = 0
+    ids = ids_seed(s)
+    for i, sl in slot_item_seed(s):
+        m = meta.get(str(i)) or {}
+        nama = set(re.findall(r"[a-z]+", (m.get("n") or "").lower()))
+        if m.get("c") == "Roblox":
+            n_rob += 1
+            if sl in ("Shirt", "Pants", "TShirt") or (sl == "Hair" and i < 10_000_000_000) or sl in ("LayerAtas", "LayerBawah") and i < 7_000_000_000:
+                basic_inti = True
+        if sl in ("LayerAtas", "LayerBawah") and not (nama & KATA_KAKI_TANGAN):
+            n_lapis += 1
+        if nama & KATA_KOSTUM_BANK and sl in ("Shirt", "Pants", "LayerAtas", "LayerBawah", "Hat"):
+            n_kostum += 1
+    acc = s.get("A", [])
+    sm = 0.0
+    if n_lapis:
+        sm += 10
+    baru = sorted(ids)[len(ids) // 2] if ids else 0
+    if baru > 10_000_000_000:
+        sm += 5
+    tr = [tren.get(i) for i in ids if tren.get(i) is not None]
+    if tr:
+        sm += 0.15 * (sum(tr) / len(tr) - 50)
+    if 3 <= len(acc) <= 7:
+        sm += 4
+    if not n_lapis and len(acc) <= 2:
+        sm -= 8
+    sm -= 15 * n_kostum
+    return basic_inti, n_rob, sm
+
+
 def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
     versi = int(time.time())
     nama_gaya, p_gaya, nama_atr, p_atr, p_fem, ids_zs = zs
@@ -1401,7 +1447,9 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
     # yang bisa dibeli, lalu yang paling tren). Latihan tetap memakai SEMUA item.
     di_bank = set()
     for s0 in st["outfit"].values():
-        di_bank.update(ids_seed(s0))
+        bi0, nr0, _ = info_modern(s0, st["meta"], tren)
+        if not bi0 and nr0 < 2:  # v7: item outfit yang bisa masuk bank didahulukan (dulu: semua outfit, termasuk "noob")
+            di_bank.update(ids_seed(s0))
     diminta = set(int(k) for k in st.get("diminta", {}))
     def prioritas(i):
         m = st["meta"].get(str(i)) or {}
@@ -1464,7 +1512,7 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
         import bisect
         return int(round(100 * bisect.bisect_left(kh_list, v) / len(kh_list)))
     kandidat = []
-    n_tolak_beli = n_tolak_koh = 0
+    n_tolak_beli = n_tolak_koh = n_tolak_basic = 0
     for s, kh, g, inti_ok, n_beli in nilai:
         if not inti_ok or n_beli < 3:
             n_tolak_beli += 1
@@ -1473,21 +1521,40 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
         if len(ids_seed(s)) < 4 or "invis" in nama_item or "headless" in nama_item:
             n_tolak_beli += 1  # bukan outfit jadi (terlalu sedikit item / item troll)
             continue
+        bi, n_rob, sm = info_modern(s, st["meta"], tren)
+        if bi or n_rob >= 2:
+            n_tolak_basic += 1  # v7: outfit berisi baju/rambut bawaan Roblox = kesan "noob", bukan acuan gaya
+            continue
         q = persentil(kh)
         if kh is not None and q < 10:
             n_tolak_koh += 1  # 10% paling tidak koheren menurut model: dibuang
             continue
         n_est = s.get("N")
-        if n_est is not None and n_est < 45:
+        if n_est is not None and n_est < 30:  # v7: 45 -> 30 (N terbukti tidak mewakili selera; outfit modern sering 45-60)
             n_tolak_koh += 1  # dinilai jelek oleh mata estetika (CLIP/Gemini)
             continue
         e = {k: v for k, v in s.items() if k in ("Sh", "Pa", "Gt", "A", "F", "BCn", "SC", "R", "H", "S", "N", "GY")}
         e["Q"] = q
         e["G"] = g
-        kandidat.append(e)
-    # v5: outfit pemain bergaya yang dinilai bagus diutamakan; outfit kreator lama (tanpa nilai) dianggap 40
-    kandidat.sort(key=lambda e: -(0.55 * (e.get("N") if e.get("N") is not None else 40) + 0.45 * e["Q"]))
-    kandidat = kandidat[:MAKS_BANK]
+        kandidat.append((e, sm))
+    # v7: urutan = koherensi + ciri modern; N hanya bobot kecil. Keragaman: satu item maks 30 outfit di bank (dulu satu
+    # penghangat lengan bisa muncul di ratusan outfit -> semua hasil terlihat sama)
+    kandidat.sort(key=lambda x: -(0.45 * x[0]["Q"] + 0.15 * (x[0].get("N") if x[0].get("N") is not None else 50) + x[1]))
+    pakai, terpilih, sisa = {}, [], []
+    for e, _ in kandidat:
+        ii = ids_seed(e)
+        if any(pakai.get(i, 0) >= 30 for i in ii):
+            sisa.append(e)
+            continue
+        for i in ii:
+            pakai[i] = pakai.get(i, 0) + 1
+        terpilih.append(e)
+        if len(terpilih) >= MAKS_BANK:
+            break
+    if len(terpilih) < MAKS_BANK:
+        terpilih += sisa[:MAKS_BANK - len(terpilih)]
+    kandidat = terpilih
+    log(f"BANK v7: {len(kandidat)} outfit | ditolak bawaan Roblox {n_tolak_basic}, tak bisa dibeli {n_tolak_beli}, tak koheren {n_tolak_koh}")
     bshard = [[] for _ in range(SHARD_BANK)]
     for e in kandidat:
         bshard[int(e["H"][:8], 16) % SHARD_BANK].append(e)

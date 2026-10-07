@@ -49,6 +49,13 @@ MENIT_META = float(os.environ.get("MENIT_META", "45") or 45)
 TTL_META_JUAL = 5 * 86400     # item yang bisa dibeli: dicek ulang tiap 5 hari (server Roblox tetap cek live item yang tampil)
 TTL_META_TIDAK = 14 * 86400   # item tidak dijual/dihapus jarang kembali dijual: cukup tiap 14 hari
 MAKS_DIMINTA = 6000           # item tak dikenal yang diminta pemain di map (kunci "itembaru" di DataStore)
+# PETA BADAN: bagian badan avatar pemain (kunci "badanbaru") -> bundle yang berisi bagian itu, lewat
+# catalog.roblox.com/v1/assets/{id}/bundles (API ini tidak bisa dipanggil dari server Roblox). Server memakai peta ini
+# untuk baris "Badan" di Detail: beli bundle badan bila dijual & salin avatar orang lain utuh.
+MAKS_BADAN_PER_PUTARAN = 400
+MAKS_PETA_BADAN = 30000
+TTL_PETA_BADAN = 30 * 86400
+TIPE_BADAN = {17, 27, 28, 29, 30, 31, 79}  # Head, Torso, RightArm, LeftArm, LeftLeg, RightLeg, DynamicHead
 MAKS_KREATOR = int(os.environ.get("MAKS_KREATOR", "600") or 600)
 MAKS_ITEM_BARU = int(os.environ.get("MAKS_ITEM_BARU", "25000") or 25000)
 MAKS_OUTFIT_PER_KREATOR = 8
@@ -1504,6 +1511,14 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
                 mshard[i % SHARD_ITEM][str(i)] = [m.get("n", ""), m.get("p", -1), m.get("s", 0), m.get("c", ""), m.get("t", 0), m.get("w", 0), tren.get(i, -1)]
     for s in range(SHARD_ITEM):
         tulis_json(f"meta/harga_{s}.json", {"versi": versi, "d": mshard[s]})
+    # --- peta bagian badan -> bundle (kandidat diurutkan: yang dijual dulu, lalu termurah)
+    pbadan = st.get("badan") or {}
+    bb = pbadan.get("b") or {}
+    def urut_bundle(bid):
+        v = bb.get(str(bid)) or ["", 0, 0]
+        return (0 if v[1] else 1, v[2], bid)
+    peta_a = {k: sorted(v, key=urut_bundle)[:6] for k, v in (pbadan.get("a") or {}).items() if v}
+    tulis_json("meta/badan.json", {"versi": versi, "a": peta_a, "b": bb})
 
     # --- validasi gender visual memakai label kata di nama item (bukan klaim, angka)
     pos, neg = [], []
@@ -1529,6 +1544,7 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
         "n_tolak_pemain": len(st.get("tolak", {})),
         "n_dasar_lokal": sum(1 for x in st["outfit"].values() if x.get("S") == "lokal"),
         "n_diminta_pemain": len(st.get("diminta", {})),
+        "badan": True, "n_peta_badan": len(peta_a), "n_bundle_badan": len(bb),
         "durasi_menit": round((time.time() - T0) / 60, 1),
     }
     rw = st.setdefault("riwayat", [])
@@ -1657,6 +1673,7 @@ def ambil_dari_roblox(st):
     daftar_kunci += [("KatalogSinyalOtak_v1", f"pos_{i}") for i in range(8)]
     daftar_kunci += [("KatalogSinyalOtak_v1", f"pos_{i}_{b}") for i in range(8) for b in range(4)]
     daftar_kunci += [("KatalogSinyalOtak_v1", "itembaru")] + [("KatalogSinyalOtak_v1", f"itembaru_{b}") for b in range(8)]
+    daftar_kunci += [("KatalogSinyalOtak_v1", f"badanbaru_{b}") for b in range(8)]
     with ThreadPoolExecutor(max_workers=8) as ex:
         nilai = dict(zip(daftar_kunci, ex.map(lambda sk: ambil(sk[0], sk[1]), daftar_kunci)))
     n_lokal = n_sinyal = 0
@@ -1678,7 +1695,80 @@ def ambil_dari_roblox(st):
     if len(dim) > MAKS_DIMINTA:
         for k, _ in sorted(dim.items(), key=lambda kv: kv[1])[:len(dim) - MAKS_DIMINTA]:
             dim.pop(k, None)
+    # bagian badan avatar pemain yang bundlenya belum dikenal -> dipetakan putaran ini (peta_badan)
+    bdim = st.setdefault("badan_diminta", {})
+    for (store, entri), d in nilai.items():
+        if entri.startswith("badanbaru") and isinstance(d, dict) and isinstance(d.get("ids"), list):
+            for x in d["ids"]:
+                if isinstance(x, int) and x > 0:
+                    bdim.setdefault(str(x), int(time.time()))
+    if len(bdim) > 5000:
+        for k, _ in sorted(bdim.items(), key=lambda kv: kv[1])[:len(bdim) - 5000]:
+            bdim.pop(k, None)
     log(f"sumber Roblox: +{n_lokal} outfit dasar server, {n_sinyal} outfit sinyal pemain, {n_diminta} item baru diminta pemain")
+
+
+def peta_badan(http, st, batas, hasil):
+    """Bagian badan -> bundle. Ditulis ke `hasil` (bukan st) supaya aman berjalan di utas sendiri; digabung ke st
+    oleh utas utama sebelum ekspor."""
+    lama = st.get("badan") or {}
+    pa, pb, pt = dict(lama.get("a") or {}), dict(lama.get("b") or {}), dict(lama.get("t") or {})
+    sekarang = int(time.time())
+    dim = dict(st.get("badan_diminta") or {})
+    antre = [k for k in dim if sekarang - int(pt.get(k, 0)) > TTL_PETA_BADAN]
+    antre.sort(key=lambda k: -int(dim[k]))
+    n_tanya = n_bundle = 0
+    for k in antre[:MAKS_BADAN_PER_PUTARAN]:
+        if time.time() > batas:
+            break
+        if sekarang - int(pt.get(k, 0)) <= TTL_PETA_BADAN:
+            continue  # sudah ikut terpetakan dari bundle bagian badan lain
+        try:
+            aid = int(k)
+        except Exception:
+            continue
+        js = http.get(f"https://catalog.roblox.com/v1/assets/{aid}/bundles")
+        n_tanya += 1
+        if not isinstance(js, dict) or not isinstance(js.get("data"), list):
+            continue  # gagal jaringan: dicoba lagi putaran berikutnya
+        pt[k] = sekarang
+        pa.setdefault(k, [])
+        for b in js["data"]:
+            if not isinstance(b, dict) or b.get("bundleType") not in ("BodyParts", "DynamicHead"):
+                continue
+            try:
+                bid = int(b["id"])
+            except Exception:
+                continue
+            prod = b.get("product") or {}
+            try:
+                harga = int(prod.get("priceInRobux") or 0)
+            except Exception:
+                harga = 0
+            pb[str(bid)] = [str(b.get("name") or "")[:60], 1 if prod.get("isForSale") else 0, harga]
+            n_bundle += 1
+            for it in b.get("items") or []:
+                if not (isinstance(it, dict) and it.get("type") == "Asset" and it.get("assetType") in TIPE_BADAN):
+                    continue
+                try:
+                    a = str(int(it["id"]))
+                except Exception:
+                    continue
+                daftar = pa.setdefault(a, [])
+                if bid not in daftar:
+                    daftar.append(bid)
+                pt[a] = sekarang
+    if len(pt) > MAKS_PETA_BADAN:
+        for k, _ in sorted(pt.items(), key=lambda kv: kv[1])[:len(pt) - MAKS_PETA_BADAN]:
+            pt.pop(k, None)
+            pa.pop(k, None)
+    dipakai = set()
+    for daftar in pa.values():
+        dipakai.update(daftar)
+    pb = {k: v for k, v in pb.items() if int(k) in dipakai}
+    hasil["badan"] = {"a": pa, "b": pb, "t": pt}
+    hasil["selesai"] = [k for k in dim if sekarang - int(pt.get(k, 0)) <= TTL_PETA_BADAN]
+    log(f"PETA BADAN: {n_tanya} bagian badan ditanyakan, {n_bundle} bundle tercatat | peta {len(pa)} aset, {len(pb)} bundle")
 
 
 def main():
@@ -1691,6 +1781,10 @@ def main():
     emb, warna = muat_emb()
     muat_state_v5(st)
     ambil_dari_roblox(st)
+    # 0) PETA BADAN di utas sendiri (endpoint katalog /v1/assets, ringan: <= MAKS_BADAN_PER_PUTARAN permintaan)
+    hasil_badan = {}
+    utas_badan = threading.Thread(target=peta_badan, args=(http, st, T0 + 20 * 60, hasil_badan), daemon=True)
+    utas_badan.start()
     # 1) META sejak menit 0, utas sendiri: item diminta pemain -> item outfit tanpa meta -> item paling basi
     meta = PekerjaMeta(http, st, T0 + MENIT_META * 60)
     semua_id = set()
@@ -1746,6 +1840,12 @@ def main():
     if not ids_zs:
         log("tidak ada item berembedding -- berhenti")
         sys.exit(1)
+    utas_badan.join(timeout=60)
+    if "badan" in hasil_badan:
+        with KUNCI_ST:
+            st["badan"] = hasil_badan["badan"]
+            for k in hasil_badan.get("selesai", []):
+                st.get("badan_diminta", {}).pop(k, None)
     X = np.stack([emb[i] for i in ids_zs]).astype("float32")
     X /= np.linalg.norm(X, axis=1, keepdims=True)
     nama_gaya, p_gaya, nama_atr, p_atr, p_fem = zero_shot(embedder, ids_zs, X, slot_of)

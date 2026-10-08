@@ -25,6 +25,7 @@ Jadwal waktu satu putaran (v6, target +-70 menit, dulu +-155 menit):
 Variabel lingkungan: STUB=1 (uji alur tanpa jaringan/model), MENIT_PANEN, MAKS_KREATOR, MAKS_ITEM_BARU,
                      MENIT_MATA, CACHE_DIR.
 """
+import collections
 import gzip
 import hashlib
 import io
@@ -1360,6 +1361,264 @@ def latih(st, emb, slot_of, rng_seed=1):
 
 
 # ---------------------------------------------------------------------------------------------
+# 4b. BELAJAR DESAIN (desain v1, 9 Okt 2026): yang dipelajari adalah PROSES desainer, bukan outfitnya.
+#   Dari outfit buatan pemain sungguhan, otak belajar: "kalau item utama (MC) seperti ini, bumbu (item lain)
+#   seperti apa yang dipilih desainer?" -> bobot penilai per slot (vektor gaya, harmoni warna, set/kreator sama,
+#   tren, popularitas di kalangan desainer, konteks item yang sudah dipasang), tabel harmoni warna (PMI), resep
+#   (slot apa yang biasa dipakai bersama), dan jumlah aksesori. Server Roblox MENYUSUN outfit dari nol memakai
+#   ini; bank outfit tidak lagi disalin. Uji jujur: outfit uji (kreator berbeda dari latih) -> peringkat item asli
+#   di antara SEMUA item slotnya, dibandingkan cos vektor saja.
+# ---------------------------------------------------------------------------------------------
+DESAIN_VERSI = 1
+DESAIN_SLOT = [1, 2, 13, 14, 6, 5, 7, 8, 9, 10, 11, 12]
+DESAIN_FITUR = ["cos", "pmiWarna", "gayaSama", "bedaGender", "tren", "pop", "kreatorSama", "satC", "valC", "satCxM",
+                "setSama", "cosKonteks", "pmiKonteks", "kreatorKonteks", "setKonteks", "adaKonteks"]
+DESAIN_AKS = [5, 7, 8, 9, 10, 11, 12]
+# sama persis dengan KATA_UMUM / KATA_WARNA / pecahKata di IndeksOutfitEngine (server)
+KATA_UMUM_D = set("the and with for from new set full outfit style limited ugc free shirt shirts pants pant top tops "
+                  "bottom bottoms tee tees jeans jean skirt shorts trousers classic layered version edition kaus kaos "
+                  "celana baju atasan bawahan".split())
+KATA_WARNA_D = set("black white pink blue red green purple yellow brown grey gray orange beige dark light cream navy "
+                   "hitam putih merah biru hijau ungu kuning coklat cokelat abu cute aesthetic boy girl boys girls men "
+                   "women mens womens".split())
+
+
+def warna_desain(hx):
+    """-> (bin 0-15, saturasi, value). 0-11 = rona (30 derajat), 12 hitam, 13 putih, 14 abu, 15 tanpa warna.
+    Sama persis dengan binWarna di DesainerEngine (Color3.fromHex():ToHSV())."""
+    import colorsys
+    try:
+        r, g, b = int(hx[0:2], 16) / 255, int(hx[2:4], 16) / 255, int(hx[4:6], 16) / 255
+    except Exception:
+        return 15, 0.0, 0.0
+    h, s, v = colorsys.rgb_to_hsv(r, g, b)
+    if v < 0.18:
+        return 12, s, v
+    if s < 0.18:
+        return (13 if v > 0.82 else 14), s, v
+    return int(h * 12 + 0.5) % 12, s, v
+
+
+def token_desain(nama):
+    return {w for w in re.findall(r"[a-z0-9]+", (nama or "").lower()) if len(w) >= 3 and not w.isdigit() and w not in KATA_UMUM_D}
+
+
+def logreg_irls(X, y, bobot_pos=6.0, l2=1.0, iterasi=30):
+    Xb = np.hstack([X, np.ones((len(X), 1), dtype=np.float64)])
+    w = np.zeros(Xb.shape[1])
+    sw = np.where(y == 1, bobot_pos, 1.0)
+    reg = np.ones(Xb.shape[1]) * l2
+    reg[-1] = 0
+    for _ in range(iterasi):
+        z = np.clip(Xb @ w, -30, 30)
+        p = 1 / (1 + np.exp(-z))
+        g = Xb.T @ (sw * (p - y)) + reg * w
+        H = (Xb * (sw * p * (1 - p))[:, None]).T @ Xb + np.diag(reg)
+        step = np.linalg.solve(H, g)
+        w -= step
+        if np.abs(step).max() < 1e-7:
+            break
+    return w
+
+
+def belajar_desain(st, hasil_latih, baris_of, tren, batas_detik=600, seed=3):
+    """baris_of: {id: baris ekspor [slot, fem, hex, gb, ab, v1..v32]}. -> (desain dict untuk info.json, {id: pop*100})"""
+    t0 = time.time()
+    rng = np.random.default_rng(seed)
+    ids = sorted(i for i, b in baris_of.items() if len(b) >= 5 + DIM)
+    if len(ids) < 1000:
+        return None, {}
+    pos = {i: k for k, i in enumerate(ids)}
+    n = len(ids)
+    V = np.array([baris_of[i][5:5 + DIM] for i in ids], dtype=np.float32) / 127.0
+    SL = np.array([baris_of[i][0] for i in ids])
+    FEM = np.array([baris_of[i][1] for i in ids], dtype=np.float32)
+    GB = np.array([baris_of[i][3] for i in ids], dtype=np.int64)
+    BIN = np.zeros(n, dtype=np.int64)
+    SAT = np.zeros(n, dtype=np.float32)
+    VAL = np.zeros(n, dtype=np.float32)
+    for k, i in enumerate(ids):
+        BIN[k], SAT[k], VAL[k] = warna_desain(baris_of[i][2] or "")
+    TR = np.array([(tren[i] / 100.0) if i in tren else 0.5 for i in ids], dtype=np.float32)
+    meta = st["meta"]
+    nama = [(meta.get(str(i)) or {}).get("n") or "" for i in ids]
+    kre = [((meta.get(str(i)) or {}).get("c") or "").lower() for i in ids]
+    peta_kre = {}
+    CRE = np.array([peta_kre.setdefault(c, len(peta_kre)) if c else -1 for c in kre])
+    TOK = [token_desain(x) for x in nama]
+    df = collections.Counter()
+    for t in TOK:
+        df.update(t)
+    KHAS = [{w for w in t if w not in KATA_WARNA_D and df[w] <= 150} for t in TOK]
+
+    def satu_set(a, b):
+        if a == b:
+            return False
+        if KHAS[a] & KHAS[b]:
+            return True
+        if kre[a] and kre[a] == kre[b] and (TOK[a] & TOK[b]) - KATA_WARNA_D:
+            return True
+        A, B = TOK[a] - KATA_WARNA_D, TOK[b] - KATA_WARNA_D
+        s = A & B
+        return any(len(w) >= 4 for w in s) and len(s) / max(1, len(A | B)) >= 0.5
+
+    # outfit nyata (item yang punya baris), dibagi latih/uji PER KREATOR seperti latih()
+    outfits = []
+    for h, s in sorted(st["outfit"].items()):
+        it = [pos[i] for i, sl in slot_item_seed(s) if i in pos and sl != "Alis"]
+        if len(it) >= 3:
+            outfits.append((h, it, int(hashlib.md5((s.get("K") or h).encode()).hexdigest()[:4], 16) % 100 < 15))
+    trn = [o for o in outfits if not o[2]]
+    val = [o for o in outfits if o[2]]
+    # popularitas di kalangan desainer + harmoni warna (PMI 16x16) dari outfit latih
+    FREQ = np.zeros(n, dtype=np.float32)
+    cooc = np.ones((16, 16)) * 0.5
+    marg = np.ones(16) * 0.5
+    for _, it, _ in trn:
+        for x in it:
+            FREQ[x] += 1
+        bs = [BIN[x] for x in it]
+        for a in range(len(bs)):
+            marg[bs[a]] += 1
+            for b in range(len(bs)):
+                if a != b:
+                    cooc[bs[a], bs[b]] += 1
+    PMI = np.log((cooc / cooc.sum()) / np.outer(marg / marg.sum(), marg / marg.sum()))
+    LF = np.log1p(FREQ)
+    pool = {s: np.where(SL == s)[0] for s in DESAIN_SLOT}
+    peluang = {}
+    for s in DESAIN_SLOT:
+        w = FREQ[pool[s]] ** 0.75
+        peluang[s] = (w / w.sum()) if len(pool[s]) and w.sum() > 0 else None
+
+    def fitur(m, ctx, P):
+        f = np.zeros((len(P), 16), dtype=np.float32)
+        f[:, 0] = V[P] @ V[m]
+        f[:, 1] = PMI[BIN[m], BIN[P]]
+        f[:, 2] = (GB[P] & GB[m]) != 0
+        f[:, 3] = np.abs(FEM[P] - FEM[m]) / 100
+        f[:, 4] = TR[P]
+        f[:, 5] = LF[P]
+        f[:, 6] = (CRE[P] == CRE[m]) & (CRE[m] >= 0)
+        f[:, 7] = SAT[P]
+        f[:, 8] = VAL[P]
+        f[:, 9] = SAT[P] * SAT[m]
+        f[:, 10] = [satu_set(m, int(x)) for x in P]
+        if ctx:
+            c = V[ctx].mean(axis=0)
+            f[:, 11] = V[P] @ c
+            f[:, 12] = PMI[BIN[ctx][:, None], BIN[P][None, :]].mean(axis=0)
+            f[:, 13] = np.max([(CRE[P] == CRE[x]) & (CRE[x] >= 0) for x in ctx], axis=0)
+            f[:, 14] = np.max([[satu_set(x, int(p)) for p in P] for x in ctx], axis=0)
+            f[:, 15] = 1
+        return f
+
+    X = {s: [] for s in DESAIN_SLOT}
+    Y = {s: [] for s in DESAIN_SLOT}
+    urut = rng.permutation(len(trn))[:22000]
+    n_contoh = 0
+    for oi in urut:
+        if time.time() - t0 > batas_detik * 0.75:
+            log(f"  DESAIN: batas waktu sampel ({n_contoh} contoh)")
+            break
+        it = trn[oi][1]
+        isi = set(it)
+        for ti, t in enumerate(it):
+            ts = SL[t]
+            if ts not in pool or len(pool[ts]) < 30:
+                continue
+            lain = [k for k in range(len(it)) if k != ti]
+            mi = lain[rng.integers(len(lain))]
+            m = it[mi]
+            if SL[m] == ts:
+                continue
+            sisa = [it[k] for k in lain if k != mi]
+            nc = rng.integers(0, len(sisa) + 1)
+            ctx = [int(x) for x in rng.permutation(sisa)[:nc]] if sisa else []
+            neg = list(pool[ts][rng.integers(len(pool[ts]), size=6)])
+            if peluang[ts] is not None:
+                neg += list(rng.choice(pool[ts], size=6, p=peluang[ts]))
+            neg = [int(x) for x in neg if x not in isi]
+            P = np.array([t] + neg)
+            X[ts].append(fitur(m, ctx, P))
+            Y[ts] += [1] + [0] * len(neg)
+            n_contoh += 1
+    bobot = {}
+    for s in DESAIN_SLOT:
+        if len(Y[s]) < 2000:
+            continue
+        w = logreg_irls(np.vstack(X[s]).astype(np.float64), np.array(Y[s], dtype=np.float64))
+        if np.all(np.isfinite(w)):
+            bobot[str(s)] = [round(float(x), 4) for x in w]
+    if len(bobot) < 6:
+        log(f"  DESAIN: bobot slot kurang ({len(bobot)}) -> tidak diekspor")
+        return None, {}
+    # uji jujur (outfit uji): peringkat item asli di antara SEMUA item slotnya; MC + 2 bumbu konteks
+    r_cos, r_mod = [], []
+    for _, it, _ in [val[k] for k in rng.permutation(len(val))[:600]]:
+        if time.time() - t0 > batas_detik:
+            break
+        for ti, t in enumerate(it):
+            ts = SL[t]
+            if str(ts) not in bobot:
+                continue
+            lain = [k for k in range(len(it)) if k != ti]
+            mi = lain[rng.integers(len(lain))]
+            m = it[mi]
+            if SL[m] == ts:
+                continue
+            sisa = [it[k] for k in lain if k != mi]
+            ctx = [int(x) for x in rng.permutation(sisa)[:2]] if sisa else []
+            P = pool[ts]
+            ix = int(np.where(P == t)[0][0])
+            sc = V[P] @ V[m]
+            r_cos.append(float((sc > sc[ix]).mean()))
+            w = np.array(bobot[str(ts)])
+            sc = fitur(m, ctx, P) @ w[:-1]
+            r_mod.append(float((sc > sc[ix]).mean()))
+    rc, rm = np.array(r_cos), np.array(r_mod)
+    metrik = {"n": int(len(rm)), "contoh_latih": n_contoh,
+              "top1_cos": round(float((rc < 0.01).mean()), 4) if len(rc) else None,
+              "top1_model": round(float((rm < 0.01).mean()), 4) if len(rm) else None,
+              "top5_cos": round(float((rc < 0.05).mean()), 4) if len(rc) else None,
+              "top5_model": round(float((rm < 0.05).mean()), 4) if len(rm) else None,
+              "median_cos": round(float(np.median(rc)), 4) if len(rc) else None,
+              "median_model": round(float(np.median(rm)), 4) if len(rm) else None}
+    # resep: slot yang dipakai bersama, jumlah aksesori, pasangan atasan/bawahan 2D-3D
+    ada = collections.Counter()
+    bersama = collections.defaultdict(collections.Counter)
+    n_aks = collections.Counter()
+    pasang = collections.Counter()
+    for _, it, _ in trn:
+        sl = set(int(SL[x]) for x in it)
+        for a in sl:
+            ada[a] += 1
+            for b in sl:
+                if a != b:
+                    bersama[a][b] += 1
+        n_aks[min(6, sum(1 for x in it if SL[x] in DESAIN_AKS))] += 1
+        atas = "3D" if 13 in sl else ("2D" if 1 in sl else "-")
+        bawah = "3D" if 14 in sl else ("2D" if 2 in sl else "-")
+        pasang[atas + bawah] += 1
+    nt = max(1, len(trn))
+    resep = {str(a): {str(b): round(bersama[a][b] / ada[a], 3) for b in DESAIN_SLOT if bersama[a][b]} for a in DESAIN_SLOT if ada[a] >= 50}
+    desain = {
+        "versi": DESAIN_VERSI, "fitur": DESAIN_FITUR, "w": bobot,
+        "pmi": [[round(float(x), 3) for x in baris] for baris in PMI],
+        "mu": [round(float(x), 4) for x in V.mean(axis=0)],
+        "pAks": {str(s): round(ada[s] / nt, 3) for s in DESAIN_AKS},
+        "nAks": [round(n_aks[k] / nt, 3) for k in range(7)],
+        "resep": resep, "pasang": {k: round(v / nt, 3) for k, v in pasang.items()},
+        "alpha": 1.3, "beta": 0.6, "lam": 1.2,
+        "metrik": metrik, "outfit_latih": len(trn), "outfit_uji": len(val), "detik": round(time.time() - t0, 1),
+    }
+    pop = {ids[k]: int(round(float(LF[k]) * 100)) for k in range(n) if FREQ[k] > 0}
+    log(f"  DESAIN v{DESAIN_VERSI}: {n_contoh} contoh, {len(bobot)} slot | uji top1% model {metrik['top1_model']} vs cos "
+        f"{metrik['top1_cos']} | top5% {metrik['top5_model']} vs {metrik['top5_cos']} | {desain['detik']} dtk")
+    return desain, pop
+
+
+# ---------------------------------------------------------------------------------------------
 # 5. EKSPOR
 # ---------------------------------------------------------------------------------------------
 def tulis_json(p, obj):
@@ -1455,10 +1714,9 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
         m = st["meta"].get(str(i)) or {}
         return (0 if (i in di_bank or i in diminta) else 1, 0 if m.get("s") == 1 else 1, -tren.get(i, 0))
     ids_kirim = set(sorted(ids_zs, key=prioritas)[:MAKS_ITEM_EKSPOR])
-    shard = [dict() for _ in range(SHARD_ITEM)]
+    # desain v1: baris dihitung untuk SEMUA item (belajar memakai semua), yang dikirim tetap ids_kirim
+    baris_of = {}
     for i in ids_zs:
-        if i not in ids_kirim:
-            continue
         k = pos_zs[i]
         g_bits = 0
         urut = np.argsort(-p_gaya[k])[:2]
@@ -1478,6 +1736,22 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
         baris = [SLOT_KODE.get(slot_of.get(i, ""), 0), int(round(float(p_fem[k]) * 100)), warna.get(i, ""), g_bits, a_bits]
         if fz is not None and i in idx_of:
             baris += [int(round(float(x) * 127)) for x in fz[idx_of[i]]]
+        baris_of[i] = baris
+    # BELAJAR DESAIN (proses desainer) -- gagal = server Roblox memakai bobot bawaannya, ekspor lain tetap jalan
+    desain, pop_of = None, {}
+    if fz is not None:
+        try:
+            desain, pop_of = belajar_desain(st, hasil_latih, baris_of, tren)
+        except Exception as ex:
+            log("  DESAIN gagal (dilewati):", repr(ex)[:300])
+            desain, pop_of = None, {}
+    shard = [dict() for _ in range(SHARD_ITEM)]
+    for i in ids_kirim:
+        baris = baris_of.get(i)
+        if baris is None:
+            continue
+        if len(baris) == 5 + DIM:
+            baris = baris + [pop_of.get(i, 0)]  # desain v1: popularitas di kalangan desainer (log1p(frek) x100)
         shard[i % SHARD_ITEM][str(i)] = baris
     for s in range(SHARD_ITEM):
         tulis_json(f"model/item_{s}.json", {"versi": versi, "d": shard[s]})
@@ -1612,6 +1886,7 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
         "n_dasar_lokal": sum(1 for x in st["outfit"].values() if x.get("S") == "lokal"),
         "n_diminta_pemain": len(st.get("diminta", {})),
         "badan": True, "n_peta_badan": len(peta_a), "n_bundle_badan": len(bb),
+        "desain": desain,
         "durasi_menit": round((time.time() - T0) / 60, 1),
     }
     rw = st.setdefault("riwayat", [])
@@ -1642,6 +1917,15 @@ def laporan(info, http):
         f"- **LAYAK DIPAKAI SERVER: {'YA' if info['layak'] else 'BELUM'}** (syarat: FITB >= 0,38 dengan >= 150 soal; acak = 0,25)", "",
         f"- Sinyal pemain (outfit difavoritkan/dibeli di map): **{info.get('n_sinyal_pemain', 0)}** | outfit dasar dari server Roblox: {info.get('n_dasar_lokal', 0)} | item baru diminta pemain: {info.get('n_diminta_pemain', 0)}",
         f"- Durasi putaran: **{info.get('durasi_menit', '-')} menit** | META: {json.dumps(info.get('panen', {}).get('meta', {}))}", "",
+        "## Belajar PROSES desain (dipakai server Roblox untuk menyusun outfit dari nol di sekitar item pilihan pemain)", "",
+    ] + ([
+        f"- Uji jujur di outfit yang TIDAK dipelajari: item asli pilihan desainer masuk **1% teratas** dari semua item slotnya: "
+        f"model **{f((info.get('desain') or {}).get('metrik', {}).get('top1_model'))}** vs kemiripan gaya saja {f((info.get('desain') or {}).get('metrik', {}).get('top1_cos'))}",
+        f"- Masuk 5% teratas: model **{f((info.get('desain') or {}).get('metrik', {}).get('top5_model'))}** vs {f((info.get('desain') or {}).get('metrik', {}).get('top5_cos'))} "
+        f"| {(info.get('desain') or {}).get('metrik', {}).get('n', '-')} soal | contoh latih {(info.get('desain') or {}).get('metrik', {}).get('contoh_latih', '-')}",
+        "- Yang dipelajari: bobot 16 fitur per slot (gaya visual, harmoni warna, set/kreator sama, tren, popularitas di kalangan desainer, "
+        "kecocokan dengan bumbu yang sudah dipasang), tabel harmoni warna 16x16, resep slot, jumlah aksesori, pasangan 2D/3D", "",
+    ] if info.get("desain") else ["- Belajar desain putaran ini GAGAL/dilewati: server memakai bobot bawaan (hasil lab).", ""]) + [
         "## Perkembangan otak (makin banyak data = makin pintar)", "",
         "| Putaran | Waktu (UTC) | Outfit dipelajari | Item dikenal | FITB | Sinyal pemain |", "|---|---|---|---|---|---|",
     ] + [f"| {r['putaran']} | {r['waktu']} | {r['outfit']} | {r['item']} | {r['fitb']} | {r['sinyal']} |" for r in info.get("riwayat", [])] + [

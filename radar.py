@@ -9,6 +9,7 @@ Aturan ketat (permintaan pemilik): hanya item yang benar-benar siap klaim (IsFor
 jelas 1-3 experience). Cara klaim di game lain TIDAK ditampilkan (tidak spoiler). Tanpa kunci API, tanpa biaya.
 """
 import json
+import re
 import time
 
 import requests
@@ -19,8 +20,11 @@ S.headers["Accept"] = "application/json"
 LOG = []
 MULAI = time.time()
 BATAS_DETIK = 9 * 60          # workflow dibatasi 15 menit; sisakan waktu untuk push
-MAKS_DETAIL = 120             # panggilan economy per putaran
+MAKS_DETAIL = 200             # panggilan economy per putaran
 MAKS_ITEM = 40                # item di radar.json
+MAKS_PER_GAME = 4             # supaya radar tidak dikuasai satu game
+# game yang klaimnya butuh KODE dari luar (medsos/Discord) tidak "siap klaim" untuk pemain biasa -> dilewati
+POLA_KODE = re.compile(r"\bcodes?\b|\bkode\b|\bpromo\b", re.I)
 
 
 def log(m):
@@ -99,6 +103,11 @@ def cari_kandidat():
                     continue
                 if "Collectible" not in restr and "Limited" not in restr and "LimitedUnique" not in restr:
                     continue
+                # stok sudah 0 / hanya dijual di toko (bukan di game) -> tak perlu dicek detail
+                if isinstance(e.get("unitsAvailableForConsumption"), int) and e.get("totalQuantity") and e["unitsAvailableForConsumption"] <= 0:
+                    continue
+                if e.get("saleLocationType") == "ShopOnly":
+                    continue
                 kandidat[i] = e
             kursor = js.get("nextPageCursor") or ""
             log(f"  kueri {q.get('Keyword', '-')}/sort {q['SortType']}: +{len(data)} baris, kandidat {len(kandidat)}")
@@ -166,6 +175,7 @@ def main():
     item = detail(kandidat)
     gi = game_info([u for it in item for u in it["uids"]])
     keluar = []
+    lewat_kode = 0
     for it in item:
         terbaik = None
         for u in it["uids"]:
@@ -175,11 +185,21 @@ def main():
         if not terbaik:
             continue
         u, g = terbaik
+        if POLA_KODE.search(g["g"]):
+            lewat_kode += 1
+            continue
         keluar.append({"id": it["id"], "n": it["n"], "c": it["c"], "t": it["t"], "s": it["s"], "q": it["q"],
                        "u": u, "p": g["p"], "g": g["g"], "pl": g["pl"]})
     # game yang sedang ramai & stok masih banyak didahulukan
     keluar.sort(key=lambda x: (-(1 if x["pl"] > 0 else 0), -min(x["s"], 1000), -x["pl"], -x["id"]))
-    keluar = keluar[:MAKS_ITEM]
+    per_game, rapi = {}, []
+    for x in keluar:
+        if per_game.get(x["u"], 0) >= MAKS_PER_GAME:
+            continue
+        per_game[x["u"]] = per_game.get(x["u"], 0) + 1
+        rapi.append(x)
+    log(f"dilewati: {lewat_kode} item di game ber-kode; {len(keluar) - len(rapi)} item kelebihan per game")
+    keluar = rapi[:MAKS_ITEM]
     with open("radar.json", "w", encoding="utf-8") as f:
         json.dump({"v": 1, "w": int(time.time()), "n": len(keluar), "items": keluar}, f, ensure_ascii=False, separators=(",", ":"))
     log(f"SELESAI: {len(keluar)} item siap klaim ditulis ke radar.json")

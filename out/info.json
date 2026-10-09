@@ -1,9 +1,0 @@
-{
- "dibuat": "2026-10-01T09:37:19.928623+00:00",
- "model": "openai/clip-vit-base-patch32",
- "jumlah_item": 1321,
- "jumlah_gagal": 0,
- "ragam_dijelaskan_pca": 0.5951,
- "dim_akhir": 32,
- "stub": false
-}

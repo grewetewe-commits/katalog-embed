@@ -9,7 +9,8 @@ Alur satu putaran:
                 ID item (tanpa userId/username). Kreator yang sudah dibaca dicatat sebagai hash.
   2. META     : nama, harga, status dijual, kreator item (dari hasil pencarian / catalog items details).
   3. MATA     : thumbnail item -> CLIP (openai/clip-vit-base-patch32) -> vektor 512. Plus warna dominan,
-                skor feminin/maskulin, tag gaya & atribut (zero-shot).
+                skor feminin/maskulin, tag gaya & atribut (zero-shot). Rev 24: warna v2 (manekin & bayangan dibuang,
+                palet 3 warna), gender 2D dari potongan pakaian, panen bundle sepatu (meta/sepatu.json).
   4. BELAJAR  : jaringan kecil dilatih supaya item yang MEMANG dipakai bersama dalam outfit nyata berdekatan,
                 dibanding item lain di slot yang sama (contrastive, negatif satu slot).
                 Diuji jujur dengan FITB (fill-in-the-blank) pada outfit yang TIDAK ikut dilatih.
@@ -328,6 +329,15 @@ class HttpStub:
 
     def get(self, url, params=None, coba=5):
         self.n += 1
+        if "search/items" in url and params.get("Keyword") in KATA_SEPATU:
+            r = random.Random(params.get("Keyword"))
+            return {"data": [{"itemType": "Bundle", "bundleType": 3, "id": 900000 + r.randint(0, 400), "name": f"stub shoes {k}",
+                              "price": r.choice([40, 60, None]), "creatorName": "stubco", "creatorHasVerifiedBadge": k % 2 == 0,
+                              "favoriteCount": 10 * k, "itemCreatedUtc": "2025-05-01T00:00:00Z", "itemRestrictions": [],
+                              "bundledItems": [{"id": 20000 + k, "type": "Asset", "assetType": 70},
+                                               {"id": 30000 + k, "type": "Asset", "assetType": 71},
+                                               {"id": 40000 + k, "type": "UserOutfit"}]} for k in range(12)],
+                    "nextPageCursor": None}
         if "search/items" in url:
             base = abs(hash(params.get("Keyword", ""))) % 5000
             return {"data": [self._item(10000 + (base + k) % 3000) for k in range(30)]}
@@ -1032,6 +1042,589 @@ def warna_dominan(rgba):
     return "%02x%02x%02x" % tuple(int(x) for x in m)
 
 
+# ---------------------------------------------------------------------------------------------
+# 3b. MATA WARNA v2 + gender 2D (rev 24, 10 Okt 2026)
+# ---------------------------------------------------------------------------------------------
+# Masalah v1 (warna_dominan): baju/celana 2D difoto katalog DIPAKAIKAN ke manekin abu (#acaca7), dan banyak baju 2D
+# hanya menutup sebagian badan (crop top, celana pendek) -> bin terbanyak = manekin (Pants 96%, Shirt 59% tercatat abu
+# manekin). Putih/pastel terbaca abu karena bayangan render (titik putih foto katalog ~#d0d0d0).
+# v2:
+#  - 2D (Shirt/Pants/TShirt): AREA PAKAIAN dipelajari dari gambar katalog itu sendiri (piksel yang warnanya berbeda-beda
+#    antar item; manekin & latar selalu sama). Di area itu piksel manekin dibuang lewat tanda warnanya (r~g, b 1-5% lebih
+#    rendah), bayangan dinormalkan memakai manekin itu sendiri. TShirt: latar kaos putih dibuang -> yang dibaca decal.
+#  - Semua item: piksel dikelompokkan (gelap / netral / 12 rona); kelompok terbesar (gelap & netral ditimbang 0,8) ->
+#    wakil = rata-rata 30% piksel paling terang di kelompok itu (sisi yang kena cahaya; kelompok gelap: median) ->
+#    dicerahkan menjaga rasio.
+#  - Palet <= 3 warna (porsi >= 8%) disimpan di UJUNG baris ekspor (kolom lama tidak bergeser).
+#  Dikalibrasi di Studio 10 Okt pada 1.119 item berlabel nama (sampel seimbang 12-22 item per warna per slot): cocok nama
+#  Shirt 24->63%, Pants 9->52%, Hat 52->78%, Hair 47->67%, LayerAtas 41->65%, LayerBawah 46->68% (ditimbang sebaran warna
+#  populasi: Shirt 27->76%, Pants 8->67%, Hat 63->88%, Hair 73->80%, LayerAtas 49->78%, LayerBawah 55->80%).
+#  Ekspor tetap lewat GERBANG per slot: v2 hanya dipakai bila pada data putaran itu lebih cocok dengan nama item.
+#  Gender 2D: CLIP juga melihat POTONGAN pakaian saja (tanpa manekin); dipakai per slot hanya bila AUC-nya terhadap kata
+#  di nama item lebih baik.
+WARNA_V2_VERSI = 1
+W2_TITIK_PUTIH = 210.0
+W2_KUANTIL = 0.70
+W2_BOBOT_NETRAL = 0.8
+W2_SLOT_2D = ("Shirt", "Pants", "TShirt")
+W2_SLOT_LEWAT = ("Face", "Alis")
+W2_BELAJAR_N = 150
+W2_UMUR_MASKER = 7 * 86400
+P_W2 = os.path.join(CACHE_DIR, "warna2.npz")
+P_E2D = os.path.join(CACHE_DIR, "emb2d.npz")
+KUNCI_W2 = _threading.Lock()
+
+
+def w2_manekin(rgb):
+    """rgb float (N,3) -> bool: piksel manekin abu katalog (r~g, b 1-5% lebih rendah). Diukur di Studio 10 Okt: manekin #abaca7."""
+    r, g, b = rgb[:, 0], rgb[:, 1], rgb[:, 2]
+    gs = np.maximum(g, 1e-6)
+    rg, bg = r / gs, b / gs
+    return (g >= 60) & (g <= 240) & (rg >= 0.98) & (rg <= 1.015) & (bg >= 0.95) & (bg <= 0.99)
+
+
+def w2_kaos(rgb):
+    """latar kaos putih di foto TShirt klasik"""
+    return (rgb.min(axis=1) >= 248) & ((rgb.max(axis=1) - rgb.min(axis=1)) <= 4)
+
+
+def w2_klaster(px):
+    """px float (N,3) -> label: 0 gelap (maks kanal < 60), 1 netral (saturasi < 0,12), 2..13 rona per 30 derajat."""
+    mx = px.max(axis=1)
+    mn = px.min(axis=1)
+    d = mx - mn
+    s = np.where(mx > 0, d / np.maximum(mx, 1e-6), 0.0)
+    r, g, b = px[:, 0], px[:, 1], px[:, 2]
+    dd = np.where(d > 0, d, 1.0)
+    h = np.where(mx == r, np.mod((g - b) / dd, 6.0), np.where(mx == g, (b - r) / dd + 2.0, (r - g) / dd + 4.0)) * 60.0
+    rona = 2 + np.floor(np.mod(h + 15.0, 360.0) / 30.0).astype(np.int64)
+    return np.where(mx < 60, 0, np.where(s < 0.12, 1, rona))
+
+
+def w2_wakil(px, q=W2_KUANTIL):
+    """rata-rata piksel di atas kuantil kecerahan q -> dicerahkan menjaga rasio (titik putih render ~210).
+    Kelompok gelap memakai median (q 0,5): kilap rambut/kain hitam jangan sampai menjadikannya abu."""
+    kc = px.max(axis=1)
+    urut = np.argsort(kc, kind="stable")
+    a = int(math.floor(len(px) * q))
+    m = px[urut[a:]].astype(np.float64).mean(axis=0)
+    m = np.minimum(255.0, np.floor(m + 0.5))
+    k = min(255.0 / W2_TITIK_PUTIH, 255.0 / max(1.0, float(m.max())))
+    v = np.minimum(255.0, np.floor(m * k + 0.5))
+    return "%02x%02x%02x" % tuple(int(x) for x in v)
+
+
+def w2_dari_px(px):
+    """-> (hex, palet 'hex:porsi,...'). hex '-' = tidak ada piksel pakaian (item transparan / kosong)."""
+    if len(px) < 30:
+        return "-", ""
+    lab = w2_klaster(px)
+    nilai, hitung = np.unique(lab, return_counts=True)
+    bobot = hitung * np.where(nilai <= 1, W2_BOBOT_NETRAL, 1.0)
+    utama = int(nilai[int(np.argmax(bobot))])
+    hx = w2_wakil(px[lab == utama], 0.5 if utama == 0 else W2_KUANTIL)
+    palet = []
+    for j in np.argsort(-hitung, kind="stable")[:3]:
+        porsi = hitung[j] / len(px)
+        if porsi < 0.08:
+            break
+        palet.append(f"{w2_wakil(px[lab == nilai[j]], 0.5 if nilai[j] == 0 else W2_KUANTIL)}:{int(round(100 * porsi))}")
+    return hx, ",".join(palet)
+
+
+class MataWarna2D:
+    """Masker area pakaian + peta bayangan per slot 2D, dipelajari dari foto katalog itu sendiri (bukan angka tebakan):
+    area pakaian = piksel yang warnanya berbeda-beda antar item (manekin & latar selalu sama). Disimpan di state supaya
+    putaran berikutnya langsung pakai; dipelajari ulang tiap W2_UMUR_MASKER."""
+
+    def __init__(self, st):
+        import base64
+        self.b64 = base64
+        self.st = st
+        self.data = {}  # slot -> (idx int64, S float32, waktu)
+        self.dipelajari = set()
+        simpan = st.get("mata_warna") or {}
+        if simpan.get("versi") == WARNA_V2_VERSI:
+            for sl in W2_SLOT_2D:
+                e = simpan.get(sl)
+                if not isinstance(e, dict):
+                    continue
+                try:
+                    idx = np.frombuffer(base64.b64decode(e["m"]), dtype=np.uint16).astype(np.int64)
+                    S = np.frombuffer(base64.b64decode(e["s"]), dtype=np.uint8).astype(np.float32) / 100.0
+                    if len(idx) == len(S) and len(idx) > 0 and int(idx.max()) < 22500:
+                        self.data[sl] = (idx, S, int(e.get("w", 0)))
+                except Exception:
+                    pass
+
+    def perlu_belajar(self, sl):
+        if sl in self.dipelajari:
+            return False
+        d = self.data.get(sl)
+        return d is None or time.time() - d[2] > W2_UMUR_MASKER
+
+    def siap(self, sl):
+        return sl in self.data
+
+    def belajar(self, sl, arrs):
+        """arrs: list array uint8 (150,150,4) item slot ini (>= W2_BELAJAR_N, beragam)."""
+        self.dipelajari.add(sl)
+        A = np.stack(arrs)
+        N = A.shape[0]
+        al = (A[..., 3] > 128).reshape(N, -1)
+        rgb = A[..., :3].reshape(N, -1, 3).astype(np.float32)
+        n = al.sum(axis=0).astype(np.float64)
+        fa = n / N
+        w = al[..., None]
+        s1 = (rgb * w).sum(axis=0, dtype=np.float64)
+        s2 = ((rgb * rgb) * w).sum(axis=0, dtype=np.float64).sum(axis=1)
+        nn = np.maximum(n, 1.0)
+        mu = s1 / nn[:, None]
+        sd = np.sqrt(np.maximum(s2 / nn - (mu * mu).sum(axis=1), 0.0))
+        idx = np.where((n > 0) & (fa >= 0.5) & (sd >= 64))[0]
+        if not (800 <= len(idx) <= 12000):
+            log(f"  WARNA v2: area pakaian {sl} tidak wajar ({len(idx)} piksel dari {N} gambar) -> slot ini tetap v1")
+            return False
+        if sl == "TShirt":
+            S = np.ones(len(idx), dtype=np.float32)
+        else:
+            sub = rgb[:, idx, :]
+            man = w2_manekin(sub.reshape(-1, 3)).reshape(N, len(idx)) & al[:, idx] & (sub[..., 1] <= 182)
+            nS = man.sum(axis=0)
+            gS = (sub[..., 1] * man).sum(axis=0, dtype=np.float64)
+            S = np.where(nS >= 5, np.clip(gS / np.maximum(nS, 1) / 172.0, 0.5, 1.2), 1.0)
+        s8 = np.clip(np.round(np.asarray(S, dtype=np.float64) * 100), 1, 255).astype(np.uint8)
+        self.data[sl] = (idx.astype(np.int64), s8.astype(np.float32) / 100.0, int(time.time()))
+        with KUNCI_ST:
+            mw = self.st.get("mata_warna")
+            if not isinstance(mw, dict) or mw.get("versi") != WARNA_V2_VERSI:
+                mw = {"versi": WARNA_V2_VERSI}
+                self.st["mata_warna"] = mw
+            mw[sl] = {"m": self.b64.b64encode(idx.astype(np.uint16).tobytes()).decode(),
+                      "s": self.b64.b64encode(s8.tobytes()).decode(), "w": int(time.time()), "n": int(N)}
+        log(f"  WARNA v2: area pakaian {sl} dipelajari dari {N} gambar: {len(idx)} piksel, bayangan {float(S.min()):.2f}-{float(S.max()):.2f}")
+        return True
+
+    def piksel(self, sl, arr):
+        """-> (px pakaian ternormalisasi float (n,3), indeks piksel pakaian) atau None (belum siap / ukuran beda)."""
+        d = self.data.get(sl)
+        if d is None or arr.shape != (150, 150, 4):
+            return None
+        idx, S, _ = d
+        flat = arr.reshape(-1, 4)[idx]
+        rgb = flat[:, :3].astype(np.float64)
+        buang = w2_kaos(rgb) if sl == "TShirt" else w2_manekin(rgb)
+        ok = (flat[:, 3] > 128) & ~buang
+        return rgb[ok] / S[ok].astype(np.float64)[:, None], idx[ok]
+
+    def potong(self, sl, arr, idx_ok):
+        """gambar pakaian saja (manekin & latar jadi putih), dipotong ke area pakaian, persegi -> untuk CLIP gender."""
+        from PIL import Image
+        kanvas = np.full((22500, 3), 255, dtype=np.uint8)
+        kanvas[idx_ok] = arr.reshape(-1, 4)[idx_ok, :3]
+        idx = self.data[sl][0]
+        ys, xs = idx // 150, idx % 150
+        im = kanvas.reshape(150, 150, 3)[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+        h, w = im.shape[:2]
+        sisi = max(h, w)
+        kotak = np.full((sisi, sisi, 3), 255, dtype=np.uint8)
+        kotak[(sisi - h) // 2:(sisi - h) // 2 + h, (sisi - w) // 2:(sisi - w) // 2 + w] = im
+        return Image.fromarray(kotak).resize((224, 224), Image.BICUBIC)
+
+
+def warna_v2_gambar(arr, sl, m2d):
+    """arr uint8 RGBA (H,W,4) -> (hex, palet, gambar_potong). hex None = belum bisa dihitung (area 2D belum dipelajari)."""
+    if sl in W2_SLOT_2D:
+        r = m2d.piksel(sl, arr) if m2d is not None else None
+        if r is None:
+            return None, "", None
+        px, idx_ok = r
+        hx, pal = w2_dari_px(px)
+        return hx, pal, (m2d.potong(sl, arr, idx_ok) if len(idx_ok) >= 30 else None)
+    a = arr.reshape(-1, 4)
+    hx, pal = w2_dari_px(a[a[:, 3] > 128][:, :3].astype(np.float64))
+    return hx, pal, None
+
+
+def muat_w2():
+    w2, pal, e2 = {}, {}, {}
+    if os.path.exists(P_W2):
+        try:
+            d = np.load(P_W2, allow_pickle=False)
+            if int(d["versi"]) == WARNA_V2_VERSI:
+                for i, h, p in zip(d["ids"].tolist(), d["w2"].tolist(), d["pal"].tolist()):
+                    w2[int(i)] = str(h)
+                    if p:
+                        pal[int(i)] = str(p)
+            log(f"warna v2 dimuat: {len(w2)} item")
+        except Exception as ex:
+            log("gagal muat warna v2:", ex)
+    if os.path.exists(P_E2D):
+        try:
+            d = np.load(P_E2D, allow_pickle=False)
+            if int(d["versi"]) == WARNA_V2_VERSI:
+                e = d["emb"].astype("float32")
+                for k, i in enumerate(d["ids"].tolist()):
+                    e2[int(i)] = e[k]
+            log(f"sidik jari potongan 2D dimuat: {len(e2)} item")
+        except Exception as ex:
+            log("gagal muat sidik jari potongan 2D:", ex)
+    return w2, pal, e2
+
+
+def simpan_w2(w2, pal, e2):
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    with KUNCI_W2:
+        ids = sorted(w2)
+        hx = [w2[i] for i in ids]
+        pl = [pal.get(i, "") for i in ids]
+        ids2 = sorted(e2)
+        E = np.array([e2[i] for i in ids2], dtype="float16") if ids2 else np.zeros((0, 512), dtype="float16")
+    np.savez_compressed(P_W2 + ".tmp.npz", versi=np.array(WARNA_V2_VERSI), ids=np.array(ids, dtype="int64"),
+                        w2=np.array(hx, dtype="U6"), pal=np.array(pl, dtype="U64"))
+    os.replace(P_W2 + ".tmp.npz", P_W2)
+    np.savez_compressed(P_E2D + ".tmp.npz", versi=np.array(WARNA_V2_VERSI), ids=np.array(ids2, dtype="int64"), emb=E)
+    os.replace(P_E2D + ".tmp.npz", P_E2D)
+
+
+def ids_ekspor_lalu():
+    """item yang diekspor putaran lalu (file model/ di checkout repo) = prioritas pertama warna v2."""
+    out = set()
+    for s in range(SHARD_ITEM):
+        try:
+            out.update(int(k) for k in json.load(open(f"model/item_{s}.json", encoding="utf-8")).get("d", {}))
+        except Exception:
+            pass
+    return out
+
+
+def mata_warna(http, st, embedder, emb, w2, pal, e2, m2d, batas, label="WARNA-v2"):
+    """Unduh thumbnail item yang BELUM punya warna v2 -> warna v2 + palet (+ sidik jari potongan pakaian untuk 2D).
+    Urutan: item yang diekspor putaran lalu dulu, 2D dulu (paling rusak), lalu layered/sepatu, lalu sisanya."""
+    from PIL import Image
+    from concurrent.futures import ThreadPoolExecutor
+    with KUNCI_ST:
+        outfit = list(st["outfit"].values())
+        daftar_meta = list(st["meta"].items())
+    slot_of = {}
+    for s in outfit:
+        for i, sl in slot_item_seed(s):
+            slot_of.setdefault(i, sl)
+    for k, m in daftar_meta:
+        sl = ASET_KE_SLOT.get(m.get("t"))
+        if sl:
+            slot_of.setdefault(int(k), sl)
+    lalu = ids_ekspor_lalu()
+    gagal = st.get("gagal_thumb", {})
+
+    def urut(i):
+        # acak-tetap di dalam kelompok: gambar pertama tiap slot 2D dipakai BELAJAR area pakaian -> harus beragam
+        # (urut ID = item paling tua dulu, gaya fotonya bisa beda)
+        sl = slot_of.get(i)
+        return (0 if i in lalu else 1, 0 if sl in W2_SLOT_2D else (1 if sl in ("LayerAtas", "LayerBawah", "Sepatu") else 2),
+                (i * 2654435761) % 4294967296)
+    target = sorted((i for i in list(emb) if i in slot_of and slot_of[i] not in W2_SLOT_LEWAT and i not in w2
+                     and str(i) not in gagal), key=urut)
+    log(f"{label}: {len(target)} item belum punya warna v2 (sudah {len(w2)}) | area 2D siap: "
+        f"{', '.join(sl for sl in W2_SLOT_2D if m2d.siap(sl)) or '-'}")
+    kumpul = {sl: [] for sl in W2_SLOT_2D if m2d.perlu_belajar(sl)}  # gambar untuk belajar area pakaian
+    tunda = {sl: [] for sl in W2_SLOT_2D}  # item 2D yang menunggu area pakaian dipelajari
+    md5_hitung = {}
+    n_ok = n_2d = n_kosong = 0
+    t_log = time.time()
+
+    def proses(i, arr, potong_list):
+        nonlocal n_ok, n_2d, n_kosong
+        sl = slot_of.get(i)
+        hx, pl, crop = warna_v2_gambar(arr, sl, m2d)
+        if hx is None:
+            return False
+        with KUNCI_W2:
+            w2[i] = hx
+            if pl:
+                pal[i] = pl
+        n_ok += 1
+        n_kosong += hx == "-"
+        if crop is not None:
+            potong_list.append((i, crop))
+            n_2d += 1
+        return True
+
+    def benamkan(potong_list):
+        for b0 in range(0, len(potong_list), 32):
+            bag = potong_list[b0:b0 + 32]
+            f = embedder.gambar([c for _, c in bag])
+            with KUNCI_W2:
+                for k, (i, _) in enumerate(bag):
+                    e2[i] = f[k].astype("float32")
+
+    def ambil(e):
+        return e.get("targetId"), http.gambar(e["imageUrl"])
+
+    with ThreadPoolExecutor(max_workers=8) as kolam:
+        for a in range(0, len(target), 50):
+            if time.time() > batas:
+                log(f"  {label}: batas waktu, sisanya putaran berikutnya")
+                break
+            potong_ids = target[a:a + 50]
+            js = http.get("https://thumbnails.roblox.com/v1/assets", {"assetIds": ",".join(map(str, potong_ids)),
+                          "returnPolicy": "PlaceHolder", "size": "150x150", "format": "Png", "isCircular": "false"})
+            siap = [e for e in (js or {}).get("data", []) or [] if e.get("state") == "Completed" and e.get("imageUrl")]
+            potong_list = []
+            for i, b in kolam.map(ambil, siap):
+                if not b or not isinstance(i, int):
+                    continue
+                h = hashlib.md5(b).hexdigest()
+                md5_hitung[h] = md5_hitung.get(h, 0) + 1
+                if md5_hitung[h] >= 4:
+                    continue  # gambar pengganti (placeholder) -> bukan warna item
+                try:
+                    arr = np.asarray(Image.open(io.BytesIO(b)).convert("RGBA"))
+                except Exception:
+                    continue
+                sl = slot_of.get(i)
+                if sl in kumpul and arr.shape == (150, 150, 4):
+                    kumpul[sl].append(arr)
+                    if not m2d.siap(sl):
+                        tunda[sl].append((i, arr))
+                        if len(kumpul[sl]) >= W2_BELAJAR_N:
+                            m2d.belajar(sl, kumpul.pop(sl))
+                            for i2, arr2 in tunda[sl]:
+                                proses(i2, arr2, potong_list)
+                            tunda[sl] = []
+                        continue
+                    if len(kumpul[sl]) >= W2_BELAJAR_N:
+                        m2d.belajar(sl, kumpul.pop(sl))
+                proses(i, arr, potong_list)
+            benamkan(potong_list)
+            if time.time() - t_log > 240:
+                t_log = time.time()
+                log(f"  {label}: {a + len(potong_ids)}/{len(target)} | warna v2 {n_ok} (potongan 2D {n_2d}, kosong {n_kosong})")
+                simpan_w2(w2, pal, e2)
+    # sisa: slot 2D yang gambarnya belum cukup untuk belajar -> pakai area lama bila ada, kalau tidak tetap v1
+    sisa = []
+    for sl, L in tunda.items():
+        for i, arr in L:
+            proses(i, arr, sisa)
+    benamkan(sisa)
+    simpan_w2(w2, pal, e2)
+    log(f"{label} selesai: +{n_ok} warna v2 (potongan 2D {n_2d}, tanpa piksel pakaian {n_kosong}) | total {len(w2)}")
+
+
+# --- tabel kelas warna (SAMA dengan alat ukur beku revisi 24) -> gerbang v1 vs v2 per slot
+KATA_WARNA_NAMA = {"black": "hitam", "hitam": "hitam", "white": "putih", "putih": "putih", "grey": "abu", "gray": "abu",
+                   "abu": "abu", "red": "merah", "merah": "merah", "pink": "pink", "orange": "oranye", "oranye": "oranye",
+                   "brown": "coklat", "coklat": "coklat", "cokelat": "coklat", "yellow": "kuning", "kuning": "kuning",
+                   "green": "hijau", "hijau": "hijau", "blue": "biru", "biru": "biru", "purple": "ungu", "ungu": "ungu",
+                   "beige": "krem", "cream": "krem", "krem": "krem", "tan": "krem"}
+
+
+def kelas_warna_hex(h):
+    import colorsys
+    if not isinstance(h, str) or len(h) != 6:
+        return None
+    try:
+        r, g, b = [int(h[k:k + 2], 16) / 255 for k in (0, 2, 4)]
+    except ValueError:
+        return None
+    H, S, V = colorsys.rgb_to_hsv(r, g, b)
+    H *= 360
+    if V < 0.22:
+        return "hitam"
+    if S < 0.15:
+        return "putih" if V > 0.80 else "abu"
+    if 20 <= H < 50 and S < 0.40 and V > 0.70:
+        return "krem"
+    if H < 15 or H >= 345:
+        return "pink" if (S < 0.5 and V > 0.7) else "merah"
+    if H < 40:
+        return "coklat" if V < 0.6 else "oranye"
+    if H < 70:
+        return "kuning"
+    if H < 170:
+        return "hijau"
+    if H < 255:
+        return "biru"
+    if H < 290:
+        return "ungu"
+    return "pink"
+
+
+def gerbang_warna(st, ids, slot_of, warna, w2):
+    """Per slot: v2 dipakai hanya bila lebih cocok dengan warna yang disebut nama item (>= 30 item berlabel, unggul
+    >= 3 poin). Item tanpa v2 di slot yang lolos tetap memakai v1."""
+    n = collections.Counter()
+    ok1 = collections.Counter()
+    ok2 = collections.Counter()
+    tot = collections.Counter()
+    punya = collections.Counter()
+    for i in ids:
+        sl = slot_of.get(i)
+        tot[sl] += 1
+        h2 = w2.get(i)
+        if not h2:
+            continue
+        punya[sl] += 1
+        m = st["meta"].get(str(i))
+        if not m:
+            continue
+        ws = {KATA_WARNA_NAMA[w] for w in re.findall(r"[a-z]+", (m.get("n") or "").lower()) if w in KATA_WARNA_NAMA}
+        if len(ws) != 1:
+            continue
+        w = next(iter(ws))
+        n[sl] += 1
+        ok1[sl] += kelas_warna_hex(warna.get(i, "")) == w
+        ok2[sl] += kelas_warna_hex(h2) == w
+    pakai, lap = {}, {}
+    for sl in sorted(tot, key=lambda x: str(x)):
+        if sl is None:
+            continue
+        lolos = n[sl] >= 30 and ok2[sl] >= ok1[sl] + 0.03 * n[sl]
+        if lolos:
+            pakai[sl] = True
+        lap[sl] = {"n_label": n[sl], "cocok_v1": round(ok1[sl] / n[sl], 3) if n[sl] else None,
+                   "cocok_v2": round(ok2[sl] / n[sl], 3) if n[sl] else None,
+                   "cakupan_v2": round(punya[sl] / max(1, tot[sl]), 3), "pakai_v2": lolos}
+    log("WARNA v2 gerbang: " + " | ".join(f"{sl} {v['cocok_v1']}->{v['cocok_v2']} (n {v['n_label']}, cakupan "
+                                            f"{v['cakupan_v2']}) {'PAKAI' if v['pakai_v2'] else 'tetap v1'}"
+                                            for sl, v in lap.items() if v["n_label"]))
+    return pakai, lap
+
+
+def gender_2d(embedder, ids_zs, slot_of, p_fem, e2, st):
+    """Gender baju/celana/kaos 2D: CLIP pada POTONGAN pakaian (tanpa manekin). Per slot dipilih yang AUC-nya terhadap
+    kata di nama item paling baik (asli / potongan / rata-rata); potongan harus unggul >= 0,02. p_fem diubah di tempat."""
+    lap = {}
+    for sl in W2_SLOT_2D:
+        idx = [k for k, i in enumerate(ids_zs) if slot_of.get(i) == sl and i in e2]
+        if len(idx) < 50:
+            lap[sl] = {"n": len(idx), "pakai": "asli"}
+            continue
+        E = np.stack([e2[ids_zs[k]] for k in idx]).astype("float32")
+        E /= np.maximum(np.linalg.norm(E, axis=1, keepdims=True), 1e-6)
+        noun = SLOT_NOUN.get(sl, "item")
+        tf = embedder.teks([p.format(s=noun) for p in PROMPT_FEM]).mean(axis=0)
+        tm = embedder.teks([p.format(s=noun) for p in PROMPT_MASC]).mean(axis=0)
+        tf /= np.linalg.norm(tf)
+        tm /= np.linalg.norm(tm)
+        pc = 1 / (1 + np.exp(-(100 * E @ tf - 100 * E @ tm)))
+        po = p_fem[idx].astype("float64")
+        calon = {"asli": po, "potongan": pc, "rata": (po + pc) / 2}
+        lab = []
+        for k in idx:
+            m = st["meta"].get(str(ids_zs[k]))
+            lab.append(gender_label_nama(m.get("n")) if m else None)
+        nilai = {}
+        for nm, p in calon.items():
+            pos = [float(p[j]) for j, l in enumerate(lab) if l == 1]
+            neg = [float(p[j]) for j, l in enumerate(lab) if l == 0]
+            nilai[nm] = auc(pos, neg)
+        pilih = "asli"
+        if nilai["asli"] is not None:
+            for nm in ("potongan", "rata"):
+                if nilai[nm] is not None and nilai[nm] >= nilai["asli"] + 0.02 and nilai[nm] > nilai.get(pilih, 0):
+                    pilih = nm
+        if pilih != "asli":
+            p_fem[idx] = calon[pilih].astype(p_fem.dtype)
+        lap[sl] = {"n": len(idx), "auc": {k: (round(v, 3) if v is not None else None) for k, v in nilai.items()},
+                   "n_label": [sum(1 for l in lab if l == 1), sum(1 for l in lab if l == 0)], "pakai": pilih}
+    log("GENDER 2D: " + " | ".join(f"{sl} {v.get('auc')} -> {v['pakai']}" for sl, v in lap.items()))
+    return lap
+
+
+# ---------------------------------------------------------------------------------------------
+# 3c. SEPATU (bundle sepatu: 2 aksesori kiri/kanan, dibeli sebagai bundle) -- rev 24
+# ---------------------------------------------------------------------------------------------
+# Baseline 10 Okt: 0% kartu memakai sepatu karena otak tidak pernah mengenal bundle sepatu. Pencarian katalog v2
+# mengembalikan bundle beserta isinya (bundledItems: LeftShoeAccessory 70 / RightShoeAccessory 71) dalam satu permintaan.
+KATA_SEPATU = ["shoes", "sneakers", "boots", "heels", "sandals", "loafers", "platform shoes", "slippers", "combat boots",
+               "high tops", "mary janes", "trainers", "running shoes", "skate shoes", "chunky sneakers", "cowboy boots",
+               "knee high boots", "ankle boots", "flip flops", "clogs", "y2k shoes", "goth boots", "black shoes",
+               "white shoes", "pink shoes", "brown boots", "red shoes", "blue sneakers", "platform boots", "school shoes"]
+MAKS_CARI_SEPATU = 30
+MAKS_SEPATU = 8000
+
+
+def panen_sepatu(http, st, batas):
+    sp = st.setdefault("sepatu", {})
+    kursor = int(st.get("sepatu_kursor", 0)) % len(KATA_SEPATU)
+    n_req = n_baru = n_lihat = 0
+    sekarang = int(time.time())
+    k = 0
+    for k in range(len(KATA_SEPATU)):
+        if n_req >= MAKS_CARI_SEPATU or time.time() > batas:
+            break
+        kw = KATA_SEPATU[(kursor + k) % len(KATA_SEPATU)]
+        cur = None
+        for _ in range(2):
+            if n_req >= MAKS_CARI_SEPATU or time.time() > batas:
+                break
+            p = {"Keyword": kw, "Limit": "120"}
+            if cur:
+                p["Cursor"] = cur
+            js = http.get("https://catalog.roblox.com/v2/search/items/details", p, coba=2)
+            n_req += 1
+            if not isinstance(js, dict):
+                break
+            for e in js.get("data") or []:
+                if not isinstance(e, dict) or e.get("itemType") != "Bundle" or e.get("bundleType") != 3:
+                    continue
+                kiri = kanan = None
+                for b in e.get("bundledItems") or []:
+                    if not isinstance(b, dict) or b.get("type") != "Asset":
+                        continue
+                    try:
+                        if b.get("assetType") == 70:
+                            kiri = int(b["id"])
+                        elif b.get("assetType") == 71:
+                            kanan = int(b["id"])
+                    except Exception:
+                        pass
+                try:
+                    bid = int(e["id"])
+                except Exception:
+                    continue
+                if not kiri or not kanan:
+                    continue
+                n_lihat += 1
+                price = e.get("price")
+                restr = e.get("itemRestrictions") or []
+                bisa = isinstance(price, (int, float)) and price >= 0
+                if any(r in ("Limited", "LimitedUnique") for r in restr):
+                    bisa = False
+                if "Collectible" in restr and not (e.get("unitsAvailableForConsumption") or 0) > 0:
+                    bisa = False
+                rec = {"n": str(e.get("name") or "")[:80], "p": int(price) if isinstance(price, (int, float)) else -1,
+                       "s": 1 if bisa else 0, "c": str(e.get("creatorName") or "")[:40],
+                       "v": 1 if e.get("creatorHasVerifiedBadge") else 0, "L": kiri, "R": kanan, "w": sekarang}
+                fav = e.get("favoriteCount")
+                if isinstance(fav, int) and fav >= 0:
+                    rec["f"] = fav
+                dibuat = e.get("itemCreatedUtc")
+                if isinstance(dibuat, str) and len(dibuat) >= 10:
+                    try:
+                        rec["d"] = int(datetime.strptime(dibuat[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc).timestamp() // 86400)
+                    except Exception:
+                        pass
+                if str(bid) not in sp:
+                    n_baru += 1
+                sp[str(bid)] = rec
+                # sepatu kiri masuk meta -> MATA memberinya sidik jari visual, warna & gender seperti item lain
+                with KUNCI_ST:
+                    m = st["meta"].get(str(kiri))
+                    if not m or m.get("t") != 70:
+                        st["meta"][str(kiri)] = {"n": rec["n"], "p": -1, "s": 0, "c": rec["c"], "t": 70, "w": sekarang}
+            cur = js.get("nextPageCursor")
+            if not cur:
+                break
+    st["sepatu_kursor"] = (kursor + k + 1) % len(KATA_SEPATU)
+    if len(sp) > MAKS_SEPATU:
+        for b, _ in sorted(sp.items(), key=lambda kv: kv[1].get("w", 0))[:len(sp) - MAKS_SEPATU]:
+            sp.pop(b, None)
+    log(f"SEPATU: {n_req} pencarian, {n_lihat} bundle sepatu terlihat, {n_baru} baru | total {len(sp)}")
+    return {"cari": n_req, "lihat": n_lihat, "baru": n_baru, "total": len(sp)}
+
+
 def mata(http, st, embedder, emb, warna, batas, gagal_baru, label="MATA"):
     """Thumbnail -> CLIP untuk item yang belum punya embedding. Aman jalan di thread (tidak menulis st)."""
     from PIL import Image
@@ -1693,10 +2286,18 @@ def info_modern(s, meta, tren):
     return basic_inti, n_rob, sm
 
 
-def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
+def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik, w2pak=None):
     versi = int(time.time())
     nama_gaya, p_gaya, nama_atr, p_atr, p_fem, ids_zs = zs
     pos_zs = {i: k for k, i in enumerate(ids_zs)}
+    # rev24: warna v2 dipakai per slot HANYA bila lolos gerbang (lebih cocok dengan nama item daripada v1)
+    w2, pal2, lap_g2d = w2pak if w2pak else ({}, {}, {})
+    w2_pakai, lap_w2 = gerbang_warna(st, ids_zs, slot_of, warna, w2)
+
+    def hex_of(i):
+        if w2_pakai.get(slot_of.get(i)) and i in w2:
+            return "" if w2[i] == "-" else w2[i]
+        return warna.get(i, "")
     fz = idx_of = None
     if hasil_latih:
         fz, idx_of = hasil_latih["fz"], hasil_latih["idx_of"]
@@ -1710,9 +2311,15 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
         if not bi0 and nr0 < 2:  # v7: item outfit yang bisa masuk bank didahulukan (dulu: semua outfit, termasuk "noob")
             di_bank.update(ids_seed(s0))
     diminta = set(int(k) for k in st.get("diminta", {}))
+    sepatu_kiri = set()
+    for r in (st.get("sepatu") or {}).values():
+        try:
+            sepatu_kiri.add(int(r["L"]))
+        except Exception:
+            pass
     def prioritas(i):
         m = st["meta"].get(str(i)) or {}
-        return (0 if (i in di_bank or i in diminta) else 1, 0 if m.get("s") == 1 else 1, -tren.get(i, 0))
+        return (0 if (i in di_bank or i in diminta or i in sepatu_kiri) else 1, 0 if m.get("s") == 1 else 1, -tren.get(i, 0))
     ids_kirim = set(sorted(ids_zs, key=prioritas)[:MAKS_ITEM_EKSPOR])
     # desain v1: baris dihitung untuk SEMUA item (belajar memakai semua), yang dikirim tetap ids_kirim
     baris_of = {}
@@ -1733,7 +2340,7 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
                 a_bits |= 1 << 9   # rambut panjang
             elif pr <= 0.35:
                 a_bits |= 1 << 10  # rambut pendek
-        baris = [SLOT_KODE.get(slot_of.get(i, ""), 0), int(round(float(p_fem[k]) * 100)), warna.get(i, ""), g_bits, a_bits]
+        baris = [SLOT_KODE.get(slot_of.get(i, ""), 0), int(round(float(p_fem[k]) * 100)), hex_of(i), g_bits, a_bits]
         if fz is not None and i in idx_of:
             baris += [int(round(float(x) * 127)) for x in fz[idx_of[i]]]
         baris_of[i] = baris
@@ -1752,6 +2359,8 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
             continue
         if len(baris) == 5 + DIM:
             baris = baris + [pop_of.get(i, 0)]  # desain v1: popularitas di kalangan desainer (log1p(frek) x100)
+        if len(baris) == 5 + DIM + 1 and w2_pakai.get(slot_of.get(i)) and pal2.get(i):
+            baris = baris + [pal2[i]]  # rev24: palet <= 3 warna "hex:porsi%,..." (Luau: baris[39])
         shard[i % SHARD_ITEM][str(i)] = baris
     for s in range(SHARD_ITEM):
         tulis_json(f"model/item_{s}.json", {"versi": versi, "d": shard[s]})
@@ -1860,6 +2469,18 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
         return (0 if v[1] else 1, v[2], bid)
     peta_a = {k: sorted(v, key=urut_bundle)[:6] for k, v in (pbadan.get("a") or {}).items() if v}
     tulis_json("meta/badan.json", {"versi": versi, "a": peta_a, "b": bb})
+    # --- rev24 sepatu: [nama, harga, bisaDibeli, kreator, verified, favorit, asetKiri, asetKanan, hex, feminin 0-100
+    #     (-1 = belum diukur), hariDibuat]. Dibeli sebagai BUNDLE (server tetap cek live).
+    bsep = {}
+    for bid, r in (st.get("sepatu") or {}).items():
+        try:
+            kiri, kanan = int(r["L"]), int(r["R"])
+        except Exception:
+            continue
+        kz = pos_zs.get(kiri)
+        bsep[str(bid)] = [r.get("n", ""), r.get("p", -1), r.get("s", 0), r.get("c", ""), r.get("v", 0), r.get("f", 0), kiri, kanan,
+                          hex_of(kiri), int(round(float(p_fem[kz]) * 100)) if kz is not None else -1, r.get("d", 0)]
+    tulis_json("meta/sepatu.json", {"versi": versi, "b": bsep})
 
     # --- validasi gender visual memakai label kata di nama item (bukan klaim, angka)
     pos, neg = [], []
@@ -1886,6 +2507,7 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
         "n_dasar_lokal": sum(1 for x in st["outfit"].values() if x.get("S") == "lokal"),
         "n_diminta_pemain": len(st.get("diminta", {})),
         "badan": True, "n_peta_badan": len(peta_a), "n_bundle_badan": len(bb),
+        "sepatu": bool(bsep), "n_sepatu": len(bsep), "warna_v2": lap_w2, "gender_2d": lap_g2d, "palet_kolom_luau": 39,
         "desain": desain,
         "durasi_menit": round((time.time() - T0) / 60, 1),
     }
@@ -1896,6 +2518,22 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik):
     info["riwayat"] = st["riwayat"][-12:]
     tulis_json("model/info.json", info)
     return info
+
+
+def laporan_rev24(info, f):
+    out = ["## Mata warna v2 (rev 24): cocok dengan warna yang disebut nama item", "",
+           "| Slot | Item berlabel | v1 | v2 | Cakupan v2 | Dipakai |", "|---|---|---|---|---|---|"]
+    for sl, v in (info.get("warna_v2") or {}).items():
+        if v.get("n_label"):
+            out.append(f"| {sl} | {v['n_label']} | {f(v['cocok_v1'])} | {f(v['cocok_v2'])} | {f(v['cakupan_v2'])} | "
+                       f"{'v2' if v['pakai_v2'] else 'v1'} |")
+    out += ["", "- v2 dipakai per slot hanya bila >= 30 item berlabel & unggul >= 3 poin. Cakupan = porsi item slot yang sudah diukur ulang.",
+            "", "## Gender baju 2D (CLIP pada potongan pakaian tanpa manekin)", ""]
+    for sl, v in (info.get("gender_2d") or {}).items():
+        out.append(f"- {sl}: {v.get('n', 0)} item | AUC {json.dumps(v.get('auc'))} | label wanita/pria {v.get('n_label')} | dipakai: **{v.get('pakai')}**")
+    sp = (info.get("panen") or {}).get("sepatu") or {}
+    out += ["", f"## Sepatu (bundle): {info.get('n_sepatu', 0)} bundle di meta/sepatu.json | putaran ini: {json.dumps(sp)}", ""]
+    return out
 
 
 def laporan(info, http):
@@ -1933,6 +2571,7 @@ def laporan(info, http):
         "## Gender visual (zero-shot CLIP) dicek dengan kata di nama item",
         f"- AUC = {f(info['auc_gender_vs_nama'])} pada {info['n_label_gender'][0]} item berlabel wanita & {info['n_label_gender'][1]} pria",
         "  (0,5 = acak; >= 0,80 baru dipakai keras oleh server)", "",
+    ] + laporan_rev24(info, f) + [
         "_Catatan jujur: angka ini mengukur apakah model menangkap pola outfit buatan manusia. Enak-tidaknya hasil di mata pemain tetap diuji lewat penilaian pemilik._",
     ]
     open("LAPORAN_OTAK.md", "w", encoding="utf-8").write("\n".join(baris) + "\n")
@@ -2130,6 +2769,8 @@ def main():
     http = HttpStub() if STUB else Http()
     embedder = EmbedderStub() if STUB else EmbedderCLIP()
     emb, warna = muat_emb()
+    w2, pal2, e2d = muat_w2()  # rev24: warna v2 + palet + sidik jari potongan pakaian 2D
+    m2d = MataWarna2D(st)
     muat_state_v5(st)
     ambil_dari_roblox(st)
     # 0) PETA BADAN di utas sendiri (endpoint katalog /v1/assets, ringan: <= MAKS_BADAN_PER_PUTARAN permintaan)
@@ -2150,7 +2791,13 @@ def main():
     meta.utas.start()
     # 2) MATA-1 paralel (host thumbnails): item lama yang belum punya sidik jari visual
     gagal_baru = {}
-    mata1 = threading.Thread(target=mata, args=(http, st, embedder, emb, warna, T0 + (MENIT_GAYA + 10) * 60, gagal_baru, "MATA-1"), daemon=True)
+    def mata1_lalu_warna():
+        mata(http, st, embedder, emb, warna, T0 + (MENIT_GAYA + 10) * 60, gagal_baru, "MATA-1")
+        try:  # rev24: sisa waktu utas thumbnail dipakai mengukur ulang warna (v2) item lama
+            mata_warna(http, st, embedder, emb, w2, pal2, e2d, m2d, T0 + (MENIT_GAYA + 10) * 60, "WARNA-v2")
+        except Exception as ex:
+            log("WARNA-v2 gagal (dilewati):", repr(ex)[:300])
+    mata1 = threading.Thread(target=mata1_lalu_warna, daemon=True)
     mata1.start()
     # 3) PANEN GAYA (host avatar): outfit pemain sungguhan dari komunitas fashion, dinilai CLIP (+ Gemini)
     stat_gaya = {}
@@ -2180,11 +2827,23 @@ def main():
         except Exception as ex:
             log("KREATOR gagal (dilewati):", repr(ex)[:200])
     simpan_state(st)
+    # rev24: SEPATU (bundle) -- setelah antrean META & KREATOR supaya kuota katalog dipakai harga dulu
+    stat_sepatu = {}
+    try:
+        stat_sepatu = panen_sepatu(http, st, time.time() + 6 * 60)
+    except Exception as ex:
+        log("SEPATU gagal (dilewati):", repr(ex)[:200])
+    simpan_state(st)
     mata1.join(timeout=max(0, T0 + (MENIT_GAYA + 10) * 60 - time.time()))
     log(f"META selesai: {meta.ringkas()} | {http.ringkas()}")
     # 5) MATA-2: item baru (outfit gaya + item yang diminta pemain yang kini sudah punya meta)
     mata(http, st, embedder, emb, warna, time.time() + 15 * 60, gagal_baru, "MATA-2")
     st.setdefault("gagal_thumb", {}).update(gagal_baru)
+    if not mata1.is_alive():  # item baru putaran ini (outfit gaya, sepatu, permintaan pemain) ikut diukur warna v2
+        try:
+            mata_warna(http, st, embedder, emb, w2, pal2, e2d, m2d, time.time() + 6 * 60, "WARNA-v2b")
+        except Exception as ex:
+            log("WARNA-v2b gagal (dilewati):", repr(ex)[:300])
     simpan_state(st)
     slot_of = slot_semua_item(st)
     ids_zs = sorted(i for i in emb if i in slot_of)
@@ -2197,14 +2856,23 @@ def main():
             st["badan"] = hasil_badan["badan"]
             for k in hasil_badan.get("selesai", []):
                 st.get("badan_diminta", {}).pop(k, None)
+        simpan_state(st)  # rev24: peta badan dulu tidak pernah tersimpan (simpan terakhir terjadi sebelum digabung)
     X = np.stack([emb[i] for i in ids_zs]).astype("float32")
     X /= np.linalg.norm(X, axis=1, keepdims=True)
     nama_gaya, p_gaya, nama_atr, p_atr, p_fem = zero_shot(embedder, ids_zs, X, slot_of)
+    lap_g2d = {}
+    try:
+        lap_g2d = gender_2d(embedder, ids_zs, slot_of, p_fem, e2d, st)
+    except Exception as ex:
+        log("GENDER 2D gagal (dilewati):", repr(ex)[:300])
     hasil_latih = latih(st, emb, slot_of)
     statistik.update(stat_gaya)
     statistik["meta"] = meta.ringkas()
-    info = ekspor(st, emb, warna, slot_of, (nama_gaya, p_gaya, nama_atr, p_atr, p_fem, ids_zs), hasil_latih, statistik)
+    statistik["sepatu"] = stat_sepatu
+    info = ekspor(st, emb, warna, slot_of, (nama_gaya, p_gaya, nama_atr, p_atr, p_fem, ids_zs), hasil_latih, statistik,
+                  (w2, pal2, lap_g2d))
     laporan(info, http)
+    simpan_state(st)  # rev24: riwayat perkembangan otak (ditulis di ekspor) & peta badan ikut tersimpan
     log(f"SELESAI {info['durasi_menit']} menit: bank {info['n_bank']} outfit, {info['n_item']} item, layak={info['layak']}, AUC gender {info['auc_gender_vs_nama']} | {http.ringkas()}")
 
 

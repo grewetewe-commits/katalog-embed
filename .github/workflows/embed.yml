@@ -53,8 +53,8 @@ jobs:
           MENIT_PANEN: ${{ github.event.inputs.menit_panen || '75' }}
           HF_HUB_DISABLE_TELEMETRY: "1"
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           UNIVERSE_ID: "10753176264"
+        shell: bash
         run: python otak.py 2>&1 | tee otak_log.txt
 
       - name: Simpan sidik jari ke cache
@@ -65,7 +65,7 @@ jobs:
           key: emb-v2-${{ github.run_id }}
 
       - name: Simpan hasil ke repo
-        if: always()
+        if: success()
         run: |
           tail -n 120 otak_log.txt > LOG_TERAKHIR.txt 2>/dev/null || echo "log tidak ada" > LOG_TERAKHIR.txt
           git config user.name "github-actions[bot]"
@@ -77,7 +77,7 @@ jobs:
             echo "Tidak ada perubahan hasil."
           else
             git commit -m "Otak: panen + model kecocokan (putaran otomatis)"
-            git pull --rebase origin main || true
+            git pull --rebase origin main
             git push
           fi
 
@@ -87,6 +87,6 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          for f in model/info.json model/item_{0..7}.json meta/harga_{0..7}.json bank/outfit_{0..3}.json; do
+          for f in model/info.json model/item_{0..7}.json meta/harga_{0..7}.json bank/outfit_{0..3}.json meta/badan.json meta/sepatu.json; do
             curl -s -m 20 -o /dev/null -w "%{http_code} $f\n" "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/$f" || true
           done

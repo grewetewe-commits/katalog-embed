@@ -65,8 +65,8 @@ MAKS_OUTFIT_PER_KREATOR = 8
 # hanya kreator UGC (yang sering memakai kostum pajangan barangnya sendiri -> hasil terasa jelek/aneh)
 MENIT_GAYA = float(os.environ.get("MENIT_GAYA", "40") or 40)
 MAKS_PEMAIN_GAYA = int(os.environ.get("MAKS_PEMAIN_GAYA", "6000") or 6000)
-GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
-MAKS_GEMINI = int(os.environ.get("MAKS_GEMINI", "700") or 700)
+GEMINI_KEY = ""  # Rp0: tidak pernah membaca/memakai secret API generatif
+MAKS_GEMINI = 0
 KATA_GRUP_GAYA = """aesthetic outfits|outfit ideas|clothing store|clothes store|fashion|streetwear|y2k clothing|baddie|preppy|
 emo clothing|kawaii clothing|cottagecore|grunge clothing|soft girl|e-girl|e-boy|korean fashion|old money|techwear|
 gothic clothing|vintage clothing|alt fashion|layered clothing|3d clothing|aesthetic clothes|cute outfits|drip|
@@ -75,7 +75,7 @@ PROMPT_BAGUS = ["a stylish fashionable roblox avatar wearing a cohesive trendy o
                 "a well dressed roblox character with matching clothes, hair and accessories",
                 "an aesthetic roblox avatar with a coordinated color palette"]
 PROMPT_JELEK = ["a messy roblox avatar wearing random mismatched items",
-                "a roblox avatar in a silly joke costume",
+                "a roblox avatar with visually conflicting shapes and colors",
                 "a plain default roblox avatar with no style",
                 "a cluttered roblox avatar covered in too many accessories"]
 KATA_PER_PUTARAN = 160
@@ -644,9 +644,7 @@ def panen(http, st, antre):
 # 1b. PANEN GAYA (v5) + NILAI ESTETIKA
 # ---------------------------------------------------------------------------------------------
 class Penilai:
-    """Menilai foto avatar 0-100. CLIP zero-shot selalu ada (gratis, offline). Bila secret GEMINI_API_KEY dipasang,
-    foto yang lolos CLIP dinilai lagi oleh Gemini (gratis, kuota harian dibatasi MAKS_GEMINI) -> penilaian gaya
-    jauh lebih manusiawi. Tanpa key: CLIP saja."""
+    """Menilai foto avatar relatif terhadap bank memakai CLIP lokal, tanpa API berbayar."""
     def __init__(self, embedder):
         self.e = embedder
         self.tb = embedder.teks(PROMPT_BAGUS).mean(axis=0)
@@ -669,72 +667,8 @@ class Penilai:
         import bisect
         return int(round(100 * bisect.bisect_left(r, raw) / max(1, len(r))))
 
-    def _pilih_model(self, http):
-        import requests
-        try:
-            r = requests.get("https://generativelanguage.googleapis.com/v1beta/models", params={"key": GEMINI_KEY, "pageSize": 200}, timeout=30)
-            daftar = r.json().get("models", []) if r.status_code == 200 else []
-        except Exception:
-            daftar = []
-        calon = [m["name"] for m in daftar if "generateContent" in (m.get("supportedGenerationMethods") or [])
-                 and "flash" in m.get("name", "") and "image" not in m.get("name", "") and "tts" not in m.get("name", "")
-                 and "live" not in m.get("name", "") and "exp" not in m.get("name", "")]
-        def kunci(n):
-            angka = re.findall(r"(\d+(?:\.\d+)?)", n)
-            v = float(angka[0]) if angka else 0
-            return (v, "lite" not in n, "preview" not in n)
-        calon.sort(key=kunci, reverse=True)
-        self.model_gemini = calon[0] if calon else None
-        log(f"  Gemini: model dipilih {self.model_gemini} dari {len(calon)} calon")
-        if not self.model_gemini:
-            self.gemini_mati = True
-
     def gemini(self, http, png):
-        if self.gemini_mati or self.n_gemini >= MAKS_GEMINI:
-            return None
-        if self.model_gemini is None:
-            self._pilih_model(http)
-            if self.gemini_mati:
-                return None
-        import requests, base64
-        jeda = 6.5 - (time.time() - self.t_gemini)  # aman di bawah ~10 permintaan/menit kuota gratis
-        if jeda > 0:
-            time.sleep(jeda)
-        self.t_gemini = time.time()
-        prompt = ("You are a strict Roblox avatar fashion judge. Rate this avatar's OUTFIT from 1 to 10 for style: cohesion, "
-                  "color harmony, trendiness and completeness (hair, top, bottom, shoes, tasteful accessories). Joke items, "
-                  "mascot costumes, random mismatched pieces, clutter or a default look must score 1-4. Only genuinely stylish, "
-                  "put-together outfits score 8-10. Reply ONLY with JSON: {\"skor\": <integer 1-10>, \"gaya\": \"<2-3 word style name>\"}")
-        body = {"contents": [{"parts": [{"text": prompt}, {"inline_data": {"mime_type": "image/png", "data": base64.b64encode(png).decode()}}]}],
-                "generationConfig": {"temperature": 0.1, "maxOutputTokens": 60}}
-        for k in range(2):
-            try:
-                r = requests.post(f"https://generativelanguage.googleapis.com/v1beta/{self.model_gemini}:generateContent",
-                                  params={"key": GEMINI_KEY}, json=body, timeout=60)
-            except Exception:
-                time.sleep(5)
-                continue
-            if r.status_code == 429:
-                log("  Gemini: kuota habis/terbatas (429) -> sisa putaran memakai CLIP saja")
-                self.gemini_mati = True
-                return None
-            if r.status_code in (400, 401, 403, 404):
-                log(f"  Gemini: ditolak {r.status_code} -> CLIP saja. {r.text[:160]}")
-                self.gemini_mati = True
-                return None
-            if r.status_code != 200:
-                time.sleep(5)
-                continue
-            self.n_gemini += 1
-            try:
-                teks = r.json()["candidates"][0]["content"]["parts"][0]["text"]
-                m = re.search(r"\{.*\}", teks, re.S)
-                d = json.loads(m.group(0)) if m else {}
-                v = int(d.get("skor"))
-                if 1 <= v <= 10:
-                    return v, str(d.get("gaya", ""))[:30]
-            except Exception:
-                return None
+        # Tetap mempertahankan antarmuka pemanen lama; penilaian memakai CLIP lokal.
         return None
 
 
@@ -1792,6 +1726,9 @@ def latih(st, emb, slot_of, rng_seed=1):
     trn += [o for o in trn if st["outfit"][o[0]].get("S") == "sinyal"] * 2
     tolak = []
     for h, s in sorted(st.get("tolak", {}).items()):
+        vote = st.get("penilaian", {}).get(h, {})
+        if vote.get("tidak", 0) < 3 or vote.get("tidak", 0) <= vote.get("suka", 0) + 2:
+            continue
         it = [idx_of[i] for i, sl in slot_item_seed(s) if i in idx_of and sl not in ("Alis",)]
         if len(it) >= 3:
             tolak.append(it)
@@ -2220,7 +2157,7 @@ def tulis_json(p, obj):
         json.dump(obj, f, ensure_ascii=False, separators=(",", ":"))
 
 
-MAKS_ITEM_EKSPOR = 40000
+MAKS_ITEM_EKSPOR = 60000
 
 
 def skor_tren(st):
@@ -2352,19 +2289,6 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik, w2pak=None):
         except Exception as ex:
             log("  DESAIN gagal (dilewati):", repr(ex)[:300])
             desain, pop_of = None, {}
-    shard = [dict() for _ in range(SHARD_ITEM)]
-    for i in ids_kirim:
-        baris = baris_of.get(i)
-        if baris is None:
-            continue
-        if len(baris) == 5 + DIM:
-            baris = baris + [pop_of.get(i, 0)]  # desain v1: popularitas di kalangan desainer (log1p(frek) x100)
-        if len(baris) == 5 + DIM + 1 and w2_pakai.get(slot_of.get(i)) and pal2.get(i):
-            baris = baris + [pal2[i]]  # rev24: palet <= 3 warna "hex:porsi%,..." (Luau: baris[39])
-        shard[i % SHARD_ITEM][str(i)] = baris
-    for s in range(SHARD_ITEM):
-        tulis_json(f"model/item_{s}.json", {"versi": versi, "d": shard[s]})
-
     # --- bank: outfit lolos saring + skor koherensi (Q 0-100, persentil di bank) + gender outfit (G 0-100)
     seeds = list(st["outfit"].values())
     nilai = []
@@ -2437,7 +2361,40 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik, w2pak=None):
     if len(terpilih) < MAKS_BANK:
         terpilih += sisa[:MAKS_BANK - len(terpilih)]
     kandidat = terpilih
-    log(f"BANK v7: {len(kandidat)} outfit | ditolak bawaan Roblox {n_tolak_basic}, tak bisa dibeli {n_tolak_beli}, tak koheren {n_tolak_koh}")
+    # rev25: batas ekspor lama memilih dari SEMUA calon outfit, bukan bank yang akhirnya
+    # dipakai. Akibatnya ~20% item bank dan bahkan item yang diminta pemain kehilangan vektor.
+    valid = {i for i, row in baris_of.items() if len(row) >= 5 + DIM}
+    prioritas_pemain = diminta & valid
+    prioritas_sepatu = set()
+    for row in (st.get("sepatu") or {}).values():
+        for kaki in ("L", "R"):
+            try:
+                prioritas_sepatu.add(int(row[kaki]))
+            except (KeyError, TypeError, ValueError):
+                pass
+    di_bank_final = {i for e in kandidat for i in ids_seed(e)}
+    def urut_ekspor(i):
+        m = st["meta"].get(str(i)) or {}
+        prior = 0 if i in prioritas_pemain else 1 if i in prioritas_sepatu else 2 if i in di_bank_final else 3
+        return prior, 0 if m.get("s") == 1 else 1, -tren.get(i, 0), i
+    ids_kirim = set(sorted(valid, key=urut_ekspor)[:MAKS_ITEM_EKSPOR])
+    sebelum = len(kandidat)
+    kandidat = [e for e in kandidat if set(ids_seed(e)) <= ids_kirim]
+    n_tolak_vektor = sebelum - len(kandidat)
+    shard = [dict() for _ in range(SHARD_ITEM)]
+    for i in ids_kirim:
+        baris = baris_of.get(i)
+        if baris is None:
+            continue
+        if len(baris) == 5 + DIM:
+            baris = baris + [pop_of.get(i, 0)]  # desain v1: popularitas di kalangan desainer (log1p(frek) x100)
+        if len(baris) == 5 + DIM + 1 and w2_pakai.get(slot_of.get(i)) and pal2.get(i):
+            baris = baris + [pal2[i]]  # rev24: palet <= 3 warna "hex:porsi%,..." (Luau: baris[39])
+        shard[i % SHARD_ITEM][str(i)] = baris
+    for s in range(SHARD_ITEM):
+        tulis_json(f"model/item_{s}.json", {"versi": versi, "d": shard[s]})
+
+    log(f"BANK v25: {len(kandidat)} outfit | tanpa vektor lengkap {n_tolak_vektor} | ditolak bawaan Roblox {n_tolak_basic}, tak bisa dibeli {n_tolak_beli}, tak koheren {n_tolak_koh}")
     bshard = [[] for _ in range(SHARD_BANK)]
     for e in kandidat:
         bshard[int(e["H"][:8], 16) % SHARD_BANK].append(e)
@@ -2499,7 +2456,7 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik, w2pak=None):
         "model": MODEL_ID, "dim": DIM if hasil_latih else 0, "layak": bool(hl.get("layak")),
         "metrik": hl, "auc_gender_vs_nama": auc_gender, "n_label_gender": [len(pos), len(neg)],
         "n_item": len(ids_kirim), "n_item_dipelajari": len(ids_zs), "n_outfit_panen": len(st["outfit"]), "n_bank": len(kandidat),
-        "bank_tolak_tidak_bisa_dibeli": n_tolak_beli, "bank_tolak_tidak_koheren": n_tolak_koh,
+        "bank_tolak_tidak_bisa_dibeli": n_tolak_beli, "bank_tolak_tidak_koheren": n_tolak_koh, "bank_tolak_tanpa_vektor": n_tolak_vektor,
         "shard_item": SHARD_ITEM, "shard_bank": SHARD_BANK, "shard_meta": SHARD_ITEM,
         "slot_kode": SLOT_KODE, "gaya": nama_gaya, "atribut": nama_atr, "panen": statistik,
         "n_sinyal_pemain": sum(1 for x in st["outfit"].values() if x.get("S") == "sinyal"),
@@ -2639,15 +2596,28 @@ def ambil_dari_roblox(st):
             seed = seed_dari_avatar(js)
             if not seed:
                 continue
-            if sumber == "sinyal" and s.get("J") == "tidak":
-                # jempol bawah pemain = contoh outfit yang TIDAK disukai -> dipakai sebagai negatif saat latih
-                seed["S"] = "tolak"
-                seed["T"] = int(time.time())
-                st.setdefault("tolak", {})[seed["H"]] = seed
-                st["outfit"].pop(seed["H"], None)
-                continue
-            if seed["H"] in st.get("tolak", {}):
-                continue
+            if sumber == "sinyal" and s.get("J") in ("tidak", "suka", "fav", "beli"):
+                h = seed["H"]
+                event = str(s.get("E") or f"{h}:{s.get('W', 0)}:{s.get('J')}")
+                seen = st.setdefault("sinyal_dibaca", {})
+                if event in seen:
+                    continue
+                seen[event] = int(time.time())
+                if len(seen) > 60000:
+                    for key in sorted(seen, key=seen.get)[:len(seen) - 50000]:
+                        del seen[key]
+                vote = st.setdefault("penilaian", {}).setdefault(h, {"suka": 0, "tidak": 0})
+                jenis = "tidak" if s.get("J") == "tidak" else "suka"
+                vote[jenis] = min(100, vote.get(jenis, 0) + 1)
+                if vote.get("tidak", 0) >= 3 and vote["tidak"] > vote.get("suka", 0) + 2:
+                    seed["S"], seed["T"] = "tolak", int(time.time())
+                    st.setdefault("tolak", {})[h] = seed
+                else:
+                    st.setdefault("tolak", {}).pop(h, None)
+                if jenis == "tidak":
+                    continue  # tidak menghapus outfit positif dari bank
+            elif seed["H"] in st.get("tolak", {}) and seed["H"] not in st.get("penilaian", {}):
+                st["tolak"].pop(seed["H"], None)  # veto lama satu suara tidak berlaku selamanya
             seed["S"] = sumber
             seed["K"] = sumber[:3] + seed["H"][:3]
             if sumber == "sinyal" or seed["H"] not in st["outfit"]:

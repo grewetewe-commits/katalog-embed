@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: ['codex/visual-audit-20261011']
-    paths: ['visual_audit.py', '.github/workflows/visual-audit.yml']
+    paths: ['visual_audit.py', 'otak.py', 'test_training_eval.py', '.github/workflows/visual-audit.yml']
 
 permissions:
   contents: read
@@ -36,6 +36,10 @@ jobs:
           pip install 'numpy<2' pillow requests
       - name: Bandingkan tanpa mengubah model
         run: |
+          python -m unittest -v test_training_eval 2>&1 | tee training-eval-tests.txt
+          printf '\n## Regresi evaluasi pelatihan\n\n```text\n' >> "$GITHUB_STEP_SUMMARY"
+          cat training-eval-tests.txt >> "$GITHUB_STEP_SUMMARY"
+          printf '\n```\n' >> "$GITHUB_STEP_SUMMARY"
           python visual_audit.py
           cat visual-audit.md >> "$GITHUB_STEP_SUMMARY"
       - name: Simpan bukti audit
@@ -43,5 +47,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: visual-audit
-          path: visual-audit.*
+          path: |
+            visual-audit.*
+            training-eval-tests.txt
           retention-days: 7

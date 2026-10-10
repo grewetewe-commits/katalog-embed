@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile, readdir } from 'node:fs/promises';
 import { PNG } from 'pngjs';
 import { authorize, cached, upstream, ApiError } from '../lib/runtime.js';
 import { analyzePng } from '../lib/palette.js';
@@ -9,6 +10,15 @@ const secret = 'test-only-key-abcdefghijklmnopqrstuvwxyz';
 process.env.API_SECRET = secret;
 const res = () => ({code:200,headers:{},status(n){this.code=n;return this},setHeader(k,v){this.headers[k]=v},json(v){this.body=v;return this}});
 const req = body => ({method:'POST',headers:{'x-api-secret':secret},body});
+
+test('output statis dibatasi agar source backend tidak diterbitkan', async () => {
+  const root = new URL('../', import.meta.url);
+  const config = JSON.parse(await readFile(new URL('vercel.json', root), 'utf8'));
+  assert.equal(config.outputDirectory, 'public');
+  const files = await readdir(new URL('public/', root));
+  assert.deepEqual(files, ['robots.txt']);
+  assert.match(await readFile(new URL('public/robots.txt', root), 'utf8'), /^User-agent: \*\r?\nDisallow: \/\r?\n?$/);
+});
 test('secret wajib dan environment yang kosong fail closed',()=>{
   const r=res(); assert.equal(authorize({...req({}),headers:{}},r),false);assert.equal(r.code,401);
   const original=process.env.API_SECRET;delete process.env.API_SECRET;

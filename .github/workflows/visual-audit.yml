@@ -1,0 +1,53 @@
+name: Pembandingan fitur pakaian
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['codex/visual-audit-20261011']
+    paths: ['visual_audit.py', 'otak.py', 'test_training_eval.py', '.github/workflows/visual-audit.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Pulihkan fitur lengkap
+        id: features
+        uses: actions/cache/restore@v4
+        with:
+          path: cache
+          key: visual-audit-${{ github.run_id }}
+          restore-keys: emb-v2-
+          fail-on-cache-miss: true
+      - name: Dependensi CPU
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install 'numpy<2' pillow requests
+      - name: Bandingkan tanpa mengubah model
+        run: |
+          python -m unittest -v test_training_eval 2>&1 | tee training-eval-tests.txt
+          printf '\n## Regresi evaluasi pelatihan\n\n```text\n' >> "$GITHUB_STEP_SUMMARY"
+          cat training-eval-tests.txt >> "$GITHUB_STEP_SUMMARY"
+          printf '\n```\n' >> "$GITHUB_STEP_SUMMARY"
+          python visual_audit.py
+          cat visual-audit.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Simpan bukti audit
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-audit
+          path: |
+            visual-audit.*
+            training-eval-tests.txt
+          retention-days: 7

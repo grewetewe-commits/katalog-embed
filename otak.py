@@ -1697,19 +1697,88 @@ def auc(pos, neg):
     return float((r[:len(pos)].sum() - len(pos) * (len(pos) + 1) / 2) / (len(pos) * len(neg)))
 
 
-def latih(st, emb, slot_of, rng_seed=1):
+def bagian_kreator(kunci):
+    """Uji akhir 15%, pemilihan model 15%, latih 70%; stabil per kreator."""
+    bucket = int(hashlib.md5(str(kunci).encode()).hexdigest()[:4], 16) % 100
+    return "uji" if bucket < 15 else "pilih" if bucket < 30 else "latih"
+
+
+def negatif_slot(pool, isi, rng, jumlah, unik=False):
+    """Sampling cepat dengan batas putaran; None bila tidak cukup kandidat."""
+    if jumlah < 1 or not len(pool):
+        return None
+    hasil, sudah = [], set()
+    for _ in range(4):
+        for x0 in rng.choice(pool, size=max(32, jumlah * 2)):
+            x = int(x0)
+            if x not in isi and (not unik or x not in sudah):
+                hasil.append(x)
+                sudah.add(x)
+                if len(hasil) == jumlah:
+                    return hasil
+    # Slot kecil/nyaris habis: akhiri sampling dengan daftar yang pasti valid.
+    tersedia = np.asarray([int(x) for x in pool if int(x) not in isi], dtype=np.int64)
+    if not len(tersedia) or (unik and len(tersedia) < jumlah):
+        return None
+    return rng.choice(tersedia, size=jumlah, replace=not unik).tolist()
+
+
+def fitb_ketat(fz, kumpulan, slot_idx, n_kand=4, seed=7):
+    """Target harus mengalahkan semua kandidat; seri/NaN bukan jawaban benar."""
+    rng = np.random.default_rng(seed)
+    benar = total = 0
+    for _, it in kumpulan:
+        isi = {x for x, _ in it}
+        for k, (j, sl) in enumerate(it):
+            pool = slot_idx[sl]
+            if len(pool) < 30:
+                continue
+            neg = negatif_slot(pool, isi, rng, n_kand - 1, unik=True)
+            if neg is None:
+                continue
+            konteks = [x for m, (x, _) in enumerate(it) if m != k]
+            if not konteks:
+                continue
+            c = fz[konteks].mean(axis=0)
+            c /= np.linalg.norm(c) + 1e-8
+            skor = fz[[j] + neg] @ c
+            benar += int(np.isfinite(skor).all() and skor[0] > np.max(skor[1:]))
+            total += 1
+    return benar / max(1, total), total
+
+
+def pusat_slot_latih(X, slots, indeks_latih):
+    """Kreator uji/pemilihan tidak ikut menentukan rata-rata fitur atau PCA."""
+    indeks = np.asarray(sorted(set(indeks_latih)), dtype=np.int64)
+    if not len(indeks):
+        raise ValueError("Tidak ada item latih untuk pemusatan fitur")
+    return {s: X[indeks[slots[indeks] == s]].mean(axis=0)
+            for s in sorted(set(slots[indeks].tolist()))}
+
+
+def latih(st, emb, slot_of, rng_seed=1, langkah_uji=None, batas_detik=540):
     import torch
     torch.manual_seed(rng_seed)
     rng = np.random.default_rng(rng_seed)
     ids_all = sorted(i for i in emb if i in slot_of)
+    if not ids_all:
+        log("BELAJAR dilewati: tidak ada item berembedding")
+        return None
     idx_of = {i: k for k, i in enumerate(ids_all)}
     X = np.stack([emb[i] for i in ids_all]).astype("float32")
+    if X.shape != (len(ids_all), 512) or not np.isfinite(X).all() or np.any(np.linalg.norm(X, axis=1) <= 1e-8):
+        raise ValueError("Sidik jari pelatihan harus 512 angka hingga dan tidak kosong")
     slots = np.array([slot_of[i] for i in ids_all])
     slot_list = sorted(set(slots.tolist()))
     slot_idx = {s: np.where(slots == s)[0] for s in slot_list}
     outfits = []
     for h, s in sorted(st["outfit"].items()):
-        it = [(idx_of[i], sl) for i, sl in slot_item_seed(s) if i in idx_of and sl not in ("Alis",)]
+        seen = set()
+        it = []
+        for i, sl in slot_item_seed(s):
+            if i in idx_of and sl != "Alis" and i not in seen:
+                it.append((idx_of[i], sl))
+                seen.add(i)
         if len(it) >= 3:
             outfits.append((h, it))
     if len(outfits) < 60:
@@ -1718,14 +1787,25 @@ def latih(st, emb, slot_of, rng_seed=1):
     # bagi latih/uji PER KREATOR (outfit satu kreator sering berbagi item -> kalau tercampur, nilai uji bocor/terlalu
     # bagus). Outfit lama tanpa tanda kreator dibagi per hash outfit.
     kunci_bagi = {h: (st["outfit"][h].get("K") or h) for h, _ in outfits}
-    def uji(h):
-        return int(hashlib.md5(kunci_bagi[h].encode()).hexdigest()[:4], 16) % 100 < 15
-    val = [o for o in outfits if uji(o[0])]
-    trn = [o for o in outfits if not uji(o[0])]
+    val = [o for o in outfits if bagian_kreator(kunci_bagi[o[0]]) == "uji"]
+    dev = [o for o in outfits if bagian_kreator(kunci_bagi[o[0]]) == "pilih"]
+    trn = [o for o in outfits if bagian_kreator(kunci_bagi[o[0]]) == "latih"]
+    slot_set = {s: set(pool.tolist()) for s, pool in slot_idx.items()}
+    def target_latih(it):
+        isi = {x for x, _ in it}
+        return [k for k, (_, sl) in enumerate(it)
+                if len(slot_set[sl]) > sum(x in slot_set[sl] for x in isi)]
+    target_of = {h: target_latih(it) for h, it in trn}
+    trn = [o for o in trn if target_of[o[0]]]
+    if len(trn) < 30 or len(dev) < 3 or len(val) < 3:
+        log("BELAJAR dilewati: kreator/target latih, pilih, atau uji akhir kurang")
+        return None
     # outfit yang DIFAVORITKAN/DIBELI pemain sungguhan = sinyal paling berharga -> bobot 3x saat latih
     trn += [o for o in trn if st["outfit"][o[0]].get("S") == "sinyal"] * 2
     tolak = []
     for h, s in sorted(st.get("tolak", {}).items()):
+        if bagian_kreator(s.get("K") or kunci_bagi.get(h) or h) != "latih":
+            continue
         vote = st.get("penilaian", {}).get(h, {})
         if vote.get("tidak", 0) < 3 or vote.get("tidak", 0) <= vote.get("suka", 0) + 2:
             continue
@@ -1733,35 +1813,20 @@ def latih(st, emb, slot_of, rng_seed=1):
         if len(it) >= 3:
             tolak.append(it)
     log(f"  contoh negatif dari jempol bawah pemain: {len(tolak)} outfit")
-    log(f"BELAJAR: {len(ids_all)} item, outfit latih {len(trn)}, uji {len(val)}")
+    log(f"BELAJAR: {len(ids_all)} item, outfit latih {len(trn)}, pilih {len(dev)}, uji akhir {len(val)}")
     # rata-rata per slot dari item latih (menetralkan "jenis slot", supaya yang dipelajari gaya)
-    mu = {s: X[slot_idx[s]].mean(axis=0) for s in slot_list}
-    Xc = X - np.stack([mu[s] for s in slots])
+    item_latih = sorted({x for _, it in trn for x, _ in it})
+    if len(item_latih) < DIM:
+        log(f"BELAJAR dilewati: hanya {len(item_latih)} item latih unik (perlu >= {DIM})")
+        return None
+    mu = pusat_slot_latih(X, slots, item_latih)
+    Xc = X - np.stack([mu.get(s, np.zeros(512, dtype=np.float32)) for s in slots])
     Xc /= np.linalg.norm(Xc, axis=1, keepdims=True) + 1e-8
     Xt = torch.tensor(Xc)
 
     def fitb(fz, kumpulan, n_kand=4, seed=7):
         """Fill-in-the-blank: tebak item asli di antara n_kand kandidat satu slot. Acak = 1/n_kand."""
-        r = np.random.default_rng(seed)
-        benar = total = 0
-        for _, it in kumpulan:
-            for k, (j, sl) in enumerate(it):
-                pool = slot_idx[sl]
-                if len(pool) < 30:
-                    continue
-                konteks = [x for m, (x, _) in enumerate(it) if m != k]
-                c = fz[konteks].mean(axis=0)
-                c /= np.linalg.norm(c) + 1e-8
-                isi = set(x for x, _ in it)
-                kand = [j]
-                while len(kand) < n_kand:
-                    x = int(pool[r.integers(len(pool))])
-                    if x not in isi and x not in kand:
-                        kand.append(x)
-                skor = fz[kand] @ c
-                benar += int(np.argmax(skor) == 0)
-                total += 1
-        return benar / max(1, total), total
+        return fitb_ketat(fz, kumpulan, slot_idx, n_kand, seed)
 
     def koherensi(fz, it):
         v = fz[[x for x, _ in it]]
@@ -1782,7 +1847,8 @@ def latih(st, emb, slot_of, rng_seed=1):
         return auc(pos, neg)
 
     Xn = X / np.linalg.norm(X, axis=1, keepdims=True)
-    hasil = {"acak": 0.25}
+    hasil = {"acak": 0.25, "evaluasi_versi": 2,
+             "split": "kreator: latih70/pilih15/uji15", "seri_benar": False}
     hasil["clip_mentah"], n_uji = fitb(Xn, val)
     hasil["clip_netral_slot"], _ = fitb(Xc, val)
     log(f"  FITB baseline: mentah {hasil['clip_mentah']:.3f} | netral-slot {hasil['clip_netral_slot']:.3f} | acak 0.25 | {n_uji} soal")
@@ -1803,17 +1869,15 @@ def latih(st, emb, slot_of, rng_seed=1):
     def batch_contoh(n, r):
         kon, pos, neg = [], [], []
         for _ in range(n):
-            _, it = trn[r.integers(len(trn))]
-            k = r.integers(len(it))
+            h, it = trn[r.integers(len(trn))]
+            k = int(r.choice(target_of[h]))
             j, sl = it[k]
             konteks = [x for m, (x, _) in enumerate(it) if m != k]
             pool = slot_idx[sl]
             isi = set(x for x, _ in it)
-            ng = []
-            while len(ng) < 24:
-                x = int(pool[r.integers(len(pool))])
-                if x not in isi:
-                    ng.append(x)
+            ng = negatif_slot(pool, isi, r, 24)
+            if ng is None:
+                raise AssertionError("Target latih tidak lagi memiliki kandidat negatif")
             kon.append(konteks)
             pos.append(j)
             neg.append(ng)
@@ -1824,7 +1888,9 @@ def latih(st, emb, slot_of, rng_seed=1):
         model = Kepala(dalam)
         opt = torch.optim.AdamW(model.parameters(), lr=2e-3 if not dalam else 1e-3, weight_decay=1e-4)
         r = np.random.default_rng(rng_seed + (5 if dalam else 0))
-        langkah = 1500 if len(trn) < 2000 else 3000
+        langkah = int(langkah_uji) if langkah_uji is not None else (1500 if len(trn) < 2000 else 3000)
+        if langkah < 1:
+            raise ValueError("Langkah pelatihan harus positif")
         t_mulai = time.time()
         for step in range(langkah):
             kon, pos, neg = batch_contoh(128, r)
@@ -1854,36 +1920,40 @@ def latih(st, emb, slot_of, rng_seed=1):
             opt.zero_grad()
             loss.backward()
             opt.step()
-            if time.time() - t_mulai > 9 * 60:
+            if time.time() - t_mulai > batas_detik:
                 log(f"  batas waktu latih ({step} langkah)")
                 break
         model.eval()
         with torch.no_grad():
             fz = model(Xt).numpy()
-        skor, _ = fitb(fz, val)
+        skor, _ = fitb(fz, dev)
         nama = "mlp" if dalam else "linear"
         hasil["model_" + nama] = skor
-        log(f"  model {nama}: FITB uji {skor:.3f} (loss akhir {loss.item():.3f})")
+        log(f"  model {nama}: FITB pemilihan {skor:.3f} (loss akhir {loss.item():.3f})")
         if terbaik is None or skor > terbaik[0]:
             terbaik = (skor, nama, fz)
     # pembanding jujur: CLIP netral-slot dipadatkan PCA-32 (tanpa belajar). Dipakai bila model kalah.
-    xc0 = Xc - Xc.mean(axis=0)
-    _, _, vt = np.linalg.svd(xc0[rng.permutation(len(xc0))[:20000]], full_matrices=False)
+    xc0 = Xc - Xc[item_latih].mean(axis=0)
+    sampel_pca = rng.permutation(item_latih)[:20000]
+    _, _, vt = np.linalg.svd(xc0[sampel_pca], full_matrices=False)
     zp = xc0 @ vt[:DIM].T
     zp /= np.linalg.norm(zp, axis=1, keepdims=True) + 1e-8
-    skor_pca, _ = fitb(zp, val)
+    skor_pca, _ = fitb(zp, dev)
     hasil["clip_pca32"] = skor_pca
-    log(f"  pembanding CLIP PCA-32: FITB {skor_pca:.3f}")
+    log(f"  pembanding CLIP PCA-32: FITB pemilihan {skor_pca:.3f}")
     if skor_pca > terbaik[0]:
         terbaik = (skor_pca, "clip_pca32", zp.astype("float32"))
-    skor, nama, fz = terbaik
+    skor_pilih, nama, fz = terbaik
+    skor, n_uji = fitb(fz, val)
     hasil["dipakai"] = nama
+    hasil["fitb_pemilihan"] = skor_pilih
     hasil["fitb_dipakai"] = skor
     hasil["auc_koherensi_model"] = auc_koherensi(fz, val)
     hasil["auc_koherensi_clip"] = auc_koherensi(Xc, val)
     hasil["soal_uji"] = n_uji
     hasil["outfit_latih"] = len(trn)
     hasil["outfit_uji"] = len(val)
+    hasil["outfit_pemilihan"] = len(dev)
     # layak dipakai server bila jelas di atas acak (0,25) dengan cukup soal uji
     hasil["layak"] = bool(skor >= 0.38 and n_uji >= 150)
     log(f"  DIPAKAI {nama}: FITB {skor:.3f} -> layak={hasil['layak']} | AUC koherensi {hasil['auc_koherensi_model']}")
@@ -2504,10 +2574,12 @@ def laporan(info, http):
         f"- Item dengan sidik jari visual: **{info['n_item']}**",
         f"- Panen putaran ini: {json.dumps(info['panen'])} | permintaan HTTP {http.n}, kena 429: {http.n429}, gagal {http.gagal}", "",
         "## Model kecocokan (FITB: tebak item asli di antara 4 kandidat satu slot, pada outfit yang TIDAK dilatih)", "",
-        "| Metode | Akurasi |", "|---|---|",
-        f"| Acak | 0.250 |", f"| CLIP mentah | {f(m.get('clip_mentah'))} |", f"| CLIP netral-slot | {f(m.get('clip_netral_slot'))} |",
-        f"| CLIP PCA-32 (tanpa belajar) | {f(m.get('clip_pca32'))} |", f"| Model linear (dilatih) | {f(m.get('model_linear'))} |", f"| Model MLP (dilatih) | {f(m.get('model_mlp'))} |", "",
-        f"- Dipakai: **{m.get('dipakai', '-')}** | soal uji {m.get('soal_uji', '-')} | outfit latih {m.get('outfit_latih', '-')}, uji {m.get('outfit_uji', '-')}",
+        "| Metode | Akurasi | Data |", "|---|---|---|",
+        f"| Acak | 0.250 | Teoritis |", f"| CLIP mentah | {f(m.get('clip_mentah'))} | Uji akhir |", f"| CLIP netral-slot | {f(m.get('clip_netral_slot'))} | Uji akhir |",
+        f"| CLIP PCA-32 (tanpa belajar) | {f(m.get('clip_pca32'))} | Pemilihan |", f"| Model linear (dilatih) | {f(m.get('model_linear'))} | Pemilihan |", f"| Model MLP (dilatih) | {f(m.get('model_mlp'))} | Pemilihan |",
+        f"| Model terpilih | {f(m.get('fitb_dipakai'))} | Uji akhir |", "",
+        f"- Dipakai: **{m.get('dipakai', '-')}** | soal uji {m.get('soal_uji', '-')} | outfit latih {m.get('outfit_latih', '-')}, pemilihan {m.get('outfit_pemilihan', '-')}, uji {m.get('outfit_uji', '-')}",
+        "- Evaluasi v2: kreator latih, pemilihan, dan uji akhir terpisah; skor seri tidak dihitung benar. Rata-rata slot dan PCA memakai item latih saja.",
         f"- AUC koherensi (outfit asli vs setengah-diacak): model {f(m.get('auc_koherensi_model'))}, CLIP {f(m.get('auc_koherensi_clip'))}",
         f"- **LAYAK DIPAKAI SERVER: {'YA' if info['layak'] else 'BELUM'}** (syarat: FITB >= 0,38 dengan >= 150 soal; acak = 0,25)", "",
         f"- Sinyal pemain (outfit difavoritkan/dibeli di map): **{info.get('n_sinyal_pemain', 0)}** | outfit dasar dari server Roblox: {info.get('n_dasar_lokal', 0)} | item baru diminta pemain: {info.get('n_diminta_pemain', 0)}",

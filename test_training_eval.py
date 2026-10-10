@@ -2,7 +2,8 @@
 import unittest
 import numpy as np
 
-from otak import bagian_kreator, fitb_ketat, negatif_slot, pusat_slot_latih, latih
+from otak import (bagian_kreator, fitb_ketat, negatif_slot, pusat_slot_latih, latih,
+                  periksa_model_sebelum_ekspor)
 
 
 class TrainingEvaluationTests(unittest.TestCase):
@@ -60,6 +61,34 @@ class TrainingEvaluationTests(unittest.TestCase):
     def test_empty_training_centering_fails(self):
         with self.assertRaises(ValueError):
             pusat_slot_latih(np.zeros((3, 2)), np.array(['a', 'a', 'a']), [])
+
+    def valid_export(self):
+        return dict(ids=list(range(32)), fz=np.ones((32, 32), dtype=np.float32),
+                    hasil=dict(layak=True, fitb_dipakai=0.5, soal_uji=150))
+
+    def test_missing_or_failed_model_cannot_replace_snapshot(self):
+        with self.assertRaises(RuntimeError):
+            periksa_model_sebelum_ekspor(None)
+        candidate = self.valid_export()
+        candidate['hasil']['layak'] = False
+        with self.assertRaises(RuntimeError):
+            periksa_model_sebelum_ekspor(candidate)
+
+    def test_under_tested_model_cannot_replace_snapshot(self):
+        candidate = self.valid_export()
+        candidate['hasil']['soal_uji'] = 149
+        with self.assertRaises(RuntimeError):
+            periksa_model_sebelum_ekspor(candidate)
+
+    def test_malformed_vectors_cannot_replace_snapshot(self):
+        for bad in [np.zeros((32, 31)), np.full((32, 32), np.nan)]:
+            candidate = self.valid_export()
+            candidate['fz'] = bad
+            with self.assertRaises(RuntimeError):
+                periksa_model_sebelum_ekspor(candidate)
+
+    def test_valid_model_passes_export_guard(self):
+        periksa_model_sebelum_ekspor(self.valid_export())
 
     def test_training_smoke_preserves_export_contract(self):
         import torch

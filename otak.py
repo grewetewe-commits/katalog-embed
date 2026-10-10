@@ -1756,6 +1756,24 @@ def pusat_slot_latih(X, slots, indeks_latih):
             for s in sorted(set(slots[indeks].tolist()))}
 
 
+def periksa_model_sebelum_ekspor(hasil_latih):
+    """Jangan timpa snapshot repo dengan hasil gagal, kurang diuji, atau rusak."""
+    if not isinstance(hasil_latih, dict):
+        raise RuntimeError("Model baru tidak tersedia; ekspor dibatalkan, model repo dipertahankan")
+    metrik = hasil_latih.get("hasil") or {}
+    skor = metrik.get("fitb_dipakai")
+    soal = metrik.get("soal_uji", 0)
+    if (not metrik.get("layak") or not isinstance(skor, (int, float))
+            or not math.isfinite(skor) or skor < 0.38 or skor > 1
+            or not isinstance(soal, int) or soal < 150):
+        raise RuntimeError("Model baru belum lolos uji akhir; ekspor dibatalkan")
+    ids = hasil_latih.get("ids") or []
+    fz = np.asarray(hasil_latih.get("fz"))
+    if (len(ids) < DIM or len(set(ids)) != len(ids) or fz.shape != (len(ids), DIM)
+            or not np.issubdtype(fz.dtype, np.number) or not np.isfinite(fz).all()):
+        raise RuntimeError("Vektor ekspor model tidak valid; model repo dipertahankan")
+
+
 def latih(st, emb, slot_of, rng_seed=1, langkah_uji=None, batas_detik=540):
     import torch
     torch.manual_seed(rng_seed)
@@ -2908,6 +2926,8 @@ def main():
     except Exception as ex:
         log("GENDER 2D gagal (dilewati):", repr(ex)[:300])
     hasil_latih = latih(st, emb, slot_of)
+    if not STUB:
+        periksa_model_sebelum_ekspor(hasil_latih)
     statistik.update(stat_gaya)
     statistik["meta"] = meta.ringkas()
     statistik["sepatu"] = stat_sepatu

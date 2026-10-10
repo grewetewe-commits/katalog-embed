@@ -1,0 +1,157 @@
+name: Audit potongan pakaian
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coverage-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-clip-vit-b32-v1
+      - uses: actions/cache/restore@v4
+        with:
+          path: cache
+          key: audit-emb-${{ github.run_id }}
+          restore-keys: emb-v2-
+      - name: Dependensi CPU
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install 'numpy<2' 'transformers>=4.40,<4.50' pillow requests
+      - name: Ukur gambar yang sudah tersimpan
+        env:
+          HF_HUB_DISABLE_TELEMETRY: '1'
+          HF_HUB_OFFLINE: '1'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import numpy as np
+          from otak import EmbedderCLIP, muat_emb, muat_w2
+
+          # Label berasal dari pemeriksaan render. ID ini hanya data uji,
+          # bukan daftar larangan item di generator atau data untuk pelatihan.
+          cases = [
+              (18873871147, 'top', 'short', 'cropped classic top'),
+              (9665787520, 'top', 'short', 'off shoulder classic top'),
+              (18100270664, 'top', 'short', 'cruelint off shoulder top'),
+              (17492468782, 'bottom', 'short', 'blue jeans shown as shorts'),
+              (107610313779396, 'bottom', 'sheer', 'Scene fishnet'),
+              (89388726144337, 'top', 'short', 'Hello Kitty cropped layered tee'),
+              (132279000612472, 'top', 'short', 'adidas micro jumper'),
+              (12272535837, 'top', 'full', 'full haterz tee'),
+              (17013631047, 'top', 'full', 'full yabujin tee'),
+              (6553589977, 'top', 'full', 'suit with black vest'),
+              (15728190924, 'bottom', 'full', 'long jeans with stars'),
+              (9312373235, 'bottom', 'full', 'long emo chains pants'),
+              (13586432508, 'bottom', 'full', 'long gingham pants'),
+              (83921242743282, 'bottom', 'full', 'long sweatpants with printed shoes'),
+              (15464582959, 'bottom', 'full', 'long white jeans'),
+          ]
+          prompts = {
+              'top': {
+                  'full': [
+                      'a Roblox avatar wearing a regular full length t-shirt covering the shoulders and stomach',
+                      'a Roblox shirt covering the whole chest, shoulders and waist',
+                      'a full length closed shirt on a mannequin',
+                  ],
+                  'short': [
+                      'a Roblox avatar wearing a cropped shirt with a bare stomach',
+                      'an off shoulder top with bare shoulders on a Roblox avatar',
+                      'a small crop top on a mannequin',
+                  ],
+                  'sheer': [
+                      'a Roblox avatar wearing transparent mesh with bare skin visible',
+                      'a sheer fishnet shirt on a mannequin',
+                      'a body tattoo without a fabric shirt',
+                  ],
+              },
+              'bottom': {
+                  'full': [
+                      'a Roblox avatar wearing long trousers covering both legs',
+                      'full length denim jeans on a Roblox mannequin',
+                      'long sweatpants covering the legs down to the ankles',
+                  ],
+                  'short': [
+                      'a Roblox avatar wearing short shorts with bare thighs',
+                      'denim shorts above the knees on a mannequin',
+                      'a short skirt with bare legs and socks',
+                  ],
+                  'sheer': [
+                      'a Roblox avatar wearing fishnet tights with bare legs visible',
+                      'sheer stockings and underwear on a mannequin',
+                      'transparent pants with a visible leg tattoo',
+                  ],
+              },
+          }
+          model = EmbedderCLIP()
+          centers = {}
+          for slot, groups in prompts.items():
+              centers[slot] = {}
+              for label, texts in groups.items():
+                  v = model.teks(texts).mean(axis=0)
+                  centers[slot][label] = v / max(float(np.linalg.norm(v)), 1e-8)
+          original, _ = muat_emb()
+          _, _, masked = muat_w2()
+          rows = []
+          summary = {}
+          for source, features in [('original', original), ('masked2d', masked)]:
+              correct = total = 0
+              for item_id, slot, expected, description in cases:
+                  v = features.get(item_id)
+                  if v is None:
+                      rows.append(dict(id=item_id, source=source, cached=False))
+                      continue
+                  v = np.asarray(v, dtype=np.float32)
+                  if v.shape != (512,) or not np.isfinite(v).all():
+                      raise ValueError('Embedding invalid: ' + str(item_id))
+                  v /= max(float(np.linalg.norm(v)), 1e-8)
+                  scores = {k: float(v @ c) for k, c in centers[slot].items()}
+                  order = sorted(scores, key=scores.get, reverse=True)
+                  predicted = order[0]
+                  total += 1
+                  correct += int(predicted == expected)
+                  rows.append(dict(id=item_id, slot=slot, expected=expected,
+                      description=description, source=source, cached=True,
+                      predicted=predicted, scores=scores,
+                      margin=scores[order[0]]-scores[order[1]],
+                      correct=predicted == expected))
+              summary[source] = dict(correct=correct, tested=total,
+                  accuracy=correct / total if total else None)
+          if not summary['original']['tested']:
+              raise RuntimeError('No cached fixture embedding; no conclusion possible')
+          report = dict(purpose='Diagnostic only; no runtime model changed',
+              limitations=['Small rendered sample; not a production accuracy claim',
+                  'Cosine margins are not calibrated probabilities',
+                  'Different body geometry still requires actual avatar rendering'],
+              summary=summary, rows=rows)
+          Path('coverage-audit.json').write_text(json.dumps(report, indent=2))
+          print(json.dumps(report, indent=2))
+          with open('coverage-audit.md', 'w') as f:
+              f.write('# Audit potongan pakaian\n\nDiagnostic only; model runtime unchanged.\n\n')
+              f.write('| Image features | Correct | Tested |\n|---|---:|---:|\n')
+              for source, s in summary.items():
+                  f.write(f"| {source} | {s['correct']} | {s['tested']} |\n")
+              f.write('\nSmall sample. Scores are not beauty ratings or probabilities.\n')
+          PY
+          cat coverage-audit.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Simpan laporan pemeriksaan
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-audit
+          path: coverage-audit.*
+          retention-days: 7

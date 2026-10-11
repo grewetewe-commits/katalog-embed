@@ -503,15 +503,39 @@ def seed_dari_avatar(js):
                        int(bc["rightArmColorId"]), int(bc["leftLegColorId"]), int(bc["rightLegColorId"])]
     except Exception:
         pass
+    # The official avatar response lists body assets separately from clothes.
+    # Preserve that context: equal scales do not mean equal body geometry.
+    body_types = {17: "Head", 79: "Head", 27: "Torso", 29: "LeftArm",
+                  28: "RightArm", 30: "LeftLeg", 31: "RightLeg"}
+    if js.get("playerAvatarType") in ("R6", "R15"):
+        bp = {field: 0 for field in body_types.values()}
+        valid_body = True
+        for asset in js["assets"]:
+            try:
+                field = body_types.get(int(asset["assetType"]["id"]))
+                if field:
+                    value = asset["id"]
+                    if isinstance(value, bool) or not isinstance(value, int) or not 0 < value < 2**53:
+                        valid_body = False
+                        break
+                    bp[field] = value
+            except (TypeError, ValueError, KeyError):
+                valid_body = False
+                break
+        if valid_body:
+            seed["BP"] = bp
     sc = js.get("scales") or js.get("scale") or {}
     try:
-        v = [round(float(sc.get(k, d)), 2) for k, d in (("height", 1), ("width", 1), ("depth", 1), ("head", 1), ("proportion", 0), ("bodyType", 0))]
-        dasar = [1, 1, 1, 1, 0, 0]
-        if any(abs(a - b) > 0.011 for a, b in zip(v, dasar)):
+        keys = ("height", "width", "depth", "head", "proportion", "bodyType")
+        if any(isinstance(sc[k], bool) for k in keys):
+            raise ValueError("Boolean is not an avatar scale")
+        v = [round(float(sc[k]), 4) for k in keys]
+        if all(math.isfinite(x) and 0 <= x <= 2 and (i >= 4 or x > 0) for i, x in enumerate(v)):
             seed["SC"] = v
     except Exception:
         pass
-    seed["R"] = "R6" if js.get("playerAvatarType") == "R6" else "R15"
+    if js.get("playerAvatarType") in ("R6", "R15"):
+        seed["R"] = js["playerAvatarType"]
     return seed
 
 
@@ -2428,7 +2452,7 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik, w2pak=None):
         if n_est is not None and n_est < 30:  # v7: 45 -> 30 (N terbukti tidak mewakili selera; outfit modern sering 45-60)
             n_tolak_koh += 1  # dinilai jelek oleh mata estetika (CLIP/Gemini)
             continue
-        e = {k: v for k, v in s.items() if k in ("Sh", "Pa", "Gt", "A", "F", "BCn", "SC", "R", "H", "S", "N", "GY")}
+        e = {k: v for k, v in s.items() if k in ("Sh", "Pa", "Gt", "A", "F", "BCn", "SC", "BP", "R", "H", "S", "N", "GY")}
         e["Q"] = q
         e["G"] = g
         kandidat.append((e, sm))
@@ -2686,6 +2710,19 @@ def ambil_dari_roblox(st):
             seed = seed_dari_avatar(js)
             if not seed:
                 continue
+            # Anonymous, validated body context written by the map is not in js.assets.
+            bp = s.get("BP")
+            fields = ("Head", "Torso", "LeftArm", "RightArm", "LeftLeg", "RightLeg")
+            if isinstance(bp, dict) and all(isinstance(bp.get(k), int) and not isinstance(bp[k], bool)
+                                           and 0 <= bp[k] < 2**53 for k in fields):
+                seed["BP"] = {k: bp[k] for k in fields}
+            sc = s.get("SC")
+            if isinstance(sc, list) and len(sc) == 6 and all(
+                    isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+                    and 0 <= x <= 2 and (i >= 4 or x > 0) for i, x in enumerate(sc)):
+                seed["SC"] = list(sc)
+            if s.get("R") in ("R6", "R15"):
+                seed["R"] = s["R"]
             if sumber == "sinyal" and s.get("J") in ("tidak", "suka", "fav", "beli"):
                 h = seed["H"]
                 event = str(s.get("E") or f"{h}:{s.get('W', 0)}:{s.get('J')}")

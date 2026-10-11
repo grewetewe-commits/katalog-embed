@@ -1,35 +1,35 @@
 # Laporan OTAK Katalog Praktis
 
-- Dibuat: 2026-10-11T13:46:41.930032+00:00 | putaran ke-38
-- Outfit nyata terkumpul: **53042** | masuk bank (lolos saring): **7983**
-  (ditolak karena item inti tidak bisa dibeli: 26009, tidak koheren: 2395)
+- Dibuat: 2026-10-11T17:32:24.238242+00:00 | putaran ke-39
+- Outfit nyata terkumpul: **54490** | masuk bank (lolos saring): **7980**
+  (ditolak karena item inti tidak bisa dibeli: 26810, tidak koheren: 2525)
 - Item dengan sidik jari visual: **60000**
-- Panen putaran ini: {"kreator": 0, "outfit_baru": 0, "ditolak": 0, "kembar": 0, "tanpa_outfit": 0, "gaya_dibaca": 4552, "gaya_masuk": 1327, "gaya_gemini": 0, "meta": {"diminta": 4700, "diperbarui": 4640, "hilang": 60, "sisa_antre": 2192}, "sepatu": {"cari": 30, "lihat": 2543, "baru": 14, "total": 4817}} | permintaan HTTP 5342, kena 429: 97, gagal 54
+- Panen putaran ini: {"kreator": 0, "outfit_baru": 0, "ditolak": 0, "kembar": 0, "tanpa_outfit": 0, "gaya_dibaca": 4713, "gaya_masuk": 1448, "gaya_gemini": 0, "meta": {"diminta": 4800, "diperbarui": 4632, "hilang": 68, "sisa_antre": 4014}, "sepatu": {"cari": 29, "lihat": 2312, "baru": 7, "total": 4824}} | permintaan HTTP 5516, kena 429: 100, gagal 52
 
 ## Model kecocokan (FITB: tebak item asli di antara 4 kandidat satu slot, pada outfit yang TIDAK dilatih)
 
 | Metode | Akurasi | Data |
 |---|---|---|
 | Acak | 0.250 | Teoritis |
-| CLIP mentah | 0.336 | Uji akhir |
-| CLIP netral-slot | 0.500 | Uji akhir |
+| CLIP mentah | 0.337 | Uji akhir |
+| CLIP netral-slot | 0.498 | Uji akhir |
 | CLIP PCA-32 (tanpa belajar) | 0.489 | Pemilihan |
-| Model linear (dilatih) | 0.785 | Pemilihan |
-| Model MLP (dilatih) | 0.804 | Pemilihan |
-| Model terpilih | 0.806 | Uji akhir |
+| Model linear (dilatih) | 0.787 | Pemilihan |
+| Model MLP (dilatih) | 0.805 | Pemilihan |
+| Model terpilih | 0.802 | Uji akhir |
 
-- Dipakai: **mlp** | soal uji 46140 | outfit latih 37115, pemilihan 7978, uji 7917
+- Dipakai: **mlp** | soal uji 47376 | outfit latih 38119, pemilihan 8205, uji 8133
 - Evaluasi v2: kreator latih, pemilihan, dan uji akhir terpisah; skor seri tidak dihitung benar. Rata-rata slot dan PCA memakai item latih saja.
-- AUC koherensi (outfit asli vs setengah-diacak): model 0.808, CLIP 0.717
+- AUC koherensi (outfit asli vs setengah-diacak): model 0.805, CLIP 0.710
 - **LAYAK DIPAKAI SERVER: YA** (syarat: FITB >= 0,38 dengan >= 150 soal; acak = 0,25)
 
 - Sinyal pemain (outfit difavoritkan/dibeli di map): **26** | outfit dasar dari server Roblox: 533 | item baru diminta pemain: 34
-- Durasi putaran: **62.1 menit** | META: {"diminta": 4700, "diperbarui": 4640, "hilang": 60, "sisa_antre": 2192}
+- Durasi putaran: **60.2 menit** | META: {"diminta": 4800, "diperbarui": 4632, "hilang": 68, "sisa_antre": 4014}
 
 ## Belajar PROSES desain (dipakai server Roblox untuk menyusun outfit dari nol di sekitar item pilihan pemain)
 
-- Uji jujur di outfit yang TIDAK dipelajari: item asli pilihan desainer masuk **1% teratas** dari semua item slotnya: model **0.593** vs kemiripan gaya saja 0.432
-- Masuk 5% teratas: model **0.705** vs 0.547 | 3218 soal | contoh latih 116590
+- Uji jujur di outfit yang TIDAK dipelajari: item asli pilihan desainer masuk **1% teratas** dari semua item slotnya: model **0.606** vs kemiripan gaya saja 0.433
+- Masuk 5% teratas: model **0.707** vs 0.545 | 3203 soal | contoh latih 116117
 - Yang dipelajari: bobot 16 fitur per slot (gaya visual, harmoni warna, set/kreator sama, tren, popularitas di kalangan desainer, kecocokan dengan bumbu yang sudah dipasang), tabel harmoni warna 16x16, resep slot, jumlah aksesori, pasangan 2D/3D
 
 ## Perkembangan otak (makin banyak data = makin pintar)
@@ -45,38 +45,39 @@
 | 36 | 2026-10-11T02:37 | 50426 | 117219 | 0.8 | 25 |
 | 37 | 2026-10-11T06:39 | 51714 | 118451 | 0.803 | 26 |
 | 38 | 2026-10-11T13:46 | 53042 | 119578 | 0.806 | 26 |
+| 39 | 2026-10-11T17:32 | 54490 | 120753 | 0.802 | 26 |
 
 ## Gender visual (zero-shot CLIP) dicek dengan kata di nama item
-- AUC = 0.849 pada 7526 item berlabel wanita & 2191 pria
+- AUC = 0.850 pada 7574 item berlabel wanita & 2211 pria
   (0,5 = acak; >= 0,80 baru dipakai keras oleh server)
 
 ## Mata warna v2 (rev 24): cocok dengan warna yang disebut nama item
 
 | Slot | Item berlabel | v1 | v2 | Cakupan v2 | Dipakai |
 |---|---|---|---|---|---|
-| Back | 1914 | 0.556 | 0.701 | 0.999 | v2 |
-| FaceAcc | 2345 | 0.562 | 0.680 | 0.999 | v2 |
-| Front | 1936 | 0.536 | 0.637 | 0.999 | v2 |
-| Hair | 8511 | 0.693 | 0.807 | 1.000 | v2 |
-| Hat | 6438 | 0.584 | 0.708 | 0.999 | v2 |
-| LayerAtas | 5288 | 0.484 | 0.731 | 0.999 | v2 |
-| LayerBawah | 3442 | 0.518 | 0.752 | 1.000 | v2 |
-| Neck | 1652 | 0.577 | 0.706 | 0.999 | v2 |
-| Pants | 3923 | 0.077 | 0.664 | 0.999 | v2 |
-| Sepatu | 3996 | 0.613 | 0.707 | 1.000 | v2 |
-| Shirt | 3903 | 0.280 | 0.723 | 1.000 | v2 |
-| Shoulder | 858 | 0.586 | 0.690 | 1.000 | v2 |
-| TShirt | 98 | 0.194 | 0.520 | 0.998 | v2 |
-| Waist | 2110 | 0.592 | 0.686 | 1.000 | v2 |
+| Back | 1919 | 0.555 | 0.701 | 0.999 | v2 |
+| FaceAcc | 2365 | 0.561 | 0.680 | 0.999 | v2 |
+| Front | 1950 | 0.535 | 0.637 | 0.999 | v2 |
+| Hair | 8588 | 0.692 | 0.806 | 1.000 | v2 |
+| Hat | 6503 | 0.583 | 0.708 | 0.999 | v2 |
+| LayerAtas | 5305 | 0.484 | 0.731 | 0.999 | v2 |
+| LayerBawah | 3449 | 0.519 | 0.752 | 1.000 | v2 |
+| Neck | 1662 | 0.576 | 0.706 | 0.999 | v2 |
+| Pants | 3985 | 0.077 | 0.662 | 0.999 | v2 |
+| Sepatu | 4010 | 0.613 | 0.707 | 1.000 | v2 |
+| Shirt | 3964 | 0.280 | 0.720 | 1.000 | v2 |
+| Shoulder | 865 | 0.586 | 0.688 | 1.000 | v2 |
+| TShirt | 99 | 0.192 | 0.525 | 0.998 | v2 |
+| Waist | 2118 | 0.592 | 0.685 | 1.000 | v2 |
 
 - v2 dipakai per slot hanya bila >= 30 item berlabel & unggul >= 3 poin. Cakupan = porsi item slot yang sudah diukur ulang.
 
 ## Gender baju 2D (CLIP pada potongan pakaian tanpa manekin)
 
-- Shirt: 15309 item | AUC {"asli": 0.582, "potongan": 0.603, "rata": 0.607} | label wanita/pria [599, 252] | dipakai: **rata**
-- Pants: 14902 item | AUC {"asli": 0.671, "potongan": 0.68, "rata": 0.688} | label wanita/pria [1226, 204] | dipakai: **asli**
-- TShirt: 3093 item | AUC {"asli": null, "potongan": null, "rata": null} | label wanita/pria [52, 14] | dipakai: **asli**
+- Shirt: 15576 item | AUC {"asli": 0.586, "potongan": 0.607, "rata": 0.611} | label wanita/pria [606, 255] | dipakai: **rata**
+- Pants: 15169 item | AUC {"asli": 0.67, "potongan": 0.678, "rata": 0.686} | label wanita/pria [1242, 207] | dipakai: **asli**
+- TShirt: 3141 item | AUC {"asli": null, "potongan": null, "rata": null} | label wanita/pria [53, 14] | dipakai: **asli**
 
-## Sepatu (bundle): 4817 bundle di meta/sepatu.json | putaran ini: {"cari": 30, "lihat": 2543, "baru": 14, "total": 4817}
+## Sepatu (bundle): 4824 bundle di meta/sepatu.json | putaran ini: {"cari": 29, "lihat": 2312, "baru": 7, "total": 4824}
 
 _Catatan jujur: angka ini mengukur apakah model menangkap pola outfit buatan manusia. Enak-tidaknya hasil di mata pemain tetap diuji lewat penilaian pemilik._

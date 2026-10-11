@@ -1,0 +1,34 @@
+name: Body context regression
+
+on:
+  pull_request:
+    paths: ['otak.py', 'test_body_context.py', 'test_training_eval.py', '.github/workflows/body-context.yml']
+  push:
+    branches: ['codex/body-context']
+    paths: ['otak.py', 'test_body_context.py', 'test_training_eval.py', '.github/workflows/body-context.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: body-context-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate body parser and export schema
+        run: python test_body_context.py
+      - name: Install CPU evaluation dependencies
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install 'numpy<2'
+      - name: Run evaluation regression suite
+        run: python -m unittest -v test_training_eval

@@ -1,0 +1,35 @@
+name: Public ready outfit collection
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 */6 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: ready-outfit-collection
+  cancel-in-progress: false
+jobs:
+  collect:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test test_ready_outfits.mjs
+      - run: node ready_outfits.mjs
+      - name: Commit collection and resumable cursors
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add bank/ready_outfits.json data/ready_outfit_cursor.json data/ready_outfit_report.json
+          if ! git diff --staged --quiet; then
+            git commit -m 'Refresh public ready outfit references'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+      - name: Refresh public manifest CDN
+        continue-on-error: true
+        run: curl -s -m 20 "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/bank/ready_outfits.json"

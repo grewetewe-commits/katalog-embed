@@ -1,0 +1,34 @@
+name: Ready outfit regressions
+on:
+  pull_request:
+    paths:
+      - 'ready_*.mjs'
+      - 'ready_import.py'
+      - 'test_ready*'
+      - 'bank/ready_outfits.json'
+      - '.github/workflows/ready-outfits*.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ready_*.mjs'
+      - 'ready_import.py'
+      - 'test_ready*'
+      - 'bank/ready_outfits.json'
+      - '.github/workflows/ready-outfits*.yml'
+permissions:
+  contents: read
+jobs:
+  regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: node --test test_ready_outfits.mjs
+      - run: python -m unittest test_ready_import
+      - run: python -m py_compile otak.py ready_import.py

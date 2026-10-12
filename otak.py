@@ -38,6 +38,7 @@ import re
 import sys
 import time
 from datetime import datetime, timezone
+from ready_import import import_ready
 
 import numpy as np
 
@@ -2452,7 +2453,7 @@ def ekspor(st, emb, warna, slot_of, zs, hasil_latih, statistik, w2pak=None):
         if n_est is not None and n_est < 30:  # v7: 45 -> 30 (N terbukti tidak mewakili selera; outfit modern sering 45-60)
             n_tolak_koh += 1  # dinilai jelek oleh mata estetika (CLIP/Gemini)
             continue
-        e = {k: v for k, v in s.items() if k in ("Sh", "Pa", "Gt", "A", "F", "BCn", "SC", "BP", "R", "H", "S", "N", "GY")}
+        e = {k: v for k, v in s.items() if k in ("Sh", "Pa", "Gt", "A", "AM", "F", "BC", "BCn", "SC", "BP", "R", "H", "S", "N", "GY", "Origin")}
         e["Q"] = q
         e["G"] = g
         kandidat.append((e, sm))
@@ -2861,6 +2862,7 @@ def peta_badan(http, st, batas, hasil):
 def main():
     import threading
     st = muat_state()
+    log(f"REFERENSI UTUH: +{import_ready(st)} komposisi publik masuk jalur belajar")
     st["putaran"] = st.get("putaran", 0) + 1
     log(f"putaran {st['putaran']} | bank {len(st['outfit'])} outfit | meta {len(st['meta'])} | STUB={STUB}")
     http = HttpStub() if STUB else Http()

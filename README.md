@@ -1,5 +1,7 @@
 # Otak Katalog Praktis
 
+Panduan bersama Codex Desktop dan Claude Desktop: **[COLLAB.md](COLLAB.md)**. Baca [checkpoint aktif](AI_STATE.md) sebelum melanjutkan pekerjaan; source Studio dapat lebih baru daripada folder lokal.
+
 Generator outfit Roblox memakai model CLIP lokal dan model kecocokan milik proyek ini.
 Tidak membutuhkan API ChatGPT, Claude, Gemini, atau backend Vercel saat pemain membuat outfit.
 

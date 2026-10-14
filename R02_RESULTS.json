@@ -1,0 +1,160 @@
+{
+  "before": {
+    "cases": [
+      {
+        "name": "snapshot_initial_fallback",
+        "passed": true
+      },
+      {
+        "error": "[string \"-- R-02 isolated regression. Actual registration/Peek/PeekAny/Fold source captured 2026-10-15....\"]:117: assertion failed!",
+        "name": "same_pair_keeps_inherited_metadata",
+        "passed": false
+      },
+      {
+        "name": "live_still_wins",
+        "passed": true
+      },
+      {
+        "error": "[string \"-- R-02 isolated regression. Actual registration/Peek/PeekAny/Fold source captured 2026-10-15....\"]:130: assertion failed!",
+        "name": "expiry_599_to_600",
+        "passed": false
+      },
+      {
+        "error": "[string \"-- R-02 isolated regression. Actual registration/Peek/PeekAny/Fold source captured 2026-10-15....\"]:134: assertion failed!",
+        "name": "eviction_restores_snapshot_fallback",
+        "passed": false
+      },
+      {
+        "error": "[string \"-- R-02 isolated regression. Actual registration/Peek/PeekAny/Fold source captured 2026-10-15....\"]:138: assertion failed!",
+        "name": "repeat_registration_idempotent",
+        "passed": false
+      },
+      {
+        "error": "[string \"-- R-02 isolated regression. Actual registration/Peek/PeekAny/Fold source captured 2026-10-15....\"]:143: assertion failed!",
+        "name": "offsale_false_preserved",
+        "passed": false
+      },
+      {
+        "error": "[string \"-- R-02 isolated regression. Actual registration/Peek/PeekAny/Fold source captured 2026-10-15....\"]:148: assertion failed!",
+        "name": "zero_price_preserved",
+        "passed": false
+      },
+      {
+        "name": "changed_bundle_no_old_price",
+        "passed": true
+      },
+      {
+        "name": "changed_partner_no_old_price",
+        "passed": true
+      },
+      {
+        "name": "swapped_sides_no_old_price",
+        "passed": true
+      },
+      {
+        "name": "new_pair_has_mapping_only",
+        "passed": true
+      },
+      {
+        "name": "wrong_record_identity_no_copy",
+        "passed": true
+      },
+      {
+        "error": "[string \"-- R-02 isolated regression. Actual registration/Peek/PeekAny/Fold source captured 2026-10-15....\"]:175: assertion failed!",
+        "name": "invalid_ids_do_not_mutate",
+        "passed": false
+      },
+      {
+        "name": "source_metadata_not_mutated",
+        "passed": true
+      },
+      {
+        "error": "[string \"-- R-02 isolated regression. Actual registration/Peek/PeekAny/Fold source captured 2026-10-15....\"]:187: assertion failed!",
+        "name": "fold_pair_one_bundle_after_expiry",
+        "passed": false
+      },
+      {
+        "name": "fold_single_shoe_does_not_claim_pair",
+        "passed": true
+      }
+    ],
+    "total": 17,
+    "passed": 9,
+    "failed": 8
+  },
+  "proposal": {
+    "cases": [
+      {
+        "name": "snapshot_initial_fallback",
+        "passed": true
+      },
+      {
+        "name": "same_pair_keeps_inherited_metadata",
+        "passed": true
+      },
+      {
+        "name": "live_still_wins",
+        "passed": true
+      },
+      {
+        "name": "expiry_599_to_600",
+        "passed": true
+      },
+      {
+        "name": "eviction_restores_snapshot_fallback",
+        "passed": true
+      },
+      {
+        "name": "repeat_registration_idempotent",
+        "passed": true
+      },
+      {
+        "name": "offsale_false_preserved",
+        "passed": true
+      },
+      {
+        "name": "zero_price_preserved",
+        "passed": true
+      },
+      {
+        "name": "changed_bundle_no_old_price",
+        "passed": true
+      },
+      {
+        "name": "changed_partner_no_old_price",
+        "passed": true
+      },
+      {
+        "name": "swapped_sides_no_old_price",
+        "passed": true
+      },
+      {
+        "name": "new_pair_has_mapping_only",
+        "passed": true
+      },
+      {
+        "name": "wrong_record_identity_no_copy",
+        "passed": true
+      },
+      {
+        "name": "invalid_ids_do_not_mutate",
+        "passed": true
+      },
+      {
+        "name": "source_metadata_not_mutated",
+        "passed": true
+      },
+      {
+        "name": "fold_pair_one_bundle_after_expiry",
+        "passed": true
+      },
+      {
+        "name": "fold_single_shoe_does_not_claim_pair",
+        "passed": true
+      }
+    ],
+    "total": 17,
+    "passed": 17,
+    "failed": 0
+  }
+}

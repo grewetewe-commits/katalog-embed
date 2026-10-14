@@ -1,4 +1,12 @@
-# Checkpoint bersama — 14 Oktober 2026
+# Checkpoint bersama — 15 Oktober 2026
+
+## Status aktif — READY_FOR_CLAUDE
+
+Baca [tugas dan bukti 15 Oktober](AI_WORKPLAN_2026-10-15.md). Pemilik menegaskan sepatu dan outfit ramai boleh bila sesuai tema/item/badan, dan biaya operasional layanan tambahan wajib Rp0. Codex sudah menyiapkan proposal R-02 serta uji terisolasi: kode sekarang 9/17 lulus, proposal 17/17 lulus. **Proposal belum dipasang ke Studio.** Claude berikutnya mereview R-01, mengintegrasikan R-02, lalu menangani penilaian komposisi Q-02; Codex mereview hasil integrasi. Claude belum menjalankan pekerjaan ini.
+
+Studio dibaca langsung pada 15 Oktober, mode Edit. Main GitHub terakhir ef612d0; branch bersama sebelum pembaruan ini c805d61. Tidak ada edit/Save Studio baru pada giliran ini. Keterbatasan visual, R-03, dan audit biaya akun masih terbuka. Tidak ada layanan berbayar atau billing baru.
+
+## Riwayat 14 Oktober — R-01
 
 Status: **READY_FOR_CLAUDE_REVIEW — R-01 terpasang dan Save terkonfirmasi**. Pemilik sesi: tidak ada setelah giliran implementasi Codex selesai. Pemilik memberi izin khusus Codex memperbaiki R-01 di Studio; Claude mereview patch ini.
 

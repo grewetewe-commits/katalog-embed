@@ -20,6 +20,8 @@ Pengecualian khusus 14 Oktober: pemilik mengizinkan Codex memperbaiki R-01 di St
 
 ## Tujuan produk
 
+Arahan terbaru 15 Oktober: sepatu, motif, aksesori besar, dan outfit ramai boleh bila komposisi utuh sesuai item/tema/badan. Label tema dan jumlah aksesori bukan bukti mutu. Baca AI_WORKPLAN_2026-10-15.md untuk proposal R-02, pekerjaan komposisi Q-02, bukti uji dan batas biaya Rp0. Jangan menganggap proposal sudah terpasang atau Claude sudah bekerja hanya karena dokumen diperbarui.
+
 Pemain mencentang item yang disukai; sistem menyusun outfit utuh yang mendukung item itu dan cocok pada tubuh pemain. Jangkar yang cocok digabung, yang bertentangan dipisahkan menjadi kelompok yang jelas. Jangkar tetap dipertahankan.
 
 Penilaian mencakup tema, motif/gambar pakaian, warna, siluet, volume, fokus, preferensi gaya yang dipilih pemain, kombinasi 2D/3D, serta bentuk dan bagian tubuh sebenarnya. R6/R15, kotak, tinggi/ramping, badan campuran, headless, Korblox, dan pasangan sepatu/kaki harus masuk kasus uji. Nama item dan skor model adalah bukti terbatas, bukan pengganti pemeriksaan render.

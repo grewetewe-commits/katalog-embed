@@ -11,6 +11,8 @@ Pemilik memakai Codex Desktop dan Claude Desktop secara bergantian. Panduan ini 
 
 ## Peran dan batas kerja
 
+Pengecualian khusus 14 Oktober: pemilik mengizinkan Codex memperbaiki R-01 di Studio dan Save biasa tanpa publish. Patch sudah terpasang; Claude menjadi reviewer untuk patch tersebut. Ini tidak mengubah aturan otomatisasi atau memberi izin umum untuk patch Studio lain. Lihat AI_STATE.md.
+
 - Claude mengimplementasikan; Codex melakukan diagnosis dan review independen. Keduanya boleh memperbaiki rancangan berdasarkan bukti. Jangan menyebut patch sendiri telah mendapat review independen.
 - Sesi desktop manual dapat membaca Studio untuk membandingkan perubahan. Aturan proyek saat ini melarang Codex mengedit Studio melalui MCP; otomatisasi tetap hanya mengerjakan file lokal. Izin mengedit pada sesi implementer harus mengikuti instruksi pemilik dan aturan yang berlaku pada sesi itu.
 - Jangan menyentuh controller/`automation/`, melakukan publish, mengubah DataStore live, membeli aset, atau mengubah pengaturan akun. Release tetap membutuhkan persetujuan pemilik dan uji Studio manual pada versi yang sama.

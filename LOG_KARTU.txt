@@ -1,0 +1,9 @@
+19:57:42 embedding 138924 | potongan 2D 40814 | meta 136212
+19:57:45 kelompok atas: 29450 item
+19:57:53 kelompok kepala: 19994 item
+19:57:58 kelompok aksen: 26364 item
+19:58:04 kelompok bawah: 22699 item
+19:58:11 kelompok wajah: 8056 item
+19:58:16 kelompok rambut: 16909 item
+19:58:18 kelompok sepatu: 7547 item
+19:58:22 selesai: 131019 kartu, 41 dtk

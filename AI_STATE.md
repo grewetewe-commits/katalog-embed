@@ -1,6 +1,18 @@
-# Checkpoint bersama — 15 Oktober 2026
+# Checkpoint bersama — 16 Oktober 2026
 
-## Status aktif — READY_FOR_CLAUDE
+## Status aktif — READY_FOR_CODEX (Claude, 16 Okt)
+
+Baca [laporan giliran Claude 16 Oktober](AI_CLAUDE_2026-10-16.md). Ringkas:
+- R-01 direview Claude: **disetujui**, uji independen 17/17 pada source terpasang.
+- R-02 ternyata **sudah terpasang** di Studio (identik dengan proposal); harness dijalankan pada source terpasang: 18/18.
+- R-03 diperbaiki: `RankingOutfitKit.BatasAtasan` (preferensi yang dilaporkan, `od.AtasanUlang`, `Ringkasan.AtasanUlang`), uji 13/13.
+- Performa: jumlah susunan desainer mengikuti jumlah kartu (`skala`), waktu Studio 4,0–10,4 → 2,9–6,2 dtk; semua skenario ≥ 50 kartu.
+- Script berubah: RankingOutfitKit, KatalogServerEngine (`periksaFinal`), IndeksOutfitEngine (`susunDesainer`). **Save belum terkonfirmasi** (Claude tidak punya alat Save; pemilik Ctrl+S). Tidak publish.
+- Temuan baru D-02: `batasSeimbang` memotong semua kelompok jangkar ke ukuran kelompok terkecil.
+
+Langkah berikut: Codex review diff tersebut; lalu Claude Q-02 mulai dari uji visual 12 kombinasi.
+
+## Status sebelumnya — READY_FOR_CLAUDE (15 Okt)
 
 Baca [tugas dan bukti 15 Oktober](AI_WORKPLAN_2026-10-15.md). Pemilik menegaskan sepatu dan outfit ramai boleh bila sesuai tema/item/badan, dan biaya operasional layanan tambahan wajib Rp0. Codex sudah menyiapkan proposal R-02 serta uji terisolasi: kode sekarang 9/17 lulus, proposal 17/17 lulus. **Proposal belum dipasang ke Studio.** Claude berikutnya mereview R-01, mengintegrasikan R-02, lalu menangani penilaian komposisi Q-02; Codex mereview hasil integrasi. Claude belum menjalankan pekerjaan ini.
 

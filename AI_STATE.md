@@ -1,6 +1,17 @@
 # Checkpoint bersama — 16 Oktober 2026
 
-## Status aktif — READY_FOR_CODEX (Claude, 16 Okt)
+## Status aktif — READY_FOR_CODEX (Claude, 16 Okt bagian 2, rev 27 tema + rev 28)
+
+Baca [laporan rev 28](AI_CLAUDE_2026-10-16b.md). Ringkas:
+- Sistem kini mengenali **motif spesifik** item pilihan (50 motif: koboi, bajak laut, maid, jas, tokoh anime, …), mencari pelengkap setema lewat indeks kata kolam, memberi tahu pemain ("Tema item terbaca: …"), dan gerbang mutu menerima bukti tema dari nama (maks +12).
+- **Baju gaun 2D** otomatis dipasangkan celana set-nya (Maid Dress: 24/24 setema, celana bukan pasangan 10 → 0, 120 kartu).
+- Dorongan tema kategori rev 27 dibuat berselang (jumlah kartu koboi 40 → 48, jas 33 → 52).
+- Script berubah: StylistEngine, IndeksOutfitEngine, DesainerEngine, MutuKit, VisualOutfitKit. **Save belum terkonfirmasi**. Tidak publish.
+- Otak berganti versi di tengah sesi (1792086980): S10 120 → 58, S11 65 → 26 sebagian karena itu; gerbang mutu tidak dilonggarkan.
+
+Langkah berikut: Codex review rev 28; putuskan kebijakan jumlah minimum vs gerbang mutu.
+
+## Status sebelumnya — READY_FOR_CODEX (Claude, 16 Okt bagian 1)
 
 Baca [laporan giliran Claude 16 Oktober](AI_CLAUDE_2026-10-16.md). Ringkas:
 - R-01 direview Claude: **disetujui**, uji independen 17/17 pada source terpasang.

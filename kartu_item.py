@@ -608,6 +608,17 @@ def label_baca(kel, b):
     s.append(f"[gambar:{nm(TEMA, b[17])}]")
     if len(b) > 18 and b[18] >= 0:
         s.append(f"fungsi={nm(FUNGSI, b[18])}")
+    if len(b) > 20 and b[19] >= 0 and b[20] > 0:
+        s.append(f"gender={'cewek' if b[19] > 100 else ('cowok' if b[19] < 100 else 'netral')}"
+                 f"({abs(b[19] - 100)}, {b[20]} bukti)")
+    if len(b) > 23 and b[21] >= 0:
+        s.append(f"temaBukti={nm(TEMA, b[21])}({b[22]} poin)")
+    if len(b) > 26 and b[26] >= 0 and b[26] & 16:
+        d = []
+        if b[25] >= 0:
+            d.append(f"leher {b[25]}%")
+        d += [nmb for bit, nmb in ((1, "bahu terbuka"), (2, "crop"), (4, "menutup badan"), (8, "kaus kaki/stoking")) if b[26] & bit]
+        s.append("DIUKUR: " + (", ".join(d) or "-"))
     return " | ".join(s)
 
 
@@ -725,8 +736,9 @@ def bentuk_2d(kartu, meta):
         bits = 16
         if t == 11:
             b[13] = ia["lengan"].get(r.get("lengan"), b[13])
+            # baju 2D hanya menutup badan R6: panjangnya crop (diukur) atau normal -- tebakan CLIP "crop" tidak dipakai lagi
+            b[14] = ia["panjang"]["crop"] if r.get("crop") else ia["panjang"]["normal"]
             if r.get("crop"):
-                b[14] = ia["panjang"]["crop"]
                 bits |= 2
             if r.get("bahu") == "terbuka":
                 bits |= 1

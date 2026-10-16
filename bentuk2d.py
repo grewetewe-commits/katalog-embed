@@ -21,7 +21,7 @@ import requests
 from PIL import Image
 
 H = {"User-Agent": "KatalogPraktis-kartu/1.0 (GitHub Actions; github.com/grewetewe-commits/katalog-embed)"}
-VERSI_BENTUK = 2   # 2: warna manekin diperketat (baju putih/krem tidak lagi terbaca manekin)
+VERSI_BENTUK = 3   # 2: warna manekin diperketat (baju putih/krem tidak terbaca manekin); 3: celana sobek di lutut tetap panjang
 W = {  # (x0, y0, x1, y1) inklusif-eksklusif, gambar 420
     "leher": (182, 136, 226, 200),
     "leher_lebar": (160, 136, 248, 146),
@@ -96,14 +96,23 @@ def ukur(im):
         if mulai is None:
             return 0.0
         h0 = hist(k, mulai, nb)
-        akhir = mulai
-        for j in range(mulai + 1, nb):
+
+        def sama(j):
             if cs[j] < amb:
-                break
+                return False
             hj = hist(k, j, nb)
-            if h0 is None or hj is None or np.minimum(h0, hj).sum() < 0.35:
+            return h0 is not None and hj is not None and np.minimum(h0, hj).sum() >= 0.35
+
+        akhir, j = mulai, mulai + 1
+        while j < nb:
+            if sama(j):
+                akhir = j
+            elif j + 1 < nb and sama(j + 1):
+                akhir = j + 1           # satu pita beda lalu warna celana berlanjut: sobekan/lutut, bukan ujung celana
+                j += 1
+            else:
                 break
-            akhir = j
+            j += 1
         return (akhir + 1) / nb
 
     def bawah(cs, amb=0.5):

@@ -1,6 +1,20 @@
 # Checkpoint bersama — 16 Oktober 2026
 
-## Status aktif — READY_FOR_CODEX (Claude, 16 Okt bagian 3, rev 29 Kartu Item)
+## Status aktif — READY_FOR_CODEX (Claude, 16 Okt bagian 4, rev 30: 2D, headless, GUI)
+
+Baca [laporan rev 30](AI_CLAUDE_2026-10-16d.md) dan PR #5 (branch `claude/kartu-item`). Ringkas:
+- **Pakaian 2D**: label emas manual 175 item (`uji2d/`). Kartu skema 2 (probe dari nama + gambar; kolom `fungsi` kaos klasik).
+  Akurasi kartu vs label emas: baju jenis 25→49%, baju tema 50→65%, celana jenis 42→56%, kaos fungsi 87%. Map: kaos
+  shading/kalung/gambar tidak dihitung atasan (`kaosMenutup`).
+- **Headless**: dulu 120/120 kartu tanpa rambut/topi/leher → kini mengikuti avatar pemain (`V.KepalaTersembunyi`).
+- **GUI**: semua UI buatan script dipindah ke Studio (0 `Instance.new` kelas UI), label tanpa kurung/miring, `BodyChoiceDialog`
+  ScreenGui baru, cadangan `ServerStorage.Cadangan_GUI_20261016`.
+- Script: IndeksOutfitEngine, DesainerEngine, KartuItemKit, VisualOutfitKit, KatalogServerEngine, KatalogUIController,
+  ResponsiveCatalogKit, BodyChoiceUI. **Save belum terkonfirmasi**. Tidak publish.
+
+Langkah berikut: Codex review PR #5 (+ audit `uji2d/emas.json`) dan patch Studio rev 30; setelah merge `KartuItemKit.CABANG = "main"`.
+
+## Status sebelumnya — READY_FOR_CODEX (Claude, 16 Okt bagian 3, rev 29 Kartu Item)
 
 Baca [laporan rev 29](AI_CLAUDE_2026-10-16c.md) dan PR #5 (branch `claude/kartu-item`, `RANCANGAN_KARTU_ITEM.md`). Ringkas:
 - **Kartu Item**: GitHub membaca GAMBAR 132 rb item (CLIP, gratis) → jenis, bentuk, tema, subjek gambar utama, pola. Map memakainya lewat `KartuItemKit` (baru).

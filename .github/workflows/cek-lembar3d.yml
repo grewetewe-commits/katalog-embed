@@ -1,0 +1,31 @@
+name: Cek lembar 3D (alat periksa mata)
+
+# Thumbnail katalog resmi + angka ukur 3D untuk daftar id di uji3d/cek_ids.json -> uji3d/cek_lembar.png. Tidak dipakai map.
+on:
+  push:
+    branches: [claude/kartu-item]
+    paths: [uji3d/cek_ids.json, cek_lembar3d.py, .github/workflows/cek-lembar3d.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  lembar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pillow requests
+      - run: python cek_lembar3d.py
+      - name: Simpan lembar
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add uji3d/cek_lembar.png
+          git commit -m "Cek lembar 3D (otomatis)" || echo "tidak ada perubahan"
+          git pull --rebase -q origin claude/kartu-item || true
+          git push origin HEAD:claude/kartu-item

@@ -36,7 +36,7 @@ P_EMB = os.path.join(CACHE_DIR, "emb.npz")
 P_E2D = os.path.join(CACHE_DIR, "emb2d.npz")
 P_STATE = "data/panen.json.gz"
 SHARD = 8
-SKEMA = 5             # 5: kolom 28-34 BENTUK 3D diukur dari mesh resmi (bentuk3d.py / mata3d.py); 2: kolom 19 "fungsi" kaos klasik; 3: kolom 20-25 BUKTI (gender, tema berbukti, tema cocok) -- bukti_item.py
+SKEMA = 6             # 6: kolom 35 "genderSumber" (1 nama, 2 bentuk diukur 2D/3D, 4 jenis/kategori resmi, 8 pemakaian); 5: kolom 28-34 BENTUK 3D diukur dari mesh resmi (bentuk3d.py / mata3d.py); 2: kolom 19 "fungsi" kaos klasik; 3: kolom 20-25 BUKTI (gender, tema berbukti, tema cocok) -- bukti_item.py
                       # 4: kolom 26-27 BENTUK 2D DIUKUR (leher, bit bahu/crop/badan/kaus kaki) -- bentuk2d.py
 P_BENTUK = os.path.join(os.environ.get("CACHE_BENTUK", "cache_bentuk"), "bentuk2d.json")
 BATAS_BENTUK = int(os.environ.get("BATAS_BENTUK", "3000"))      # item 2D baru yang diukur per putaran (thumbnail 420)
@@ -673,12 +673,14 @@ def label_semua():
             "kolom": ["kelompok", "jenis", "jenisP", "tema1", "tema1P", "tema2", "tema2P", "subjek1", "subjek1P", "subjek2",
                       "subjek2P", "pola", "polaP", "lengan", "panjang", "fit", "depan", "temaGambar", "fungsi",
                       "gender", "genderN", "temaB", "temaBPoin", "temaBSumber", "temaCocok", "leher", "bentukBit",
-                      "lebar3D", "tinggi3D", "tebal3D", "bit3D", "lengan3D", "panjang3D", "tebalKain3D"],
+                      "lebar3D", "tinggi3D", "tebal3D", "bit3D", "lengan3D", "panjang3D", "tebalKain3D", "genderSumber"],
             "bentuk3d": {"ukuran": "lebar3D/tinggi3D/tebal3D = stud x20 (kotak batas mesh resmi); tebalKain3D = cm",
                          "bit": {"diukur": 1, "celana": 2, "rokGaun": 4, "melebarKeBawah": 8, "bot": 16, "gaun": 32,
                                  "diukurTerhadapBadan": 64, "bukanPenutupBadan": 128},
                          "lengan": ["tanpa", "pendek", "panjang"], "panjang": ["pendek", "sedang/selutut", "panjang"]},
-            "bentukBit": {"bahuTerbuka": 1, "crop": 2, "celanaMenutupBadan": 4, "kausKakiStoking": 8, "diukur": 16},
+            "bentukBit": {"bahuTerbuka": 1, "crop": 2, "celanaMenutupBadan": 4, "kausKakiStoking": 8, "diukur": 16,
+                          "leherRendah3D": 32, "dariMesh3D": 64},
+            "genderSumber": {"nama": 1, "bentukDiukur": 2, "jenisAtauKategori": 4, "pemakaian": 8},
             "leher": "kedalaman bukaan leher baju 2D, % tinggi badan (diukur piksel; kecil = kerah tinggi, besar = leher rendah)",
             "gender": "0..200: 100 netral, <100 cowok, >100 cewek (bukti nama + pemakaian di outfit manusia)",
             "temaBSumber": {"nama": BUKTI.SUMBER_NAMA, "unsur": BUKTI.SUMBER_UNSUR, "gaya": BUKTI.SUMBER_GAYA,
@@ -783,6 +785,7 @@ def bentuk_3d(kartu, meta):
     ia = {lab[0]: k for k, lab in enumerate(BA["lengan"])}
     ib = {lab[0]: k for k, lab in enumerate(BB["panjang"])}
     per, n = {}, 0
+    bentuk_atas = {}   # rev 32c: id -> bit bentukBit dari mesh 3D (1 bahu terbuka, 2 crop, 32 leher rendah, 16 diukur, 64 dari mesh)
     for sid, f in H3.items():
         try:
             i = int(sid)
@@ -820,8 +823,19 @@ def bentuk_3d(kartu, meta):
                 b[14] = ib.get({0: "pendek", 1: "selutut", 2: "panjang"}[pj], b[14])
         cap = lambda x: int(max(0, min(254, round(x))))
         per[i] = [cap(o["W"] * 20), cap(o["H"] * 20), cap(o["D"] * 20), bit, lg, pj, cap((o.get("tebalRata") or 0) * 100)]
+        if r.get("ukurBadan") and t in B3.ATAS:
+            bb = 16 | 64
+            if r.get("bahuTerbuka"):
+                bb |= 1
+            if r.get("crop"):
+                bb |= 2
+            if r.get("leherRendah"):
+                bb |= 32
+            bentuk_atas[i] = bb
         n += 1
-    log(f"bentuk 3D: {len(H3)} mesh diukur, {len(RK)} berkerangka badan, {n} kartu diberi bentuk 3D")
+    log(f"bentuk 3D: {len(H3)} mesh diukur, {len(RK)} berkerangka badan, {n} kartu diberi bentuk 3D, "
+        f"{sum(1 for v in bentuk_atas.values() if v & 35)} atasan dengan bagian badan terbuka diukur")
+    bentuk_3d.atas = bentuk_atas
     return per
 
 
@@ -855,7 +869,7 @@ def bukti_badan(gb, st, min_item=2, min_outfit=3):
     return out
 
 
-def perkaya_bukti(kartu, meta, st, per_bentuk=None):
+def perkaya_bukti(kartu, meta, st, per_bentuk=None, bentuk3=None):
     """kolom 20-25: gender & tema dari BUKTI (bukti_item.py). Tanpa data outfit -> kolom kosong (-1), kartu tetap jalan."""
     t0 = time.time()
     lab = label_semua()
@@ -866,8 +880,19 @@ def perkaya_bukti(kartu, meta, st, per_bentuk=None):
     for i, (leher, bits) in (per_bentuk or {}).items():
         if (leher is not None and leher > 22) or (bits & 1) or (bits & 2):
             bb[i] = 0.6
-    gb = BUKTI.gender_bukti(kartu, meta, outs, lab, benih_bentuk=bb) if outs else {}
+    # rev 32c: benih dari MESH 3D (perut/bahu terbuka, leher rendah; uji 17 Okt 163 cewek, 0 cowok) dan KATEGORI RESMI
+    # DressSkirt (tipe 72: 1.032 cewek, 1 cowok dari nama/pemakaian) -- bukan tebakan gambar
+    sumb = {}
+    for i, bits in (bentuk3 or {}).items():
+        if bits & 35:
+            bb[i] = 0.6
+    for i in kartu:
+        if i not in bb and int((meta.get(str(i)) or {}).get("t") or 0) == 72:
+            bb[i] = 0.6
+            sumb[i] = 4
+    gb = BUKTI.gender_bukti(kartu, meta, outs, lab, benih_bentuk=bb, sumber_bentuk=sumb) if outs else {}
     tb = BUKTI.tema_bukti(kartu, meta, outs, lab, TEMA, ada_kata, token)
+    perkaya_bukti.sumber = {i: g[2] for i, g in gb.items() if len(g) > 2}
     for i, b in kartu.items():
         g = gb.get(i)
         b += [int(round(100 + 100 * g[0])) if g else -1, min(254, g[1]) if g else -1]
@@ -996,18 +1021,24 @@ def main():
         log("bentuk 2D gagal (kartu tetap ditulis):", ex)
         bentuk = None
     per_b = (bentuk or {}).get("per") or {}
-    bukti = perkaya_bukti(kartu, meta, getattr(muat, "st", {}) or {}, per_b)
-    for i, b in kartu.items():               # kolom 26-27 SETELAH kolom bukti 20-25
-        lh, bits = per_b.get(i, (-1, -1))
-        b += [lh, bits]
+    # rev 32c: bentuk 3D dibaca SEBELUM bukti, supaya bagian badan terbuka yang diukur dari mesh ikut menjadi benih gender
     try:
         per3 = bentuk_3d(kartu, meta) if not stub else {}
     except Exception as ex:
         log("bentuk 3D gagal (kartu tetap ditulis):", ex)
         per3 = {}
+    atas3 = getattr(bentuk_3d, "atas", {}) or {}
+    bukti = perkaya_bukti(kartu, meta, getattr(muat, "st", {}) or {}, per_b, atas3)
+    for i, b in kartu.items():               # kolom 26-27 SETELAH kolom bukti 20-25
+        lh, bits = per_b.get(i, (-1, -1))
+        if i in atas3 and (bits is None or bits < 0):
+            bits = atas3[i]                  # atasan 3D: bit bagian badan terbuka dari mesh (64 = dari mesh 3D)
+        b += [lh, bits]
     kosong3 = [-1] * 7
-    for i, b in kartu.items():               # kolom 28-34
+    sumberG = getattr(perkaya_bukti, "sumber", {}) or {}
+    for i, b in kartu.items():               # kolom 28-34, lalu 35 sumber gender
         b += per3.get(i, kosong3)
+        b.append(sumberG.get(i, -1))
     versi = int(time.time())
     tulis(kartu, versi, evals)
     if bukti.get("graf"):

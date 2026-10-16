@@ -111,25 +111,28 @@ def _konteks(nilai, outs):
     return {i: acc[i] / n[i] for i in acc}, n
 
 
-def gender_bukti(kartu, meta, outs, label, sembunyi=None, iters=2, benih_bentuk=None):
+def gender_bukti(kartu, meta, outs, label, sembunyi=None, iters=2, benih_bentuk=None, sumber_bentuk=None):
     """-> {id: (skor -1 cowo .. +1 cewe, jumlah outfit)} ; sembunyi = set id yang benih namanya disembunyikan (uji);
     benih_bentuk = {id: nilai} dari BENTUK 2D DIUKUR (leher rendah / bahu terbuka / crop: 98-99% dipakai cewek, data 16 Okt)"""
-    benih = {}
+    benih, src = {}, {}
     for i, b in kartu.items():
         m = meta.get(str(i)) or {}
         g = 0.0 if (sembunyi and i in sembunyi) else gender_nama(m.get("n"))
+        sb = 1 if g else 0                               # 1 nama
         if g == 0.0 and benih_bentuk and i in benih_bentuk:
             g = benih_bentuk[i]
+            sb = (sumber_bentuk or {}).get(i, 2)         # 2 bentuk diukur (2D/3D), 4 kategori resmi
         if g == 0.0 and b[K_JENIS] >= 0 and b[K_JENISP] >= 50:
             kel = label["kelompok"][b[K_KEL]]
             jn = label["jenis"].get(kel, [])
             nmj = jn[b[K_JENIS]] if b[K_JENIS] < len(jn) else None
             if (kel, nmj) in JENIS_CEWE:
-                g = 0.5
+                g, sb = 0.5, 4
             elif (kel, nmj) in JENIS_COWO:
-                g = -0.5
+                g, sb = -0.5, 4
         if g:
             benih[i] = g
+            src[i] = sb
     cur = dict(benih)
     ctx, n = {}, collections.Counter()
     for _ in range(iters):
@@ -142,7 +145,8 @@ def gender_bukti(kartu, meta, outs, label, sembunyi=None, iters=2, benih_bentuk=
         if c is None and g0 == 0.0:
             continue
         s = (0.6 * g0 + 0.4 * (c or 0.0)) if g0 else (c or 0.0)
-        hasil[i] = (max(-1.0, min(1.0, s)), n.get(i, 0) + (2 if abs(g0) >= 1 else 0))
+        sb = src.get(i, 0) | (8 if n.get(i, 0) >= 2 and c is not None else 0)   # 8 pemakaian (>= 2 outfit manusia)
+        hasil[i] = (max(-1.0, min(1.0, s)), n.get(i, 0) + (2 if abs(g0) >= 1 else 0), sb)
     return hasil
 
 

@@ -41,6 +41,8 @@ def fitur(f, rk=None):
         o["luar" + q] = fr_
         o["luar" + q + "Bawah"] = lo_ if lo_ >= 0 else 100
     ld = f.get("leher") or [-1, -1, -1]
+    if ld[0] >= 0:
+        o["leherDepan"] = ld[0] / 100       # turunnya garis leher depan dari puncak pakaian (stud)
     if ld[0] >= 0 and ld[2] >= 0:
         o["leherDalam"] = (ld[0] - ld[2]) / 100
     if ld[0] >= 0 and ld[1] >= 0:
@@ -107,7 +109,8 @@ def baca(o, t):
       Ketepatan saat MENGKLAIM (17 Okt, nama sebagai pembanding berisik): lengan panjang 93%, pendek 74%, tanpa 82%;
       celana panjang 93%, celana pendek 71%; potong dari tipe resmi 98-99%. Sisanya TIDAK diklaim (kerangka tak wajar).
       sepatu   bot bila tinggi >= 0,65 stud
-    Belum lolos uji (TIDAK diklaim): crop, bahu terbuka, tudung, jaket terbuka, tebal/puffer, bentuk dada."""
+      atasan   (rev 32c, hanya kerangka wajar) crop / bahu terbuka / leher rendah -- ambang & uji di badan fungsi.
+    Belum lolos uji (TIDAK diklaim): tudung, jaket terbuka, tebal/puffer, bentuk dada."""
     out = {}
     if not o:
         return out
@@ -147,6 +150,17 @@ def baca(o, t):
             else:
                 out["lengan"] = "pendek"
             out["ukurBadan"] = True
+            # rev 32c: BAGIAN BADAN YANG TERBUKA (pembeda gender yang terlihat), diuji 17 Okt pada 897 atasan bergender
+            # (nama / pemakaian): perut terbuka = ujung bawah >= +0,8 (di atas pinggang celana +0,6): 92 cewek, 0 cowok;
+            # bahu terbuka = ujung atas < +1,5 (bahu +1,9), depan tidak terbuka, lebar < 3,5: 46 cewek, 0 cowok;
+            # leher rendah = garis leher depan turun >= 0,4 stud, depan tidak terbuka (< 10%): 25 cewek, 0 cowok.
+            dT = o.get("depanTerbuka", 0)
+            if yb is not None and yb >= 0.8:
+                out["crop"] = True
+            if yt < 1.5 and dT < 30 and o["W"] < 3.5:
+                out["bahuTerbuka"] = True
+            if (o.get("leherDepan") or 0) >= 0.4 and dT < 10:
+                out["leherRendah"] = True
     elif t in SEPATU:
         out["tinggi"] = "bot" if o["H"] >= 0.65 else "rendah"
     return out

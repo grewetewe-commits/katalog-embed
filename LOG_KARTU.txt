@@ -1,11 +1,11 @@
-04:58:38 embedding 140155 | potongan 2D 41330 | meta 137463
-04:58:42 kelompok atas2D: 20131 item
-04:58:50 kelompok atas3D: 9634 item
-04:58:57 kelompok kepala: 20119 item
-04:59:03 kelompok aksen: 26554 item
-04:59:09 kelompok bawah2D: 17186 item
-04:59:17 kelompok bawah3D: 5742 item
-04:59:23 kelompok wajah: 8128 item
-04:59:28 kelompok rambut: 17052 item
-04:59:31 kelompok sepatu: 7650 item
-04:59:35 selesai: 132196 kartu, 59 dtk
+05:17:14 embedding 140155 | potongan 2D 41330 | meta 137463
+05:17:17 kelompok atas2D: 20131 item
+05:17:27 kelompok atas3D: 9634 item
+05:17:35 kelompok kepala: 20119 item
+05:17:41 kelompok aksen: 26554 item
+05:17:49 kelompok bawah2D: 17186 item
+05:17:58 kelompok bawah3D: 5742 item
+05:18:05 kelompok wajah: 8128 item
+05:18:10 kelompok rambut: 17052 item
+05:18:13 kelompok sepatu: 7650 item
+05:18:18 selesai: 132196 kartu, 66 dtk

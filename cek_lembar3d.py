@@ -12,15 +12,20 @@ H = {"User-Agent": "KatalogPraktis-cek3d/1.0 (GitHub Actions; github.com/grewete
 SEL, KOL, TEKS = 260, 4, 54
 
 
-def thumb(ids):
+def thumb(ids, bundle=False):
     out = {}
     for a in range(0, len(ids), 50):
         p = ids[a:a + 50]
         for _ in range(3):
             try:
-                r = requests.get("https://thumbnails.roblox.com/v1/assets", headers=H, timeout=30,
-                                 params={"assetIds": ",".join(map(str, p)), "returnPolicy": "PlaceHolder",
-                                         "size": "420x420", "format": "Png", "isCircular": "false"})
+                if bundle:
+                    r = requests.get("https://thumbnails.roblox.com/v1/bundles/thumbnails", headers=H, timeout=30,
+                                     params={"bundleIds": ",".join(map(str, p)), "size": "420x420", "format": "Png",
+                                             "isCircular": "false"})
+                else:
+                    r = requests.get("https://thumbnails.roblox.com/v1/assets", headers=H, timeout=30,
+                                     params={"assetIds": ",".join(map(str, p)), "returnPolicy": "PlaceHolder",
+                                             "size": "420x420", "format": "Png", "isCircular": "false"})
                 pending = False
                 for e in r.json().get("data", []):
                     if e.get("state") == "Completed" and e.get("imageUrl"):
@@ -41,7 +46,9 @@ def thumb(ids):
 
 def main():
     daftar = json.load(open("uji3d/cek_ids.json", encoding="utf-8"))
-    gb = thumb([d["id"] for d in daftar])
+    # {"bundle": true} pada entri = thumbnail bundle (badan avatar), selain itu aset
+    gb = thumb([d["id"] for d in daftar if not d.get("bundle")])
+    gb.update(thumb([d["id"] for d in daftar if d.get("bundle")], bundle=True))
     baris = (len(daftar) + KOL - 1) // KOL
     kanvas = Image.new("RGB", (KOL * SEL, baris * (SEL + TEKS)), (255, 255, 255))
     dr = ImageDraw.Draw(kanvas)

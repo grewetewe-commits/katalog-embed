@@ -1,6 +1,20 @@
 # Checkpoint bersama — 16 Oktober 2026
 
-## Status aktif — READY_FOR_CODEX (Claude, 16 Okt bagian 4, rev 30: 2D, headless, GUI)
+## Status aktif — READY_FOR_CODEX (Claude, 16 Okt bagian 5, rev 31: pembaca item berbukti & diukur)
+
+Baca [laporan rev 31](AI_CLAUDE_2026-10-16e.md). Ringkas:
+- **Tema berbukti** (nama + benda terlihat + pemakaian di 73 rb outfit manusia; kurang bukti = tidak bertema) dan **peta
+  sambungan tema** (PMI) dipakai penyusun; pesan ke pemain menyebut buktinya.
+- **Gender** dari pemakaian (uji nama-tersembunyi 95–97%) + bentuk diukur; gerbang gender berlaku semua slot.
+- **Bentuk 2D diukur dari piksel** (leher, bahu, lengan, crop, panjang celana, lapisan kulit); leher rendah/bahu terbuka/crop
+  terbukti 98–99% dipakai cewek.
+- **FisikItemKit** (map): titik pasang, ukuran mesh, lapisan 3D, tekstur PBR, template 2D.
+- Verteks 3D: `mata3d.py` siap, menunggu izin API key **thumbnails: read** dari pemilik. Vercel tidak dipakai.
+- **Save rev 31 belum terkonfirmasi** (rev 30 sudah tersimpan). Tidak publish.
+
+Langkah berikut: Codex review PR #5 + patch Studio rev 30/31.
+
+## Status sebelumnya — READY_FOR_CODEX (Claude, 16 Okt bagian 4, rev 30: 2D, headless, GUI)
 
 Baca [laporan rev 30](AI_CLAUDE_2026-10-16d.md) dan PR #5 (branch `claude/kartu-item`). Ringkas:
 - **Pakaian 2D**: label emas manual 175 item (`uji2d/`). Kartu skema 2 (probe dari nama + gambar; kolom `fungsi` kaos klasik).

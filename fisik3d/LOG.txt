@@ -1,0 +1,23 @@
+kunci API terpasang: True
+calon 6000 (sudah diukur 0), pekerja 4, batas 40.0 mnt
+  200 | {"ok": 200, "pending": 0, "galat": 0, "429": 16, "tanpa_obj": 0} | 89 dtk
+  400 | {"ok": 400, "pending": 0, "galat": 0, "429": 40, "tanpa_obj": 0} | 223 dtk
+  600 | {"ok": 599, "pending": 0, "galat": 1, "429": 60, "tanpa_obj": 0} | 328 dtk
+  800 | {"ok": 797, "pending": 0, "galat": 3, "429": 82, "tanpa_obj": 0} | 460 dtk
+  1000 | {"ok": 997, "pending": 0, "galat": 3, "429": 102, "tanpa_obj": 0} | 577 dtk
+  1200 | {"ok": 1197, "pending": 0, "galat": 3, "429": 122, "tanpa_obj": 0} | 689 dtk
+  1400 | {"ok": 1397, "pending": 0, "galat": 3, "429": 146, "tanpa_obj": 0} | 827 dtk
+  1600 | {"ok": 1597, "pending": 0, "galat": 3, "429": 166, "tanpa_obj": 0} | 942 dtk
+  1800 | {"ok": 1797, "pending": 0, "galat": 3, "429": 186, "tanpa_obj": 0} | 1062 dtk
+  2000 | {"ok": 1997, "pending": 0, "galat": 3, "429": 206, "tanpa_obj": 0} | 1185 dtk
+  2200 | {"ok": 2197, "pending": 0, "galat": 3, "429": 226, "tanpa_obj": 0} | 1305 dtk
+  2400 | {"ok": 2395, "pending": 2, "galat": 3, "429": 245, "tanpa_obj": 0} | 1418 dtk
+  2600 | {"ok": 2595, "pending": 2, "galat": 3, "429": 265, "tanpa_obj": 0} | 1540 dtk
+  2800 | {"ok": 2795, "pending": 2, "galat": 3, "429": 285, "tanpa_obj": 0} | 1654 dtk
+  3000 | {"ok": 2993, "pending": 4, "galat": 3, "429": 305, "tanpa_obj": 0} | 1775 dtk
+  3200 | {"ok": 3192, "pending": 4, "galat": 4, "429": 323, "tanpa_obj": 0} | 1902 dtk
+  3400 | {"ok": 3392, "pending": 4, "galat": 4, "429": 343, "tanpa_obj": 0} | 2023 dtk
+  3600 | {"ok": 3590, "pending": 4, "galat": 6, "429": 362, "tanpa_obj": 0} | 2150 dtk
+  3800 | {"ok": 3788, "pending": 6, "galat": 6, "429": 382, "tanpa_obj": 0} | 2275 dtk
+  4000 | {"ok": 3987, "pending": 7, "galat": 6, "429": 402, "tanpa_obj": 0} | 2391 dtk
+selesai: {"ok": 4044, "pending": 7, "galat": 6, "429": 402, "tanpa_obj": 0} | total diukur 4044 | 2404 dtk

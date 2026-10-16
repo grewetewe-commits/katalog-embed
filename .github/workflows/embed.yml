@@ -95,7 +95,7 @@ jobs:
           tail -n 120 otak_log.txt > LOG_TERAKHIR.txt 2>/dev/null || echo "log tidak ada" > LOG_TERAKHIR.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for p in model bank meta data kartu/info.json kartu/kartu_0.json kartu/kartu_1.json kartu/kartu_2.json kartu/kartu_3.json kartu/kartu_4.json kartu/kartu_5.json kartu/kartu_6.json kartu/kartu_7.json kartu/tema_graf.json LAPORAN_KARTU.md LAPORAN_OTAK.md LOG_TERAKHIR.txt; do
+          for p in model bank meta data kartu/info.json kartu/kartu_0.json kartu/kartu_1.json kartu/kartu_2.json kartu/kartu_3.json kartu/kartu_4.json kartu/kartu_5.json kartu/kartu_6.json kartu/kartu_7.json kartu/tema_graf.json kartu/badan_bukti.json LAPORAN_KARTU.md LAPORAN_OTAK.md LOG_TERAKHIR.txt; do
             if [ -e "$p" ]; then git add "$p"; fi
           done
           if git diff --staged --quiet; then
@@ -112,6 +112,6 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          for f in model/info.json model/item_{0..7}.json meta/harga_{0..7}.json bank/outfit_{0..3}.json meta/badan.json meta/sepatu.json kartu/info.json kartu/kartu_{0..7}.json kartu/tema_graf.json; do
+          for f in model/info.json model/item_{0..7}.json meta/harga_{0..7}.json bank/outfit_{0..3}.json meta/badan.json meta/sepatu.json kartu/info.json kartu/kartu_{0..7}.json kartu/tema_graf.json kartu/badan_bukti.json; do
             curl -s -m 20 -o /dev/null -w "%{http_code} $f\n" "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/$f" || true
           done

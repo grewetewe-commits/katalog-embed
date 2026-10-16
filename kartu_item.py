@@ -817,6 +817,36 @@ def bentuk_3d(kartu, meta):
     return per
 
 
+def bukti_badan(gb, st, min_item=2, min_outfit=3):
+    """rev 32: GENDER BAGIAN BADAN (bundle) dari PEMAKAIAN, bukan dari kata "Woman"/"Man" di nama bundle.
+    Outfit manusia yang mencatat bagian badannya (BP) -> gender outfit = rata-rata skor gender BERBUKTI item-itemnya
+    (>= 2 item berbukti) -> tiap bagian badan mewarisi rata-rata outfit yang memakainya. -> {id_bagian: [skor -100..100, n]}"""
+    acc, n = collections.defaultdict(float), collections.Counter()
+    tot_go, n_go = 0.0, 0
+    for o in (st.get("outfit") or {}).values():
+        bp = o.get("BP") if isinstance(o, dict) else None
+        if not isinstance(bp, dict):
+            continue
+        ids = [o[k] for k in ("Sh", "Pa", "Gt") if o.get(k)] + [a[0] for a in (o.get("A") or []) if a]
+        sk = [gb[int(i)][0] for i in ids if isinstance(i, (int, float)) and int(i) in gb and gb[int(i)][1] >= 2]
+        if len(sk) < min_item:
+            continue
+        go = sum(sk) / len(sk)
+        tot_go += go
+        n_go += 1
+        for v in bp.values():
+            if isinstance(v, int) and v > 0:
+                acc[v] += go
+                n[v] += 1
+    # data panen condong cewek -> skor dipusatkan pada rata-rata outfit (pusat) supaya "lebih cowok/cewek dari rata-rata"
+    pusat = tot_go / max(1, n_go)
+    out = {str(i): [int(round(100 * (acc[i] / n[i] - pusat))), n[i]] for i in acc if n[i] >= min_outfit}
+    jelas = sum(1 for v in out.values() if abs(v[0]) >= 25)
+    log(f"bukti badan: {len(out)} bagian badan berbukti pemakaian (>= {min_outfit} outfit, pusat {pusat:+.2f}), "
+        f"{jelas} jelas cowok/cewek")
+    return out
+
+
 def perkaya_bukti(kartu, meta, st, per_bentuk=None):
     """kolom 20-25: gender & tema dari BUKTI (bukti_item.py). Tanpa data outfit -> kolom kosong (-1), kartu tetap jalan."""
     t0 = time.time()
@@ -840,7 +870,8 @@ def perkaya_bukti(kartu, meta, st, per_bentuk=None):
     ug = BUKTI.uji_gender(kartu, meta, outs, lab, benih_bentuk=bb) if outs else []
     log(f"bukti: {len(outs)} outfit manusia, gender {len(gb)} item, tema berbukti "
         f"{sum(1 for v in tb.values() if v[0] >= 0)} item, {time.time() - t0:.0f} dtk")
-    return {"outs": len(outs), "graf": graf, "uji_gender": ug, "tb": tb}
+    badan = bukti_badan(gb, st) if gb else {}
+    return {"outs": len(outs), "graf": graf, "uji_gender": ug, "tb": tb, "badan": badan}
 
 
 def laporan(kartu, evals, contoh, meta, uji, versi, bukti=None):
@@ -974,6 +1005,9 @@ def main():
     if bukti.get("graf"):
         with open("kartu/tema_graf.json", "w", encoding="utf-8") as f:
             json.dump({"versi": versi, **bukti["graf"]}, f, ensure_ascii=False, separators=(",", ":"))
+    if bukti.get("badan"):
+        with open("kartu/badan_bukti.json", "w", encoding="utf-8") as f:
+            json.dump({"versi": versi, "d": bukti["badan"]}, f, separators=(",", ":"))
     laporan(kartu, evals, contoh, meta, uji, versi, bukti)
     log(f"selesai: {len(kartu)} kartu, {time.time() - t0:.0f} dtk")
 

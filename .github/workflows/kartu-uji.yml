@@ -65,4 +65,5 @@ jobs:
           cp probe_log.txt LOG_PROBE3D.txt 2>/dev/null || true
           git add kartu LAPORAN_KARTU.md LOG_KARTU.txt LOG_PROBE3D.txt 2>/dev/null || git add kartu LAPORAN_KARTU.md LOG_KARTU.txt
           git commit -m "Kartu item: hasil uji (otomatis)" || echo "tidak ada perubahan"
+          git pull --rebase -q origin claude/kartu-item || true
           git push origin HEAD:claude/kartu-item

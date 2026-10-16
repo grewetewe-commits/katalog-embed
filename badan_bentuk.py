@@ -168,7 +168,14 @@ def main():
         if r is not None:
             peta[str(b)] = r
         time.sleep(0.15)
-    label = (json.load(open(P_LABEL, encoding="utf-8")).get("d") or {}) if os.path.exists(P_LABEL) else {}
+    berkas_label = json.load(open(P_LABEL, encoding="utf-8")) if os.path.exists(P_LABEL) else {}
+    label = berkas_label.get("d") or {}
+    # bagian badan bundle berlabel (dibaca di Studio lewat AssetService:GetBundleDetailsAsync) -> ikut dipetakan
+    for bid, parts in (berkas_label.get("bagian") or {}).items():
+        for part in parts:
+            lst = peta.setdefault(str(part), [])
+            if int(bid) not in lst:
+                lst.append(int(bid))
     perlu = sorted(({x for v in peta.values() for x in v} | {int(k) for k in label}) - {int(k) for k in skorB})
     log(f"bagian badan dipakai manusia: {len(bagian)}, dipetakan {len(peta)} (+{n_tanya} tanya), bundle perlu dibaca {len(perlu)}")
     if perlu:

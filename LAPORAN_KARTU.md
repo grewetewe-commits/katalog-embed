@@ -1,4 +1,4 @@
-# Laporan Kartu Item (MATA v2) — versi 1792146263
+# Laporan Kartu Item (MATA v2) — versi 1792147319
 
 Kartu dibaca dari GAMBAR item (CLIP zero-shot, model sama dengan otak.py); nama hanya bukti tambahan.
 
@@ -94,9 +94,11 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 | baju 2D | jenis | 57 | 28 | 49% | 0 |
 | baju 2D | tema | 37 | 24 | 65% | 0 |
 | baju 2D | pola | 54 | 17 | 31% | 0 |
+| baju 2D | fungsi | 9 | 9 | 100% | 51 |
 | celana 2D | jenis | 43 | 24 | 56% | 0 |
 | celana 2D | tema | 23 | 12 | 52% | 0 |
 | celana 2D | pola | 48 | 20 | 42% | 0 |
+| celana 2D | fungsi | 6 | 6 | 100% | 53 |
 | kaos klasik | fungsi | 55 | 48 | 87% | 0 |
 
 ## Item uji
@@ -105,16 +107,16 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 - `72558563872966` Black Cowboy Hat (kepala): jenis=topi_koboi(81) | tema=koboi(100)/formal(0) | subjek=rantai(12)/tanpa(12) | [gambar:koboi]
 - `1028859` Pirate Captain's Hat (kepala): jenis=topi_lain(41) | tema=bajak_laut(100)/halloween(0) | subjek=tengkorak(86)/hantu(3) | [gambar:bajak_laut]
 - `14328141014` Gojo (wajah): jenis=kacamata_hitam(74) | tema=anime(37)/steampunk(9) | subjek=bulan(40)/mata(16) | [gambar:steampunk]
-- `8565346973` 🤍 Maid Dress (atas): jenis=gaun(54) | tema=maid(67)/punk(4) | subjek=salib(6)/rantai(6) | pola=bulu(26) | lengan=panjang panjang=normal fit=pas depan=tertutup | [gambar:maid]
-- `6554200369` Grey Suit w/ Black Vest [+] (atas): jenis=jas(31) | tema=formal(69)/gothic(4) | subjek=kelelawar(10)/salib(8) | pola=bulu(31) | lengan=tanpa panjang=normal fit=pas depan=terbuka | [gambar:formal]
+- `8565346973` 🤍 Maid Dress (atas): jenis=gaun(54) | tema=maid(67)/punk(4) | subjek=salib(6)/rantai(6) | pola=bulu(26) | lengan=pendek panjang=normal fit=pas depan=tertutup | [gambar:maid] | fungsi=pakaian
+- `6554200369` Grey Suit w/ Black Vest [+] (atas): jenis=jas(31) | tema=formal(69)/gothic(4) | subjek=kelelawar(10)/salib(8) | pola=bulu(31) | lengan=panjang panjang=normal fit=pas depan=terbuka | [gambar:formal] | fungsi=pakaian
 - `192557913` Sparkling Angel Wings (aksen): jenis=sayap(98) | tema=malaikat(88)/peri(10) | subjek=bulan(23)/kupu_kupu(21) | [gambar:malaikat]
 - `78504769792948` Bloody Silver Dermal Piercing Under Eye Right (wajah): jenis=tindik(78) | tema=horor(45)/steampunk(26) | subjek=mata(50)/bulan(32) | [gambar:steampunk]
-- `126582482792163` Pastel Goth (atas): jenis=kostum_penuh(65) | tema=kawaii(70)/gothic(18) | subjek=pita(23)/hantu(9) | pola=polkadot(97) | lengan=pendek panjang=normal fit=longgar depan=tertutup | [gambar:kawaii]
+- `126582482792163` Pastel Goth (atas): jenis=kostum_penuh(65) | tema=kawaii(70)/gothic(18) | subjek=pita(23)/hantu(9) | pola=polkadot(97) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:kawaii] | fungsi=pakaian
 - `93519364113971` kawaii curious droopy cat ears in full black (kepala): jenis=telinga(46) | tema=kawaii(35)/formal(13) | subjek=kucing(36)/bulan(17) | [gambar:formal]
-- `382538059` Green Jersey (atas): jenis=jersey(93) | tema=sporty(96)/y2k(1) | subjek=katak(24)/bintang(9) | pola=bunga(33) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:sporty]
+- `382538059` Green Jersey (atas): jenis=jersey(93) | tema=sporty(96)/y2k(1) | subjek=katak(24)/bintang(9) | pola=bunga(33) | lengan=pendek panjang=crop fit=longgar depan=tertutup | [gambar:sporty] | fungsi=pakaian
 - `7192553841` Zip Hoodie - Black (atas): jenis=jaket(49) | tema=gothic(45)/formal(19) | subjek=salib(23)/kelelawar(12) | pola=kulit(59) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:gothic]
 - `14027730224` ♡ kawaii baby pink pastel bow headband (kepala): jenis=pita_bando(93) | tema=coquette(79)/kawaii(19) | subjek=pita(79)/kelinci(4) | [gambar:coquette]
-- `15901064855` black grunge dark y2k dh emo boy punk evade (bawah): jenis=jeans(79) | tema=y2k(31)/punk(27) | subjek=bulan(6)/rantai(6) | pola=denim(87) | panjang=pendek fit=lebar | [gambar:gothic]
+- `15901064855` black grunge dark y2k dh emo boy punk evade (bawah): jenis=jeans(79) | tema=y2k(31)/punk(27) | subjek=bulan(6)/rantai(6) | pola=denim(87) | panjang=panjang fit=lebar | [gambar:gothic] | fungsi=pakaian
 - `98089688160090` 🖤 Black leather jacket with spikes and skull  (atas): jenis=jaket(50) | tema=gothic(48)/punk(26) | subjek=tengkorak(44)/laba_laba(11) | pola=kulit(81) | lengan=tanpa panjang=crop fit=longgar depan=tertutup | [gambar:gothic]
 - `116973312880668` Arisu's Sword of Light: Supernova MK.II (aksen): jenis=senjata(74) | tema=cyber(64)/polisi(9) | subjek=petir(50)/hiu(6) | [gambar:cyber]
 - `98757749181872` ♡ coquette curls with pink bow blonde (rambut): tema=coquette(62)/kawaii(37) | [gambar:kawaii]
@@ -240,7 +242,7 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 - `86660277439344`  1.0 Blocky Belted Jeans and Shoes — jenis=jeans(44) | tema=koboi(16)/kerajaan(12) | subjek=mahkota(41)/bulan(8) | pola=denim(53) | panjang=pendek fit=lebar | [gambar:koboi]
 - `15253448762` Phoenix UFO Aura — jenis=bawahan_gaun(42) | tema=penyihir(25)/superhero(18) | subjek=bintang(38)/bulan(12) | pola=pelangi(62) | panjang=selutut fit=ketat | [gambar:penyihir]
 - `4822560548` Bluey (Pants) — jenis=overall(53) | tema=kostum_hewan(21)/kawaii(15) | subjek=hantu(12)/hiu(10) | pola=denim(61) | panjang=pendek fit=lebar | [gambar:kawaii]
-- `5168804217` pants fuego arcoiris cool 😎😎😎👍 — jenis=rok_pendek(31) | tema=streetwear(16)/antariksa(15) | subjek=api(15)/petir(9) | pola=pelangi(99) | panjang=pendek fit=lebar | [gambar:y2k]
+- `5168804217` pants fuego arcoiris cool 😎😎😎👍 — jenis=rok_pendek(31) | tema=streetwear(16)/antariksa(15) | subjek=api(15)/petir(9) | pola=pelangi(99) | panjang=selutut fit=lebar | [gambar:y2k] | fungsi=pakaian
 - `7124183470` [𝓚] Donald - — jenis=celana_kain(36) | tema=polisi(32)/anime(8) | subjek=bulan(5)/bintang(5) | pola=denim(46) | panjang=pendek fit=lebar | [gambar:biasa]
 - `76315271208132` Vintage Baggy Skater Pants (Grey) — jenis=jeans(49) | tema=punk(17)/y2k(15) | subjek=tanpa(21)/salib(11) | pola=denim(66) | panjang=selutut fit=lebar | [gambar:punk]
 - `96622013932427` 2000s mini dress with flowy sleeves black — jenis=bawahan_gaun(57) | tema=y2k(35)/formal(34) | subjek=salib(13)/tanpa(9) | pola=polos(37) | panjang=selutut fit=ketat | [gambar:formal]

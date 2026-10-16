@@ -1,4 +1,4 @@
-# Laporan Kartu Item (MATA v2) — versi 1792132593
+# Laporan Kartu Item (MATA v2) — versi 1792146263
 
 Kartu dibaca dari GAMBAR item (CLIP zero-shot, model sama dengan otak.py); nama hanya bukti tambahan.
 
@@ -40,6 +40,49 @@ yang dipilih otomatis (kecocokan top-1 tertinggi).
 | wajah/tema | 2117 | 1.0 | 21% | 35% | 15% | 21% |
 
 Catatan: angka ini batas bawah kasar — nama Roblox sering tidak menyebut apa yang terlihat, dan label nama sendiri bisa salah.
+
+## Bukti (rev 31): gender & tema dari bukti, bukan tebakan satu sumber
+
+Outfit buatan manusia dipakai sebagai bukti pemakaian: **73233**.
+
+### Gender (uji jujur: benih nama 20% item disembunyikan, ditebak dari pemakaian)
+
+| ambang | benar | diputuskan | item uji |
+|---|---|---|---|
+| 0.1 | 1340 (94.9%) | 1412 | 2690 |
+| 0.15 | 1230 (95.3%) | 1290 | 2690 |
+| 0.25 | 973 (96.7%) | 1006 | 2690 |
+
+### Tema berbukti vs label emas (baju/celana 2D)
+
+| tipe | n | diputuskan | tepat saat diputuskan | kartu lama tepat |
+|---|---|---|---|---|
+| 11 | 37 | 8 | 8 | 24 |
+| 12 | 23 | 4 | 3 | 12 |
+
+Item bertema berbukti: 15814 dari 133329 (sisanya tidak bertema khusus).
+
+Sebaran: kawaii 2841, coquette 1553, formal 1431, halloween 1287, militer 1120, kerajaan 851, sporty 781, malaikat 613, gothic 601, punk 557, koboi 471, ksatria 445, natal 420, penyihir 261, iblis 246, musim_dingin 232, anime 194, antariksa 192, pantai 176, superhero 172, cyber 168, gaun_elegan 154, badut 142, peri 111, polisi 106
+
+### Sambungan tema (PMI positif, dari outfit manusia)
+
+- kawaii: coquette (0.22, 459)
+- kerajaan: steampunk (0.37, 14), peri (0.28, 84), pantai (0.10, 29)
+- formal: penyihir (0.38, 6), steampunk (0.28, 10)
+- coquette: malaikat (0.32, 75), kawaii (0.22, 459), gaun_elegan (0.06, 10), peri (0.05, 48)
+- militer: cyber (0.44, 9), koboi (0.05, 9)
+- punk: gothic (0.74, 43), vampir (0.69, 6), iblis (0.52, 17), peri (0.34, 23), natal (0.01, 9)
+- gothic: vampir (0.89, 6), iblis (0.78, 18), punk (0.74, 43)
+- malaikat: peri (1.02, 35), iblis (0.51, 13), coquette (0.32, 75)
+- peri: horor (1.58, 5), malaikat (1.02, 35), iblis (0.96, 17), punk (0.34, 23), kerajaan (0.28, 84)
+- musim_dingin: natal (0.45, 8)
+- iblis: vampir (1.60, 6), peri (0.96, 17), gothic (0.78, 18), punk (0.52, 17), malaikat (0.51, 13)
+- natal: musim_dingin (0.45, 8), punk (0.01, 9)
+- pantai: kerajaan (0.10, 29)
+- koboi: militer (0.05, 9)
+- cyber: militer (0.44, 9)
+- gaun_elegan: coquette (0.06, 10)
+- vampir: iblis (1.60, 6), gothic (0.89, 6), punk (0.69, 6)
 
 ## Akurasi terhadap LABEL EMAS (dilihat mata, gambar 420 px; uji2d/emas.json)
 

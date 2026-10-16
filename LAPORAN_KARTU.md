@@ -1,4 +1,4 @@
-# Laporan Kartu Item (MATA v2) — versi 1792154704
+# Laporan Kartu Item (MATA v2) — versi 1792170073
 
 Kartu dibaca dari GAMBAR item (CLIP zero-shot, model sama dengan otak.py); nama hanya bukti tambahan.
 
@@ -49,9 +49,9 @@ Outfit buatan manusia dipakai sebagai bukti pemakaian: **74501**.
 
 | ambang | benar | diputuskan | item uji |
 |---|---|---|---|
-| 0.1 | 1465 (95.5%) | 1534 | 2711 |
-| 0.15 | 1354 (96.0%) | 1410 | 2711 |
-| 0.25 | 1059 (97.7%) | 1084 | 2711 |
+| 0.1 | 1490 (95.5%) | 1560 | 2711 |
+| 0.15 | 1375 (95.8%) | 1435 | 2711 |
+| 0.25 | 1091 (97.6%) | 1118 | 2711 |
 
 ### Tema berbukti vs label emas (baju/celana 2D)
 
@@ -94,11 +94,11 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 | baju 2D | jenis | 57 | 27 | 47% | 0 |
 | baju 2D | tema | 37 | 23 | 62% | 0 |
 | baju 2D | pola | 54 | 16 | 30% | 0 |
-| baju 2D | fungsi | 15 | 15 | 100% | 45 |
+| baju 2D | fungsi | 25 | 25 | 100% | 35 |
 | celana 2D | jenis | 43 | 24 | 56% | 0 |
 | celana 2D | tema | 23 | 12 | 52% | 0 |
 | celana 2D | pola | 48 | 20 | 42% | 0 |
-| celana 2D | fungsi | 10 | 9 | 90% | 49 |
+| celana 2D | fungsi | 16 | 15 | 94% | 43 |
 | kaos klasik | fungsi | 55 | 48 | 87% | 0 |
 
 ## Item uji
@@ -120,7 +120,7 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 - `98089688160090` 🖤 Black leather jacket with spikes and skull  (atas): jenis=jaket(50) | tema=gothic(49)/punk(25) | subjek=tengkorak(44)/laba_laba(11) | pola=kulit(81) | lengan=tanpa panjang=crop fit=longgar depan=tertutup | [gambar:gothic]
 - `116973312880668` Arisu's Sword of Light: Supernova MK.II (aksen): jenis=senjata(74) | tema=cyber(64)/polisi(9) | subjek=petir(50)/hiu(6) | [gambar:cyber] | gender=netral(0, 1 bukti)
 - `98757749181872` ♡ coquette curls with pink bow blonde (rambut): tema=coquette(62)/kawaii(37) | [gambar:kawaii] | gender=cewek(25, 3 bukti)
-- `5731050224` Gold Crown of O’s (kepala): jenis=mahkota(100) | tema=kerajaan(100)/gaun_elegan(0) | subjek=mahkota(100)/rantai(0) | [gambar:kerajaan] | gender=cowok(7, 31 bukti) | temaBukti=kerajaan(6 poin)
+- `5731050224` Gold Crown of O’s (kepala): jenis=mahkota(100) | tema=kerajaan(100)/gaun_elegan(0) | subjek=mahkota(100)/rantai(0) | [gambar:kerajaan] | gender=cowok(6, 31 bukti) | temaBukti=kerajaan(6 poin)
 - `301820310` Lin's Glasses (wajah): jenis=kacamata(96) | tema=streetwear(13)/medis(11) | subjek=tanpa(23)/tulisan(9) | [gambar:streetwear] | gender=cewek(4, 254 bukti)
 - `18832937926` ♡ kawaii pumpkin bear hood (kepala): jenis=tudung(37) | tema=kawaii(76)/halloween(18) | subjek=beruang(63)/labu(18) | [gambar:kawaii] | gender=cewek(36, 1 bukti) | temaBukti=kawaii(3 poin)
 - `122234019472336` Spooky Halloween Pumpkin Cat Hat (kepala): jenis=topi_lain(38) | tema=halloween(99)/kostum_hewan(0) | subjek=labu(82)/kucing(18) | [gambar:halloween] | gender=cewek(14, 3 bukti) | temaBukti=halloween(7 poin)
@@ -149,7 +149,7 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 - `1639419` Cyber Suit21 — nama: cyber | jenis=kaos(46) | tema=cyber(88)/malaikat(3) | subjek=petir(23)/hiu(12) | pola=pelangi(49) | lengan=panjang panjang=panjang fit=longgar depan=tertutup | [gambar:punk] | fungsi=grafis | gender=netral(0, 2 bukti)
 - `1639424` Cyber Suit20 — nama: cyber | jenis=kaos(53) | tema=cyber(64)/antariksa(15) | subjek=bulan(14)/petir(11) | pola=bunga(59) | lengan=panjang panjang=crop fit=pas depan=terbuka | [gambar:kawaii] | fungsi=badan | gender=cewek(6, 22 bukti)
 - `1639431` Cyber ###### — nama: cyber | jenis=jas(43) | tema=cyber(78)/penyihir(8) | subjek=bintang(15)/bulan(14) | pola=kilau(55) | lengan=pendek panjang=crop fit=longgar depan=tertutup | [gambar:steampunk] | fungsi=aksesori | gender=cowok(1, 2 bukti)
-- `1639438` Cyber Suit18 — nama: cyber | jenis=jubah(68) | tema=cyber(61)/musim_dingin(5) | subjek=bulan(29)/hiu(17) | pola=garis(33) | lengan=pendek panjang=normal fit=pas depan=tertutup | [gambar:pantai] | fungsi=pakaian | gender=cewek(1, 1 bukti)
+- `1639438` Cyber Suit18 — nama: cyber | jenis=jubah(68) | tema=cyber(61)/musim_dingin(5) | subjek=bulan(29)/hiu(17) | pola=garis(33) | lengan=pendek panjang=normal fit=pas depan=tertutup | [gambar:pantai] | fungsi=pakaian | gender=cewek(2, 1 bukti)
 - `1639470` Cyber Suit14 — nama: cyber | jenis=jaket(23) | tema=cyber(54)/gothic(15) | subjek=bulan(27)/rantai(17) | pola=catur(52) | lengan=tanpa panjang=normal fit=pas depan=tertutup | [gambar:gothic] | fungsi=aksesori | gender=cewek(4, 6 bukti)
 - `1639518` Cyber ##### — nama: cyber | jenis=hoodie(41) | tema=cyber(93)/sporty(3) | subjek=hiu(18)/logo(17) | pola=kilau(25) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:sporty] | fungsi=grafis | gender=cewek(1, 6 bukti)
 - `1648160` ninja — nama: ninja | jenis=jas(24) | tema=ninja(74)/badut(9) | subjek=logo(44)/tulisan(5) | pola=polkadot(38) | lengan=panjang panjang=normal fit=pas depan=tertutup | [gambar:badut] | fungsi=grafis | gender=netral(0, 4 bukti)
@@ -183,13 +183,13 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 - `501938437` Shoulder Raccoon — jenis=boneka(63) | tema=kostum_hewan(75)/iblis(4) | subjek=anjing(78)/kucing(5) | [gambar:kostum_hewan] | gender=netral(0, 2 bukti)
 - `12423905971` White Collar — jenis=sayap(41) | tema=malaikat(20)/vampir(7) | subjek=hiu(40)/kelelawar(32) | [gambar:malaikat] | gender=netral(0, 1 bukti)
 - `10585934218` Cute Pink Crossbody Bag — jenis=tas(41) | tema=kawaii(69)/peri(21) | subjek=kupu_kupu(20)/pita(16) | [gambar:kawaii] | gender=cewek(40, 2 bukti) | temaBukti=kawaii(4 poin)
-- `7209180136` Forest Elf - Axe — jenis=senjata(50) | tema=badut(21)/bajak_laut(12) | subjek=api(12)/musik(10) | [gambar:badut] | gender=cowok(6, 3 bukti)
+- `7209180136` Forest Elf - Axe — jenis=senjata(50) | tema=badut(21)/bajak_laut(12) | subjek=api(12)/musik(10) | [gambar:badut] | gender=cowok(5, 3 bukti)
 - `7437019814` Y2K Butterfly Belly Piercing (3.0) — jenis=lain(57) | tema=peri(47)/y2k(35) | subjek=kupu_kupu(97)/bunga(1) | [gambar:peri] | gender=cewek(23, 2 bukti)
 - `12797730449` Rich Money Aura — jenis=lain(21) | tema=y2k(24)/militer(21) | subjek=uang(96)/rantai(1) | [gambar:y2k] | gender=cewek(28, 4 bukti)
 - `11966968506` Ribboned Heart Belly Piercing 3.0 — jenis=kalung(64) | tema=coquette(82)/kawaii(11) | subjek=hati(74)/pita(21) | [gambar:coquette] | gender=cewek(48, 1 bukti)
 - `4376960922` Police Utility Belt — jenis=sabuk(67) | tema=polisi(67)/militer(7) | subjek=petir(15)/salib(11) | [gambar:polisi] | gender=cewek(1, 1 bukti) | temaBukti=polisi(3 poin)
 - `12374205379` Trendy Y2K Monogram Sidebag — jenis=tas(78) | tema=y2k(38)/kawaii(16) | subjek=bunga(12)/bintang(12) | [gambar:kawaii] | gender=cewek(4, 1 bukti)
-- `5488241290` Laid-back Black Earbuds — jenis=headphone(22) | tema=medis(20)/badut(10) | subjek=petir(56)/musik(8) | [gambar:medis] | gender=cewek(14, 2 bukti)
+- `5488241290` Laid-back Black Earbuds — jenis=headphone(22) | tema=medis(20)/badut(10) | subjek=petir(56)/musik(8) | [gambar:medis] | gender=cewek(15, 2 bukti)
 - `6202755939` High Fashion Fuzzy & Fab Purse — jenis=tas(98) | tema=horor(20)/kawaii(10) | subjek=rantai(33)/laba_laba(16) | [gambar:horor] | gender=cewek(2, 1 bukti)
 - `356210971` Sophisticated Crow — jenis=sayap(83) | tema=vampir(31)/formal(22) | subjek=kelelawar(57)/bebek(9) | [gambar:vampir]
 - `7794407127` Black Devilish Backpack [1.0] — jenis=tas(95) | tema=vampir(37)/iblis(30) | subjek=kelelawar(90)/logo(4) | [gambar:vampir] | gender=cewek(5, 3 bukti)
@@ -203,7 +203,7 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 - `4923732521` Blossom — jenis=sweater(23) | tema=coquette(40)/kawaii(30) | subjek=pita(23)/kelelawar(9) | pola=renda(40) | lengan=tanpa panjang=normal fit=pas depan=tertutup | [gambar:coquette] | gender=cewek(7, 1 bukti)
 - `71954314286609` 👑 White Gold Warrior Armor — jenis=zirah(98) | tema=ksatria(93)/kerajaan(4) | subjek=mahkota(20)/naga(19) | pola=polos(41) | lengan=tanpa panjang=normal fit=pas depan=tertutup | [gambar:ksatria] | temaBukti=ksatria(5 poin)
 - `9202781175` Lacey Cami Crop - Hot Pink — jenis=korset(37) | tema=coquette(98)/kawaii(1) | subjek=pita(46)/hati(25) | pola=pelangi(22) | lengan=tanpa panjang=normal fit=pas depan=terbuka | [gambar:coquette] | gender=cewek(60, 2 bukti) | MESH 3D: 1.4x1.2x0.7 stud, lengan tanpa
-- `13978257971` [Hand] Gray Leather Briefcase Left — jenis=zirah(87) | tema=formal(23)/polisi(13) | subjek=musik(38)/tanpa(10) | pola=kulit(70) | lengan=tanpa panjang=normal fit=pas depan=tertutup | [gambar:formal] | gender=cewek(2, 1 bukti)
+- `13978257971` [Hand] Gray Leather Briefcase Left — jenis=zirah(87) | tema=formal(23)/polisi(13) | subjek=musik(38)/tanpa(10) | pola=kulit(70) | lengan=tanpa panjang=normal fit=pas depan=tertutup | [gambar:formal] | gender=cewek(2, 1 bukti) | MESH 3D: 0.5x1.9x2.3 stud, lengan tanpa
 - `14000502219` White Arm Cast — jenis=kostum_penuh(21) | tema=maid(66)/malaikat(4) | subjek=ular(22)/pita(13) | pola=garis(46) | lengan=tanpa panjang=panjang fit=longgar depan=tertutup | [gambar:maid] | gender=cowok(11, 6 bukti) | MESH 3D: 0.8x1.2x0.7 stud, lengan tanpa
 - `3503648793` BILLIE EILISH NECKLACES / CHAINS — jenis=kaos(70) | tema=y2k(23)/malaikat(21) | subjek=rantai(71)/salib(5) | pola=kilau(70) | lengan=tanpa panjang=crop fit=longgar depan=terbuka | [gambar:malaikat] | fungsi=aksesori | gender=cewek(56, 1 bukti)
 - `5410566530` Black Void Shirt — jenis=kaos(42) | tema=biasa(22)/formal(15) | subjek=salib(7)/kelelawar(7) | pola=polos(71) | lengan=panjang panjang=normal fit=pas depan=tertutup | [gambar:gothic] | fungsi=pakaian | gender=cowok(1, 1 bukti) | DIUKUR: leher 0%
@@ -213,24 +213,24 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 - `12754225063` Man Rainbow Outline Avatar Aura — jenis=crop(32) | tema=cyber(21)/badut(19) | subjek=beruang(38)/logo(14) | pola=pelangi(100) | lengan=pendek panjang=normal fit=pas depan=tertutup | [gambar:cyber] | gender=cowok(63, 6 bukti) | MESH 3D: 4.1x4.3x1.4 stud, lengan pendek
 - `4202186598` HALLOWEEN — jenis=jas(22) | tema=halloween(44)/horor(18) | subjek=petir(24)/bendera(14) | pola=bulu(29) | lengan=tanpa panjang=normal fit=pas depan=tertutup | [gambar:iblis] | fungsi=aksesori | gender=cowok(9, 1 bukti)
 - `12175563772` Off-Shoulder Brown Sweater — jenis=jaket(39) | tema=kostum_hewan(33)/novelty(19) | subjek=kelinci(71)/beruang(12) | pola=kulit(73) | lengan=panjang panjang=panjang fit=longgar depan=terbuka | [gambar:kostum_hewan]
-- `5024371981` LULULEMON- white sports top — jenis=crop(33) | tema=kawaii(21)/biasa(12) | subjek=hantu(7)/tanpa(6) | pola=polos(44) | lengan=tanpa panjang=crop fit=longgar depan=tertutup | [gambar:malaikat] | fungsi=pakaian | gender=cewek(47, 3 bukti) | DIUKUR: leher 31%, bahu terbuka, crop
-- `18768917458` Pool Ball Bracelet — jenis=rompi(30) | tema=steampunk(52)/badut(28) | subjek=mata(63)/buah(6) | pola=pelangi(51) | lengan=tanpa panjang=normal fit=pas depan=tertutup | [gambar:steampunk] | gender=cewek(25, 1 bukti)
+- `5024371981` LULULEMON- white sports top — jenis=crop(33) | tema=kawaii(21)/biasa(12) | subjek=hantu(7)/tanpa(6) | pola=polos(44) | lengan=tanpa panjang=crop fit=longgar depan=tertutup | [gambar:malaikat] | fungsi=pakaian | gender=cewek(48, 3 bukti) | DIUKUR: leher 31%, bahu terbuka, crop
+- `18768917458` Pool Ball Bracelet — jenis=rompi(30) | tema=steampunk(52)/badut(28) | subjek=mata(63)/buah(6) | pola=pelangi(51) | lengan=tanpa panjang=normal fit=pas depan=tertutup | [gambar:steampunk] | gender=cewek(25, 1 bukti) | MESH 3D: 0.6x0.5x0.6 stud, lengan tanpa
 - `14952169925` Red & Black Cropped Striped Knitted Sweater — jenis=sweater(81) | tema=musim_dingin(45)/natal(21) | subjek=pita(19)/hati(12) | pola=garis(68) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:musim_dingin] | MESH 3D: 3.9x2.1x1.1 stud, lengan panjang
 - `4965130448` White — jenis=jubah(16) | tema=musim_dingin(12)/y2k(9) | subjek=naga(15)/rantai(9) | pola=garis(27) | lengan=tanpa panjang=normal fit=longgar depan=tertutup | [gambar:malaikat] | gender=cewek(2, 2 bukti)
 - `382537702` Teal Shirt — jenis=kaos(44) | tema=sporty(13)/kawaii(12) | subjek=katak(24)/pita(6) | pola=garis(32) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:kawaii] | fungsi=pakaian | gender=cewek(38, 254 bukti) | DIUKUR: leher 25%
 - `6456895097` Green T-Shirt. (Neon Green Beautiful Hair) — jenis=kaos(66) | tema=cyber(55)/biasa(13) | subjek=katak(64)/dinosaurus(3) | pola=polos(90) | lengan=tanpa panjang=normal fit=pas depan=tertutup | [gambar:militer] | gender=cowok(1, 1 bukti)
 - `6443337676` black crop top — jenis=crop(68) | tema=biasa(18)/punk(6) | subjek=kelelawar(10)/salib(7) | pola=polos(57) | lengan=panjang panjang=normal fit=pas depan=terbuka | [gambar:gothic] | gender=cewek(12, 1 bukti)
 - `5018401049` 🔴RED CAMO Supreme Shirt⚫ — jenis=kaos(36) | tema=militer(80)/streetwear(6) | subjek=logo(35)/hati(11) | pola=loreng(100) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:iblis] | fungsi=pakaian | gender=cowok(1, 1 bukti) | temaBukti=militer(4 poin) | DIUKUR: leher 1%
-- `12750694651` Purple Floral Denim Overalls — jenis=kostum_penuh(81) | tema=kostum_hewan(26)/antariksa(12) | subjek=bunga(35)/kelelawar(20) | pola=kulit(25) | lengan=panjang panjang=panjang fit=pas depan=terbuka | [gambar:kostum_hewan]
+- `12750694651` Purple Floral Denim Overalls — jenis=kostum_penuh(81) | tema=kostum_hewan(26)/antariksa(12) | subjek=bunga(35)/kelelawar(20) | pola=kulit(25) | lengan=pendek panjang=panjang fit=pas depan=terbuka | [gambar:kostum_hewan] | MESH 3D: 1.6x4.3x0.8 stud, lengan pendek
 - `16288956215` Swift Style Midnight Blue Cardigan — jenis=sweater(60) | tema=sekolah(18)/punk(14) | subjek=bulan(45)/bintang(31) | pola=denim(48) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:sekolah] | MESH 3D: 2.9x1.7x0.8 stud, lengan panjang
 - `9239724660` White Fluffy Shawl — jenis=zirah(27) | tema=malaikat(59)/musim_dingin(36) | subjek=naga(22)/hantu(15) | pola=bulu(98) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:malaikat] | gender=cewek(24, 3 bukti) | temaBukti=musim_dingin(3 poin) | MESH 3D: 3.3x2.0x2.4 stud, lengan panjang
 - `5981298318` christmas — jenis=sweater(73) | tema=natal(48)/gothic(15) | subjek=tengkorak(83)/hantu(3) | pola=kulit(27) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:gothic] | fungsi=pakaian | gender=cewek(17, 1 bukti) | DIUKUR: leher 1%
 
 ### bawah
-- `6532007814` Steampunk — jenis=celana_kain(61) | tema=steampunk(36)/formal(11) | subjek=salib(8)/tengkorak(7) | pola=bunga(51) | panjang=panjang fit=lebar | [gambar:vampir] | gender=cowok(60, 1 bukti)
-- `16741899934` Bow Skirt Blush — jenis=rok_pendek(52) | tema=coquette(74)/kawaii(17) | subjek=pita(40)/bunga(37) | pola=bunga(33) | panjang=pendek fit=lebar | [gambar:coquette] | gender=cewek(78, 3 bukti) | temaBukti=coquette(4 poin)
+- `6532007814` Steampunk — jenis=celana_kain(61) | tema=steampunk(36)/formal(11) | subjek=salib(8)/tengkorak(7) | pola=bunga(51) | panjang=panjang fit=lebar | [gambar:vampir] | fungsi=pakaian | gender=cowok(60, 1 bukti) | DIUKUR: menutup badan
+- `16741899934` Bow Skirt Blush — jenis=rok_pendek(52) | tema=coquette(74)/kawaii(17) | subjek=pita(40)/bunga(37) | pola=bunga(33) | panjang=pendek fit=lebar | [gambar:coquette] | gender=cewek(78, 3 bukti) | temaBukti=coquette(4 poin) | MESH 3D: 1.8x1.1x1.7 stud, rok/gaun, melebar ke bawah, panjang pendek
 - `5977722458` [MJR-CMMDR] Black BDU Long-Rolled Sleeve Trousers — jenis=celana_kain(58) | tema=formal(22)/biasa(12) | subjek=salib(5)/tanpa(5) | pola=polos(38) | panjang=panjang fit=lebar | [gambar:formal] | gender=cowok(2, 1 bukti)
-- `9353911507` Cute Blue Checkered Goth Pleated Skirt — jenis=rok_pendek(71) | tema=gothic(21)/kawaii(18) | subjek=musik(35)/bendera(8) | pola=kotak(64) | panjang=pendek fit=lebar | [gambar:punk] | gender=cewek(60, 2 bukti)
+- `9353911507` Cute Blue Checkered Goth Pleated Skirt — jenis=rok_pendek(71) | tema=gothic(21)/kawaii(18) | subjek=musik(35)/bendera(8) | pola=kotak(64) | panjang=pendek fit=lebar | [gambar:punk] | gender=cewek(60, 2 bukti) | MESH 3D: 1.4x1.0x0.9 stud, rok/gaun, panjang pendek
 - `5459047950` purple plaid pant emo boy slender da hood girl dh — jenis=rok_pendek(30) | tema=punk(49)/natal(10) | subjek=bendera(8)/salib(8) | pola=kotak(100) | panjang=panjang fit=lebar | [gambar:sekolah] | fungsi=pakaian | gender=cowok(54, 1 bukti) | temaBukti=punk(3 poin) | DIUKUR: -
 - `6553090960` MARIACHI MARIACHIS MEXICAN PARTY — jenis=zirah_bawah(59) | tema=penyihir(19)/gothic(12) | subjek=mahkota(18)/tengkorak(9) | pola=bunga(46) | panjang=panjang fit=lebar | [gambar:kerajaan] | gender=cowok(2, 2 bukti)
 - `12788750272` Long Flowy Skirt - White — jenis=rok_pendek(38) | tema=gaun_elegan(46)/sekolah(10) | subjek=petir(18)/rantai(13) | pola=garis(37) | panjang=selutut fit=lebar | [gambar:gaun_elegan] | gender=cewek(60, 2 bukti)
@@ -239,22 +239,22 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 - `6084539058` ecoFLO | Female Business Bottoms — jenis=celana_kain(29) | tema=formal(44)/polisi(9) | subjek=kelelawar(7)/mahkota(5) | pola=denim(52) | panjang=panjang fit=lebar | [gambar:formal] | gender=cewek(86, 3 bukti) | temaBukti=formal(3 poin)
 - `89685154258377` Baggy Printed Star Cargos (Faded Mixture) — jenis=kargo(46) | tema=militer(85)/polisi(6) | subjek=bintang(37)/tanpa(10) | pola=loreng(63) | panjang=pendek fit=lebar | [gambar:militer] | temaBukti=militer(3 poin)
 - `15789001692` Y2K White jumpsuit by DIVERGE — jenis=bawahan_gaun(57) | tema=y2k(37)/biasa(10) | subjek=hantu(19)/hati(6) | pola=polos(25) | panjang=selutut fit=ketat | [gambar:biasa] | gender=cewek(35, 1 bukti)
-- `86546333293927` 💗 Cute Ruffle Trim Pleated Skirt Set _ White — jenis=rok_pendek(45) | tema=kawaii(36)/maid(30) | subjek=hantu(9)/tanpa(7) | pola=renda(19) | panjang=pendek fit=lebar | [gambar:maid] | gender=cewek(60, 2 bukti)
+- `86546333293927` 💗 Cute Ruffle Trim Pleated Skirt Set _ White — jenis=rok_pendek(45) | tema=kawaii(36)/maid(30) | subjek=hantu(9)/tanpa(7) | pola=renda(19) | panjang=panjang fit=lebar | [gambar:maid] | gender=cewek(60, 2 bukti) | MESH 3D: 2.0x3.8x1.2 stud, rok/gaun, melebar ke bawah, panjang panjang
 - `15246895303` BB School Girl Pleated Skirt w Belt Plaid White — jenis=rok_pendek(72) | tema=sekolah(88)/maid(4) | subjek=pita(15)/anjing(10) | pola=kotak(100) | panjang=pendek fit=lebar | [gambar:sekolah] | gender=cewek(60, 2 bukti) | temaBukti=sekolah(3 poin)
 - `4785400711` ◤YG◢ Supreme Yellow Gearworks Suit — jenis=celana_kain(97) | tema=formal(94)/vampir(2) | subjek=logo(36)/salib(8) | pola=garis(42) | panjang=panjang fit=ketat | [gambar:formal] | gender=netral(0, 1 bukti) | temaBukti=formal(4 poin)
-- `5144353614` Pantalón Negro  — jenis=celana_kain(39) | tema=biasa(16)/formal(16) | subjek=salib(5)/logo(5) | pola=polos(58) | panjang=pendek fit=lebar | [gambar:formal] | gender=cowok(1, 1 bukti)
+- `5144353614` Pantalón Negro  — jenis=celana_kain(39) | tema=biasa(16)/formal(16) | subjek=salib(5)/logo(5) | pola=polos(58) | panjang=panjang fit=lebar | [gambar:formal] | fungsi=pakaian | gender=cowok(1, 1 bukti) | DIUKUR: -
 - `7064773844` blue — jenis=rok_pendek(60) | tema=kawaii(24)/sekolah(18) | subjek=hantu(7)/hiu(5) | pola=kotak(33) | panjang=pendek fit=lebar | [gambar:kawaii] | fungsi=pakaian | gender=cewek(40, 1 bukti) | DIUKUR: kaus kaki/stoking
 - `76226941122776` Asian Opera Blossom Butterfly Sleeve Dress-Blue — jenis=zirah_bawah(49) | tema=ksatria(58)/kerajaan(25) | subjek=kupu_kupu(37)/naga(23) | pola=pelangi(16) | panjang=pendek fit=lebar | [gambar:ksatria] | gender=cewek(60, 2 bukti)
-- `96413323720979` 💜 Kawaii Ribbon Checkered Skirt_Soft Pastel Blue — jenis=rok_pendek(88) | tema=sekolah(31)/kawaii(30) | subjek=pita(53)/kupu_kupu(5) | pola=catur(51) | panjang=pendek fit=lebar | [gambar:sekolah] | gender=cewek(60, 2 bukti)
-- `1028003348` GREE PANTS/LIMTED ITEM JUST FOR 5 ROBUX MY NOW — jenis=bawahan_gaun(39) | tema=antariksa(24)/horor(15) | subjek=katak(53)/hantu(4) | pola=bunga(21) | panjang=pendek fit=lebar | [gambar:penyihir] | gender=cowok(2, 1 bukti)
-- `83797857745695` ✨Stunning Fairytale Royal Princess Ball Gown-Red — jenis=bawahan_gaun(75) | tema=gaun_elegan(75)/kerajaan(20) | subjek=bunga(23)/mahkota(17) | pola=renda(52) | panjang=pendek fit=lebar | [gambar:gaun_elegan] | gender=cewek(60, 2 bukti) | temaBukti=gaun_elegan(3 poin)
-- `17702214986` ♡ shark slippers — jenis=jeans(56) | tema=vampir(20)/kawaii(19) | subjek=hiu(95)/kucing(1) | pola=denim(34) | panjang=pendek fit=lebar | [gambar:vampir] | gender=cewek(11, 2 bukti) | MESH 3D: 1.9x0.8x1.8 stud, rok/gaun, melebar ke bawah, panjang pendek
+- `96413323720979` 💜 Kawaii Ribbon Checkered Skirt_Soft Pastel Blue — jenis=rok_pendek(88) | tema=sekolah(31)/kawaii(30) | subjek=pita(53)/kupu_kupu(5) | pola=catur(51) | panjang=selutut fit=lebar | [gambar:sekolah] | gender=cewek(60, 2 bukti) | MESH 3D: 2.0x1.6x1.6 stud, rok/gaun, panjang sedang
+- `1028003348` GREE PANTS/LIMTED ITEM JUST FOR 5 ROBUX MY NOW — jenis=bawahan_gaun(39) | tema=antariksa(24)/horor(15) | subjek=katak(53)/hantu(4) | pola=bunga(21) | panjang=panjang fit=lebar | [gambar:penyihir] | fungsi=pakaian | gender=cowok(2, 1 bukti) | DIUKUR: menutup badan
+- `83797857745695` ✨Stunning Fairytale Royal Princess Ball Gown-Red — jenis=bawahan_gaun(75) | tema=gaun_elegan(75)/kerajaan(20) | subjek=bunga(23)/mahkota(17) | pola=renda(52) | panjang=panjang fit=lebar | [gambar:gaun_elegan] | gender=cewek(60, 2 bukti) | temaBukti=gaun_elegan(3 poin) | MESH 3D: 4.1x5.2x3.4 stud, rok/gaun, melebar ke bawah, panjang panjang
+- `17702214986` ♡ shark slippers — jenis=jeans(56) | tema=vampir(20)/kawaii(19) | subjek=hiu(95)/kucing(1) | pola=denim(34) | panjang=panjang fit=lebar | [gambar:vampir] | gender=cewek(11, 2 bukti) | MESH 3D: 1.9x0.8x1.8 stud, celana, panjang panjang
 - `6555797786` Grey Suit w/ Black Vest [-] — jenis=celana_kain(49) | tema=formal(78)/gothic(3) | subjek=salib(17)/kelelawar(9) | pola=renda(30) | panjang=panjang fit=ketat | [gambar:formal] | fungsi=pakaian | gender=cowok(8, 23 bukti) | temaBukti=formal(3 poin) | DIUKUR: menutup badan
 - `6497901280` Mushroom Suit Pants — jenis=celana_kain(51) | tema=formal(40)/natal(9) | subjek=buah(11)/api(7) | pola=kilau(27) | panjang=panjang fit=lebar | [gambar:vampir] | gender=netral(0, 1 bukti)
 - `4494396123` Dream Style — jenis=celana_pendek(24) | tema=anime(14)/kawaii(8) | subjek=mahkota(8)/beruang(6) | pola=kilau(27) | panjang=panjang fit=lebar | [gambar:biasa] | fungsi=pakaian | gender=cewek(26, 1 bukti) | DIUKUR: menutup badan
 
 ### kepala
-- `6101223186` Low White Aesthetic Headband  — jenis=pita_bando(50) | tema=medis(29)/malaikat(16) | subjek=rantai(19)/petir(11) | [gambar:medis] | gender=cewek(4, 1 bukti)
+- `6101223186` Low White Aesthetic Headband  — jenis=pita_bando(50) | tema=medis(29)/malaikat(16) | subjek=rantai(19)/petir(11) | [gambar:medis] | gender=cewek(5, 1 bukti)
 - `12154587792` Cat Ears — jenis=telinga(68) | tema=kostum_hewan(29)/coquette(9) | subjek=kucing(42)/kelelawar(11) | [gambar:kostum_hewan]
 - `3798243238` Party Fedora — jenis=topi_formal(42) | tema=kawaii(44)/peri(30) | subjek=bunga(23)/buah(15) | [gambar:kawaii] | gender=cewek(1, 3 bukti)
 - `12192710945` fairy — jenis=pita_bando(61) | tema=peri(46)/kawaii(45) | subjek=bunga(78)/kupu_kupu(5) | [gambar:kawaii] | temaBukti=peri(3 poin)
@@ -265,8 +265,8 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 - `8033028375` Portable Headphones  — jenis=headphone(99) | tema=antariksa(12)/militer(9) | subjek=musik(21)/tanpa(15) | [gambar:antariksa] | gender=cowok(1, 1 bukti)
 - `114549646` ROBLOX Sailor Hat — jenis=topi_lain(40) | tema=bajak_laut(54)/sporty(8) | subjek=tanpa(27)/logo(8) | [gambar:bajak_laut] | gender=cowok(33, 1 bukti)
 - `12686701348` ♡ Ribbon Bow Black (Droopy Bunny) — jenis=pita_bando(83) | tema=formal(63)/coquette(35) | subjek=pita(55)/kelinci(20) | [gambar:formal] | gender=cewek(26, 2 bukti) | temaBukti=coquette(3 poin)
-- `5033022878` Soft Aesthetic Hat — jenis=topi_lain(40) | tema=coquette(42)/kawaii(13) | subjek=pita(13)/rantai(11) | [gambar:coquette] | gender=cewek(3, 1 bukti)
-- `48894692` Evil Duck — jenis=topi_formal(22) | tema=iblis(44)/vampir(18) | subjek=bebek(98)/kelelawar(0) | [gambar:iblis] | gender=cowok(3, 13 bukti)
+- `5033022878` Soft Aesthetic Hat — jenis=topi_lain(40) | tema=coquette(42)/kawaii(13) | subjek=pita(13)/rantai(11) | [gambar:coquette] | gender=cewek(4, 1 bukti)
+- `48894692` Evil Duck — jenis=topi_formal(22) | tema=iblis(44)/vampir(18) | subjek=bebek(98)/kelelawar(0) | [gambar:iblis] | gender=cowok(2, 13 bukti)
 - `5410441336` Red Devil Hood — jenis=tudung(52) | tema=iblis(98)/vampir(1) | subjek=hati(45)/buah(22) | [gambar:iblis] | gender=cowok(42, 2 bukti) | temaBukti=iblis(3 poin)
 - `10491606843` Tactical Scarf Half Mask — jenis=topeng_kepala(46) | tema=militer(36)/gothic(22) | subjek=pita(15)/tanpa(13) | [gambar:gothic] | gender=netral(0, 1 bukti)
 - `4506851489` Fluffy Pink Bunny Hood — jenis=telinga(36) | tema=coquette(39)/musim_dingin(35) | subjek=kelinci(98)/pita(1) | [gambar:coquette] | gender=netral(0, 1 bukti)
@@ -336,7 +336,7 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 
 ### wajah
 - `5728744669` Void Mask — jenis=masker(41) | tema=polisi(20)/maid(15) | subjek=tanpa(25)/logo(11) | [gambar:polisi] | gender=cewek(4, 5 bukti)
-- `6774584712` Fancy Stylish Glasses — jenis=kacamata_hitam(60) | tema=formal(20)/streetwear(9) | subjek=tanpa(16)/logo(14) | [gambar:formal] | gender=cewek(4, 2 bukti)
+- `6774584712` Fancy Stylish Glasses — jenis=kacamata_hitam(60) | tema=formal(20)/streetwear(9) | subjek=tanpa(16)/logo(14) | [gambar:formal] | gender=cewek(5, 2 bukti)
 - `13521532357` Eyepatch — jenis=penutup_mata(51) | tema=medis(16)/maid(13) | subjek=hati(90)/pita(3) | [gambar:medis]
 - `4875723549` Gold Aviator Sunglasses — jenis=kacamata_hitam(94) | tema=steampunk(52)/militer(7) | subjek=tanpa(10)/mahkota(9) | [gambar:steampunk] | gender=netral(0, 1 bukti)
 - `6376603866` Dark Polar Cub Mask — jenis=masker(49) | tema=gothic(32)/kostum_hewan(26) | subjek=beruang(32)/kucing(24) | [gambar:gothic] | gender=cewek(2, 2 bukti)
@@ -344,7 +344,7 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 - `15716552257` PEARL HOOP EARRINGS — jenis=tindik(50) | tema=gaun_elegan(12)/tradisional(11) | subjek=rantai(43)/bulan(25) | [gambar:gaun_elegan] | gender=cewek(34, 1 bukti)
 - `14155756461` 😊 Happy Eyes (3D) 😊 — jenis=riasan(61) | tema=gaun_elegan(14)/kawaii(14) | subjek=mata(41)/bulan(7) | [gambar:gaun_elegan] | gender=netral(0, 1 bukti)
 - `15716571578` Y2K Crosses Face Blush Narrow Head — jenis=riasan(50) | tema=y2k(35)/kawaii(19) | subjek=hantu(36)/mahkota(9) | [gambar:kawaii]
-- `12366985658` Mr White Glasses on Head — jenis=kacamata_hitam(49) | tema=antariksa(20)/militer(7) | subjek=mata(62)/tanpa(7) | [gambar:antariksa] | gender=cewek(31, 2 bukti)
+- `12366985658` Mr White Glasses on Head — jenis=kacamata_hitam(49) | tema=antariksa(20)/militer(7) | subjek=mata(62)/tanpa(7) | [gambar:antariksa] | gender=cewek(45, 2 bukti)
 - `16112282289` Pixel Heart 8BIT — jenis=riasan(55) | tema=maid(29)/y2k(10) | subjek=hati(97)/tulisan(1) | [gambar:maid]
 - `15418130093` Chibi Lips Lower [Brown] — jenis=masker(29) | tema=koboi(17)/natal(10) | subjek=buah(18)/bintang(11) | [gambar:koboi] | gender=cewek(29, 1 bukti)
 - `13968534742` Red Frame Glasses — jenis=kacamata(99) | tema=medis(25)/natal(16) | subjek=tulisan(15)/mata(11) | [gambar:medis] | gender=cewek(16, 1 bukti)
@@ -354,12 +354,12 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 - `12726334656` Cyan 1.0 Nose Spike Piercing — jenis=tindik(48) | tema=kawaii(69)/steampunk(5) | subjek=bulan(15)/logo(14) | [gambar:kawaii] | gender=cewek(3, 1 bukti)
 - `14204517194` Clown — jenis=masker(30) | tema=badut(79)/natal(3) | subjek=buah(29)/bendera(18) | [gambar:badut] | temaBukti=badut(3 poin)
 - `12199494116` . — jenis=penutup_kain(36) | tema=polisi(15)/gothic(14) | subjek=tanpa(21)/tulisan(13) | [gambar:polisi] | gender=cowok(1, 1 bukti)
-- `6657508329` Fashionista Bangs in Blonde — jenis=kumis_jenggot(43) | tema=coquette(65)/gaun_elegan(9) | subjek=pita(27)/kelinci(19) | [gambar:coquette] | gender=cewek(5, 1 bukti)
+- `6657508329` Fashionista Bangs in Blonde — jenis=kumis_jenggot(43) | tema=coquette(65)/gaun_elegan(9) | subjek=pita(27)/kelinci(19) | [gambar:coquette] | gender=cewek(6, 1 bukti)
 - `14885847693` Halloween — jenis=riasan(60) | tema=halloween(99)/vampir(0) | subjek=labu(99)/hantu(1) | [gambar:halloween] | gender=cowok(18, 2 bukti) | temaBukti=halloween(7 poin)
 - `15685738112` Gold Skull Mask — jenis=masker(62) | tema=bajak_laut(75)/militer(10) | subjek=tengkorak(95)/logo(1) | [gambar:bajak_laut] | gender=cowok(21, 1 bukti)
 - `11134059762` Scruffy Beard In Black — jenis=kumis_jenggot(56) | tema=gothic(17)/iblis(13) | subjek=kelelawar(76)/petir(4) | [gambar:gothic] | gender=cowok(81, 5 bukti)
 - `10168554869` Luna Moth (Pink) — jenis=riasan(67) | tema=peri(89)/coquette(6) | subjek=kupu_kupu(95)/kelelawar(3) | [gambar:peri] | gender=cewek(42, 1 bukti)
-- `14033067835` Blush — jenis=riasan(68) | tema=coquette(62)/kawaii(8) | subjek=petir(25)/pita(14) | [gambar:coquette] | gender=cewek(43, 1 bukti)
+- `14033067835` Blush — jenis=riasan(68) | tema=coquette(62)/kawaii(8) | subjek=petir(25)/pita(14) | [gambar:coquette] | gender=cewek(44, 1 bukti)
 
 ## Sebaran tema (fusi) per kelompok
 

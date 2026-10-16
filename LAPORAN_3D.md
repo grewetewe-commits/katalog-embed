@@ -110,7 +110,7 @@
 | yb | -0.62 | -0.35 | 0.37 |
 | yt | 1.83 | 0.66 | 0.94 |
 
-### dipakai cewek (n=132) vs dipakai cowok (n=1) — gender dari pemakaian, bukan nama
+### dipakai cewek (n=134) vs dipakai cowok (n=1) — gender dari pemakaian, bukan nama
 | fitur | median cewek | median cowok | AUC |
 |---|---|---|---|
 
@@ -344,31 +344,31 @@
 | yb | -0.08 | -0.21 | 0.60 |
 | yt | 1.75 | 1.90 | 0.46 |
 
-### dipakai cewek (n=168) vs dipakai cowok (n=10) — gender dari pemakaian, bukan nama
+### dipakai cewek (n=179) vs dipakai cowok (n=10) — gender dari pemakaian, bukan nama
 | fitur | median cewek | median cowok | AUC |
 |---|---|---|---|
-| D | 0.76 | 0.88 | 0.34 |
-| H | 1.13 | 0.45 | 0.60 |
-| W | 3.38 | 0.64 | 0.74 |
-| dadaRasio | 0.90 | 0.97 | 0.38 |
-| dadaTonjol | -0.01 | -0.01 | 0.42 |
-| depanTerbuka | 100.00 | 0.00 | 0.87 |
-| flare | 1.17 | 0.81 | 0.78 |
+| D | 0.75 | 0.88 | 0.33 |
+| H | 1.06 | 0.45 | 0.59 |
+| W | 3.38 | 0.64 | 0.73 |
+| dadaRasio | 0.91 | 0.97 | 0.38 |
+| dadaTonjol | -0.01 | -0.01 | 0.43 |
+| depanTerbuka | 100.00 | 0.00 | 0.86 |
+| flare | 1.17 | 0.81 | 0.77 |
 | kakiCelah | 6.00 | 0.00 | 0.85 |
 | kakiCelahMax | 6.00 | 0.00 | 0.79 |
-| lebarBawah | 2.92 | 0.40 | 0.87 |
-| luar09 | 85.00 | 0.00 | 0.84 |
+| lebarBawah | 2.90 | 0.40 | 0.86 |
+| luar09 | 85.00 | 0.00 | 0.83 |
 | luar09Bawah | 0.00 | 100.00 | 0.18 |
-| luar11 | 59.00 | 0.00 | 0.81 |
+| luar11 | 58.00 | 0.00 | 0.81 |
 | luar11Bawah | 0.00 | 100.00 | 0.17 |
-| luar13 | 34.00 | 0.00 | 0.78 |
-| luar13Bawah | 1.00 | 100.00 | 0.19 |
+| luar13 | 33.00 | 0.00 | 0.78 |
+| luar13Bawah | 1.00 | 100.00 | 0.20 |
 | ntex | 3.00 | 3.50 | 0.47 |
-| nv | 2265.00 | 2559.50 | 0.32 |
-| tebalRata | 0.52 | 0.70 | 0.28 |
-| tudung | 0.02 | -0.05 | 0.70 |
-| yb | -0.44 | -0.21 | 0.49 |
-| yt | 0.68 | 0.23 | 0.51 |
+| nv | 2280.00 | 2559.50 | 0.32 |
+| tebalRata | 0.51 | 0.70 | 0.28 |
+| tudung | 0.00 | -0.05 | 0.71 |
+| yb | -0.39 | -0.21 | 0.49 |
+| yt | 0.58 | 0.23 | 0.50 |
 
 ### Hasil baca (bentuk3d.baca) per kata nama
 - bahu_terbuka → lengan: panjang 241, tanpa 77, pendek 44

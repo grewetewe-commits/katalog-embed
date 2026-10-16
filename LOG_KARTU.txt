@@ -1,20 +1,21 @@
-12:32:16 embedding 142496 | potongan 2D 42338 | meta 140025
-12:32:19 kelompok atas2D: 20661 item
-12:32:24   probe atas2D/tema: latih 4448
-12:32:28   probe atas2D/pola: latih 1168
-12:32:31   probe atas2D/jenis: latih 3945
-12:32:32 kelompok atas3D: 9711 item
-12:32:38 kelompok kepala: 20435 item
-12:32:44 kelompok aksen: 26995 item
-12:32:50 kelompok bawah2D: 17624 item
-12:32:55   probe bawah2D/tema: latih 4149
-12:32:59   probe bawah2D/pola: latih 2463
-12:33:01   probe bawah2D/jenis: latih 4022
-12:33:01 kelompok bawah3D: 5781 item
-12:33:07 kelompok wajah: 8269 item
-12:33:11 kelompok rambut: 17387 item
-12:33:13 kelompok sepatu: 7722 item
-12:44:53 bentuk 2D: 2998 diukur putaran ini, 5997 di cache, 5997 kartu diberi bentuk diukur, sisa antre 29858, 697 dtk
-12:45:04 bukti: 74501 outfit manusia, gender 102374 item, tema berbukti 15955 item, 11 dtk
-12:45:04 bentuk 3D: 4044 mesh diukur, 4044 kartu diberi bentuk 3D
-12:45:06 selesai: 134585 kartu, 773 dtk
+16:39:39 embedding 142496 | potongan 2D 42338 | meta 140025
+16:39:42 kelompok atas2D: 20661 item
+16:39:48   probe atas2D/tema: latih 4448
+16:39:53   probe atas2D/pola: latih 1168
+16:39:55   probe atas2D/jenis: latih 3945
+16:39:56 kelompok atas3D: 9711 item
+16:40:04 kelompok kepala: 20435 item
+16:40:11 kelompok aksen: 26995 item
+16:40:18 kelompok bawah2D: 17624 item
+16:40:24   probe bawah2D/tema: latih 4149
+16:40:29   probe bawah2D/pola: latih 2463
+16:40:31   probe bawah2D/jenis: latih 4022
+16:40:31 kelompok bawah3D: 5781 item
+16:40:38 kelompok wajah: 8269 item
+16:40:44 kelompok rambut: 17387 item
+16:40:47 kelompok sepatu: 7722 item
+17:01:00 bentuk 2D: 5548 diukur putaran ini, 11545 di cache, 11545 kartu diberi bentuk diukur, sisa antre 24310, 1210 dtk
+17:01:11 bukti: 74501 outfit manusia, gender 102374 item, tema berbukti 15955 item, 11 dtk
+17:01:11 bukti badan: 1193 bagian badan berbukti pemakaian (>= 3 outfit, pusat +0.06), 331 jelas cowok/cewek
+17:01:12 bentuk 3D: 11559 mesh diukur, 8947 berkerangka badan, 11559 kartu diberi bentuk 3D
+17:01:15 selesai: 134585 kartu, 1299 dtk

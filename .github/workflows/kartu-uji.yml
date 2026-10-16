@@ -4,7 +4,7 @@ name: Kartu Item (uji)
 on:
   push:
     branches: [claude/kartu-item]
-    paths: [kartu_item.py, bukti_item.py, bentuk2d.py, bentuk3d.py, uji_bentuk3d.py, lembar_kartu.py, .github/workflows/kartu-uji.yml]
+    paths: [kartu_item.py, bukti_item.py, bentuk2d.py, bentuk3d.py, uji_bentuk3d.py, badan_bentuk.py, uji3d/badan_label.json, lembar_kartu.py, .github/workflows/kartu-uji.yml]
   workflow_dispatch:
 
 permissions:
@@ -60,6 +60,11 @@ jobs:
       - name: Uji bentuk 3D (mesh resmi vs kata nama & gender pemakaian)
         continue-on-error: true
         run: python uji_bentuk3d.py 2>&1 | tail -3
+      - name: Badan avatar (manusia atau bukan dari thumbnail resmi + cara dipakai manusia)
+        continue-on-error: true
+        env:
+          HF_HUB_DISABLE_TELEMETRY: "1"
+        run: python badan_bentuk.py 2>&1 | tail -8
       - name: Simpan cache bentuk 2D
         if: always()
         uses: actions/cache/save@v4
@@ -81,6 +86,7 @@ jobs:
           tail -n 60 kartu_log.txt > LOG_KARTU.txt
           git add kartu LAPORAN_KARTU.md LOG_KARTU.txt
           git add LAPORAN_3D.md 2>/dev/null || true
+          git add LAPORAN_BADAN.md 2>/dev/null || true
           git commit -m "Kartu item: hasil uji (otomatis)" || echo "tidak ada perubahan"
           git pull --rebase -q origin claude/kartu-item || true
           git push origin HEAD:claude/kartu-item

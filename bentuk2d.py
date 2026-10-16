@@ -150,6 +150,7 @@ def ukur(im):
         "lenganWarna": int(round(100 * (lanjut_warna("lenganL", 5, lL) + lanjut_warna("lenganR", 5, lR)) / 2)),
         "kakiCak": int(round(100 * sum(kk) / 5)),
     }
+    f["pita"] = [int(round(100 * c)) for c in lL + lR + kk]   # cakupan per pita: lengan kiri(5), kanan(5), kaki(5)
     tot = al[128:338, 104:336].sum()
     f["cakupan"] = int(round(100 * kain[128:338, 104:336].sum() / max(1, tot)))
     return f
@@ -161,7 +162,7 @@ def baca(f, t):
     if t == 11:
         if f["cakupan"] < 12 or (f["badan"] < 15 and f["lenganCak"] < 15):
             out["fungsi"] = "badan"            # hampir tak menutup: shading/riasan/tekstur kulit
-        pl = min(f["lengan"], f.get("lenganWarna", f["lengan"]))
+        pl = f["lengan"]  # lengan: cakupan saja (lenganWarna = info; corak manset sering memutus warna)
         out["lengan"] = "tanpa" if f["lenganCak"] < 20 else ("pendek" if pl < 80 else "panjang")
         out["leher"] = "tinggi" if f["leher"] <= 6 else ("sedang" if f["leher"] <= 22 else "rendah")
         if f["bahu"] >= 60 and f["badan"] >= 30:

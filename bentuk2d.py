@@ -143,7 +143,7 @@ def ukur(im):
         "bahu": int(round(100 * (1 - (cak("bahuL") + cak("bahuR")) / 2))),
         "badan": int(round(100 * cak("badan"))),
         "crop": int(round(100 * (1 - cak("crop")))),
-        "lengan": int(round(100 * (panjang(lL) + panjang(lR)) / 2)),
+        "lengan": int(round(100 * max(panjang(lL, 0.3), panjang(lR, 0.3)))),
         "lenganCak": int(round(100 * (sum(lL) + sum(lR)) / 10)),
         "kaki": int(round(100 * bawah(kk))),
         "kakiWarna": int(round(100 * lanjut_warna("kaki", 5, kk))),

@@ -10,7 +10,9 @@ Baca [laporan rev 31](AI_CLAUDE_2026-10-16e.md). Ringkas:
   terbukti 98–99% dipakai cewek.
 - **FisikItemKit** (map): titik pasang, ukuran mesh, lapisan 3D, tekstur PBR, template 2D.
 - Verteks 3D: `mata3d.py` siap, menunggu izin API key **thumbnails: read** dari pemilik. Vercel tidak dipakai.
-- **Save rev 31 belum terkonfirmasi** (rev 30 sudah tersimpan). Tidak publish.
+- rev 31b: bacaan detail item pilihan tampil ke pemain lewat notifikasi yang sudah ada (`Ringkasan.Bacaan`/`BuktiTema`),
+  `FisikItemKit.AmbilCepat`, bentuk 2D v4 (celana panjang emas 17/18).
+- **Save rev 31/31b belum terkonfirmasi** (rev 30 sudah tersimpan). Tidak publish.
 
 Langkah berikut: Codex review PR #5 + patch Studio rev 30/31.
 

@@ -65,6 +65,27 @@ Checksum (panjang/h): IndeksOutfitEngine 164991/473806894 · DesainerEngine 6556
 FisikItemKit 6641/2099716507 · UkuranItemEngine 9820/1405774519 · ItemInspectorEngine 9372/573620953 ·
 KatalogServerEngine 238880/999239103 · VisualOutfitKit 29768/2077036755. Semua lolos loadstring.
 
+## Tambahan rev 31b (16 Okt sore) — bacaan item terlihat pemain, perbaikan bentuk
+
+- **`KartuItemKit.Bacaan(id, fakta)`**: kalimat bacaan item HANYA dari fakta terukur/berbukti (bukan tebakan CLIP):
+  bentuk 2D diukur (lengan, kerah menutup leher / leher sedang / leher rendah, bahu terbuka, crop, panjang bawahan,
+  kaus kaki/stoking, menutup badan, lapisan kulit), gender dari pemakaian ("dipakai cewek (24 outfit)", uniseks), fakta fisik
+  `FisikItemKit` (titik pasang → "dipasang di pinggang belakang", ukuran lebar×tinggi×tebal stud, lapisan 3D, tekstur PBR).
+- **IndeksOutfitEngine** mengirim `Ringkasan.Bacaan` (maks 2 item pilihan) dan `Ringkasan.BuktiTema`; **KatalogUIController**
+  menampilkannya lewat notifikasi yang sudah ada (`StarterGui.Notif`, 7 dtk + 5 dtk) setelah hasil siap. Dulu bukti tema hanya
+  masuk `Memuat.Sub` (1 baris, 0,55 dtk, terpotong). Tanpa UI baru.
+- **FisikItemKit**: `AmbilCepat` (tanpa menunggu DataStore di jalur pemain; shard dimuat di latar), memori dibatasi 60 rb item.
+- **Python**: baju 2D yang diukur → panjang crop/normal (tebakan CLIP "crop" pada 41% baju terukur dibuang); laporan kartu
+  menampilkan gender, tema bukti, bentuk DIUKUR. `bentuk2d.py` v4: celana sobek di lutut (pita tertutup beda warna) tetap
+  panjang; paha terbuka tidak dilewati. Emas: celana panjang **17/18** (v2 16/18), pendek/rok tetap 11/16
+  (v3 tanpa syarat tertutup sempat 7/16 → ditolak).
+- Uji Play: CEWE + baju 78686093721077 → "Item dibaca: tanpa lengan, leher rendah, bahu terbuka (diukur dari gambar), dipakai
+  cewek (24 outfit)" (114 kartu); COWO + 18444465194 → "lengan panjang, kerah menutup leher (diukur dari gambar), dipakai cowok
+  (35 outfit)". Notifikasi 2 baris muat di layar 1136 px.
+
+Checksum rev 31b (panjang/h, semua lolos loadstring): IndeksOutfitEngine 166254/614347281 · KartuItemKit 13862/883423193 ·
+FisikItemKit 7423/453707953 · KatalogUIController 153301/1294242936 (lainnya sama dengan tabel di atas).
+
 ## Batas klaim
 
 - Label emas 1 penilai, n kecil; tema berbukti cakupan rendah pada gaya abstrak (streetwear/y2k) — sengaja abstain.

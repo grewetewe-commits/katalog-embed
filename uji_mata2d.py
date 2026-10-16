@@ -14,7 +14,7 @@ Varian pada sampel acak tetap (seed) yang SAMA, semua dinilai nanti dengan LABEL
                 sampel uji dikeluarkan dari latihan). Murah: tidak perlu unduh gambar baru bila menang.
 Keluaran (uji2d/): logit.npz (logit tiap varian/facet), prediksi.json (top-3), lembar_*.png (potongan 420 untuk label emas).
 """
-import os, sys, io, json, random, time
+import os, sys, io, json, random, time, collections
 import numpy as np
 import requests
 from PIL import Image, ImageDraw, ImageFont
@@ -30,6 +30,15 @@ NOUN = {11: "shirt", 12: "pants", 2: "t-shirt graphic"}
 KEL = {11: "atas", 12: "bawah", 2: "atas"}
 # kata nama untuk pengawasan lemah 2D: "shirt" ada di hampir semua nama aset Shirt -> bukan bukti kaos
 KATA_2D = {("atas", "kaos"): ["tee", "t-shirt", "tshirt", "kaos"]}
+# FUNGSI item 2D: banyak "baju/kaos" sebenarnya lapisan kulit (shading perut/otot), kalung dilukis, atau gambar saja
+FUNGSI = [("pakaian", ["a piece of clothing", "a shirt or pants garment"], []),
+          ("badan", ["soft gray body shading, abs, belly button or collarbone shadows drawn on skin", "skin shading overlay"],
+           ["shading", "shade", "abs", "belly", "navel", "collarbone", "ribcage", "blush", "skin", "body"]),
+          ("aksesori", ["a necklace, chain or jewelry drawn on the body", "a painted belt or strap"],
+           ["necklace", "chain", "pearls", "pendant", "kalung", "choker", "piercing"]),
+          ("grafis", ["a picture, cartoon character, logo, flag or text printed", "a graphic sticker image"],
+           ["logo", "flag", "sticker", "decal"])]
+N_LATIH = int(os.environ.get("N_LATIH", "700"))   # item latih per tipe untuk probe L14 (gambar diunduh)
 
 
 def manekin(rgb):
@@ -40,14 +49,37 @@ def manekin(rgb):
     return (g >= 60) & (g <= 240) & (rg >= 0.98) & (rg <= 1.015) & (bg >= 0.95) & (bg <= 0.99)
 
 
-def potong_kain(im):
+KOTAK_KAOS = (0.17, 0.12, 0.83, 0.86)   # bidang gambar di ikon kaos TShirt klasik (proporsi lebar/tinggi)
+
+
+def bersihkan(kain):
+    """buang komponen kecil (mata/mulut manekin, derau) -> sisakan potongan pakaian utama"""
+    from scipy import ndimage
+    lab, n = ndimage.label(kain, structure=np.ones((3, 3)))
+    if n <= 1:
+        return kain
+    luas = ndimage.sum(kain, lab, index=np.arange(1, n + 1))
+    ambang = max(150.0, 0.03 * float(kain.sum()))
+    simpan = np.zeros(n + 1, dtype=bool)
+    simpan[1:] = luas >= ambang
+    return simpan[lab]
+
+
+def potong_kain(im, t=11):
     """RGBA 420 -> (utuh di latar putih, potongan pakaian saja persegi 224 atau None)"""
     a = np.asarray(im.convert("RGBA")).astype(np.float32)
     rgb, al = a[..., :3], a[..., 3] > 128
     alas = Image.new("RGBA", im.size, (255, 255, 255, 255))
     alas.alpha_composite(im.convert("RGBA"))
     utuh = alas.convert("RGB")
+    if t == 2:
+        W, Hh = utuh.size
+        x0, y0, x1, y1 = KOTAK_KAOS
+        return utuh, utuh.crop((int(x0 * W), int(y0 * Hh), int(x1 * W), int(y1 * Hh))).resize((224, 224), Image.BICUBIC)
     kain = al & ~manekin(rgb)
+    if kain.sum() < 400:
+        return utuh, None
+    kain = bersihkan(kain)
     if kain.sum() < 400:
         return utuh, None
     ys, xs = np.where(kain)
@@ -162,17 +194,28 @@ def main():
     ids_all, E, e2, meta = KI.muat()
     emb_ids = ids_all.tolist()
     pos = {int(i): k for k, i in enumerate(emb_ids)}
-    sampel = []
-    for t in (11, 12, 2):
-        calon = sorted(i for i in emb_ids if int((meta.get(str(i)) or {}).get("t") or 0) == t)
-        sampel += [(i, t) for i in rng.sample(calon, min(N_PER, len(calon)))]
+    if os.path.exists("uji2d/sampel.json"):
+        sampel = [(int(i), int(t)) for i, t in json.load(open("uji2d/sampel.json"))["sampel"]]
+    else:
+        sampel = []
+        for t in (11, 12, 2):
+            calon = sorted(i for i in emb_ids if int((meta.get(str(i)) or {}).get("t") or 0) == t)
+            sampel += [(i, t) for i in rng.sample(calon, min(N_PER, len(calon)))]
     ids = [i for i, _ in sampel]
+    t0 = time.time()
     gb = thumb(ids)
+    print(f"unduh {len(ids)} thumbnail: {time.time() - t0:.0f} dtk", flush=True)
+    os.makedirs("uji2d/mentah", exist_ok=True)
+    hit = collections.Counter()
+    for i, t in sampel:
+        if i in gb and hit[t] < 6:
+            gb[i].save(f"uji2d/mentah/{t}_{hit[t]}_{i}.png")
+            hit[t] += 1
     print("thumbnail 420:", len(gb), "dari", len(ids), flush=True)
     utuh, kain, ok = {}, {}, []
     for i, t in sampel:
         if i in gb:
-            u, k = potong_kain(gb[i])
+            u, k = potong_kain(gb[i], t)
             utuh[i] = u
             kain[i] = k if k is not None else u.resize((224, 224))
             ok.append((i, t))
@@ -180,7 +223,7 @@ def main():
     per_t = {t: [i for i, tt in ok if tt == t] for t in (11, 12, 2)}
     hasil = {"item": [{"id": i, "t": t, "n": (meta.get(str(i)) or {}).get("n", "")} for i, t in ok], "varian": {}}
     logit = {f"ids|{t}": np.array(per_t[t], dtype=np.int64) for t in per_t}
-    FACET = {"jenis": None, "pola": KI.POLA, "tema": KI.TEMA}
+    FACET = {"jenis": None, "pola": KI.POLA, "tema": KI.TEMA, "fungsi": FUNGSI}
 
     def catat(nama, t, fnm, labels, L):
         logit[f"{nama}|{t}|{fnm}"] = L.astype(np.float32)
@@ -192,8 +235,8 @@ def main():
             return e2[i]
         return E[pos[i]]
 
-    varian = [("b32_150", "b32", "lama"), ("b32_k150", "b32", "lama_kain"), ("b32_utuh", "b32", "utuh"),
-              ("b32_kain", "b32", "kain"), ("fc_kain", "fc", "kain"), ("l14_kain", "l14", "kain")]
+    varian = [("b32_150", "b32", "lama"), ("b32_k150", "b32", "lama_kain"), ("b32_kain", "b32", "kain"),
+              ("fc_kain", "fc", "kain"), ("l14_kain", "l14", "kain"), ("l14_utuh", "l14", "utuh")]
     cache_model = {}
     for nama, mk, sumber in varian:
         try:
@@ -213,7 +256,9 @@ def main():
                 elif sumber == "utuh":
                     X, kal = M.gambar([utuh[i] for i in sub]), KI.KALIMAT_2D
                 else:
+                    t0 = time.time()
                     X, kal = M.gambar([kain[i] for i in sub]), KAL_KAIN
+                    print(f"  {nama} t{t}: {len(sub)} gambar {time.time() - t0:.1f} dtk", flush=True)
                 logit[f"X|{nama}|{t}"] = X
                 for fnm, labels in FACET.items():
                     labels = labels or KI.JENIS[KEL[t]]
@@ -253,6 +298,61 @@ def main():
                     print(f"probe {nama} {t}/{fnm}: latih {len(ys)}, label aktif {(cnt >= 15).sum()}/{len(labels)}", flush=True)
         except Exception as ex:
             print("probe gagal:", nama, repr(ex), flush=True)
+
+    # PROBE L14: latih dari nama pada N_LATIH item per kelompok tipe (gambar 420 diunduh & dipotong), uji pada sampel
+    try:
+        M = cache_model.get("l14")
+        if M is None:
+            raise RuntimeError("model l14 tidak ada")
+        rng2 = random.Random(7)
+        for tt in ((11, 2), (12,)):
+            kel = KEL[tt[0]]
+            calon = [i for i in emb_ids if int((meta.get(str(i)) or {}).get("t") or 0) in tt and i not in uji]
+            berlabel = []
+            for i in calon:
+                nm = (meta.get(str(i)) or {}).get("n") or ""
+                nl, tk = nm.lower(), KI.token(nm)
+                if any(label_nama(lb or KI.JENIS[kel], kel, nl, tk) is not None for lb in FACET.values()):
+                    berlabel.append(i)
+            pilih = rng2.sample(berlabel, min(N_LATIH, len(berlabel)))
+            t0 = time.time()
+            g2 = thumb(pilih)
+            t1 = time.time()
+            Xl, idl = [], []
+            for i in pilih:
+                if i in g2:
+                    ti = int((meta.get(str(i)) or {}).get("t") or 0)
+                    u, k = potong_kain(g2[i], ti)
+                    Xl.append(k if k is not None else u.resize((224, 224)))
+                    idl.append(i)
+            XL = M.gambar(Xl)
+            print(f"probe_l14 {tt}: unduh {len(g2)}/{len(pilih)} {t1 - t0:.0f} dtk, L14 {len(Xl)} gambar {time.time() - t1:.0f} dtk", flush=True)
+            for fnm, labels in FACET.items():
+                labels = labels or KI.JENIS[kel]
+                ys, rows = [], []
+                for r, i in enumerate(idl):
+                    nm = (meta.get(str(i)) or {}).get("n") or ""
+                    j = label_nama(labels, kel, nm.lower(), KI.token(nm))
+                    if j is not None:
+                        ys.append(j)
+                        rows.append(r)
+                if len(ys) < 60:
+                    print(f"probe_l14 {tt}/{fnm}: data latih kurang ({len(ys)})", flush=True)
+                    continue
+                ys = np.array(ys, dtype=np.int64)
+                cnt = np.bincount(ys, minlength=len(labels))
+                W = latih_probe(XL[rows], ys, len(labels))
+                for t in tt:
+                    Xu = logit.get(f"X|l14_kain|{t}")
+                    if Xu is None or not len(Xu):
+                        continue
+                    L = pakai_probe(W, Xu)
+                    L[:, cnt < 5] = -1e4
+                    catat("probe_l14", t, fnm, labels, L)
+                print(f"probe_l14 {tt}/{fnm}: latih {len(ys)}, label aktif {(cnt >= 5).sum()}/{len(labels)}", flush=True)
+            np.savez_compressed(f"uji2d/latih_l14_{tt[0]}.npz", ids=np.array(idl, dtype=np.int64), X=XL.astype(np.float16))
+    except Exception as ex:
+        print("probe_l14 gagal:", repr(ex), flush=True)
 
     json.dump(hasil, open("uji2d/prediksi.json", "w", encoding="utf-8"), ensure_ascii=False)
     np.savez_compressed("uji2d/logit.npz", **logit)

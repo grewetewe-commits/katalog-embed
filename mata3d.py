@@ -19,11 +19,13 @@ H = {"User-Agent": "KatalogPraktis-kartu/1.0 (GitHub Actions; github.com/grewete
 
 
 def url_cdn(h):
-    """hash rbxcdn -> URL (rumus server CDN lama t0..t7; dicoba bersama tr.rbxcdn.com)"""
+    """hash rbxcdn -> daftar URL dicoba berurutan: server hasil rumus lama dulu, lalu t0..t7 lain, lalu tr.rbxcdn.com
+    (uji 16 Okt: rumus hanya cocok sebagian hash berawalan 180DAY-, jadi semua server dicoba)"""
     i = 31
     for c in h[:32]:
         i ^= ord(c)
-    return [f"https://t{i % 8}.rbxcdn.com/{h}", f"https://tr.rbxcdn.com/{h}"]
+    urut = [i % 8] + [k for k in range(8) if k != i % 8]
+    return [f"https://t{k}.rbxcdn.com/{h}" for k in urut] + [f"https://tr.rbxcdn.com/{h}"]
 
 
 def ambil(url, kunci=False, **kw):
@@ -51,15 +53,20 @@ def ambil_3d(aid, log=print):
     meta = r2.json()
     obj = None
     h = meta.get("obj")
+    coba_log = []
     for u in (url_cdn(h) if isinstance(h, str) else []):
         try:
             r3 = ambil(u)
-            if r3.status_code == 200 and b"\nv " in r3.content[:20000]:
+            ok = r3.status_code == 200 and (b"\nv " in r3.content[:200000] or r3.content[:2] == b"v ")
+            coba_log.append(f"{u.split('/')[2]}:{r3.status_code}:{len(r3.content)}")
+            if ok:
                 obj = r3.text
                 meta["_obj_url"] = u
                 break
         except Exception as ex:
-            log("obj gagal:", u, ex)
+            coba_log.append(f"{u.split('/')[2]}:galat")
+    if obj is None:
+        log("obj tidak terunduh, dicoba:", " ".join(coba_log))
     return meta, obj
 
 
@@ -125,6 +132,16 @@ def main():
         V, grup = baca_obj(obj)
         g = geometri(V)
         print(aid, "OBJ:", len(V), "verteks, grup:", list(grup)[:12], "geometri:", json.dumps(g)[:500], flush=True)
+        # per grup: jumlah verteks & kotak batas (apakah ada manekin/badan ikut di file 3D pakaian layered?)
+        mulai = sorted(grup.items(), key=lambda kv: kv[1]) + [("_akhir", len(V))]
+        for (nm, a0), (_, a1) in zip(mulai, mulai[1:]):
+            if a1 > a0:
+                S = V[a0:a1]
+                print("   grup", nm[:40], a1 - a0, "verteks, min", np.round(S.min(axis=0), 2).tolist(),
+                      "maks", np.round(S.max(axis=0), 2).tolist(), flush=True)
+        for ln in obj.splitlines()[:6]:
+            if not ln.startswith(("v ", "vt ", "vn ", "f ")):
+                print("   kepala:", ln[:120], flush=True)
         hasil[str(aid)] = {"meta": ring, "grup": list(grup)[:30], "geometri": g}
         time.sleep(0.5)
     json.dump(hasil, open("uji3d/hasil.json", "w"), ensure_ascii=False, indent=1)

@@ -172,7 +172,7 @@
 | yb | -2.56 | -2.37 | 0.33 |
 | yt | -1.25 | 0.67 | 0.11 |
 
-### dipakai cewek (n=138) vs dipakai cowok (n=1) — gender dari pemakaian, bukan nama
+### dipakai cewek (n=139) vs dipakai cowok (n=1) — gender dari pemakaian, bukan nama
 | fitur | median cewek | median cowok | AUC |
 |---|---|---|---|
 
@@ -507,35 +507,35 @@
 | yb | -0.34 | -0.04 | 0.36 |
 | yt | 0.28 | 1.95 | 0.06 |
 
-### dipakai cewek (n=195) vs dipakai cowok (n=10) — gender dari pemakaian, bukan nama
+### dipakai cewek (n=207) vs dipakai cowok (n=10) — gender dari pemakaian, bukan nama
 | fitur | median cewek | median cowok | AUC |
 |---|---|---|---|
-| D | 0.74 | 0.88 | 0.33 |
-| H | 0.97 | 0.45 | 0.58 |
-| W | 3.38 | 0.64 | 0.73 |
+| D | 0.70 | 0.88 | 0.31 |
+| H | 0.91 | 0.45 | 0.57 |
+| W | 3.40 | 0.64 | 0.73 |
 | dadaRasio | 0.90 | 0.97 | 0.38 |
 | dadaTonjol | -0.01 | -0.01 | 0.43 |
-| depanTerbuka | 100.00 | 0.00 | 0.86 |
+| depanTerbuka | 100.00 | 0.00 | 0.87 |
 | flare | 1.17 | 0.81 | 0.77 |
-| kakiCelah | 6.00 | 0.00 | 0.86 |
-| kakiCelahMax | 6.00 | 0.00 | 0.79 |
-| lebarBawah | 2.95 | 0.40 | 0.86 |
-| luar09 | 86.00 | 0.00 | 0.84 |
+| kakiCelah | 6.00 | 0.00 | 0.87 |
+| kakiCelahMax | 6.00 | 0.00 | 0.80 |
+| lebarBawah | 2.99 | 0.40 | 0.86 |
+| luar09 | 89.00 | 0.00 | 0.84 |
 | luar09Bawah | 0.00 | 100.00 | 0.18 |
-| luar11 | 61.00 | 0.00 | 0.81 |
+| luar11 | 66.00 | 0.00 | 0.81 |
 | luar11Bawah | 0.00 | 100.00 | 0.17 |
-| luar13 | 36.00 | 0.00 | 0.79 |
+| luar13 | 37.00 | 0.00 | 0.79 |
 | luar13Bawah | 1.00 | 100.00 | 0.19 |
 | ntex | 3.00 | 3.50 | 0.47 |
-| nv | 2387.00 | 2559.50 | 0.33 |
+| nv | 2260.00 | 2559.50 | 0.32 |
 | pinggulTertutup | 0.00 | 0.00 | 0.37 |
-| pusatTertutup | 0.00 | 1.00 | 0.22 |
-| rx | 0.00 | 1.38 | 0.18 |
-| tebalRata | 0.50 | 0.70 | 0.27 |
+| pusatTertutup | 0.00 | 1.00 | 0.21 |
+| rx | 0.00 | 1.38 | 0.17 |
+| tebalRata | 0.48 | 0.70 | 0.25 |
 | tudung | 0.00 | -0.05 | 0.71 |
-| wPinggul | 3.19 | 0.61 | 0.65 |
+| wPinggul | 3.17 | 0.61 | 0.65 |
 | yb | -0.40 | -0.21 | 0.47 |
-| yt | 0.55 | 0.23 | 0.49 |
+| yt | 0.55 | 0.23 | 0.48 |
 
 ### Hasil baca (bentuk3d.baca) per kata nama
 - bahu_terbuka → bukanPenutup: False 360, True 2

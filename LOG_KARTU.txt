@@ -1,21 +1,21 @@
-20:57:48 embedding 143958 | potongan 2D 42864 | meta 141553
-20:57:52 kelompok atas2D: 20919 item
-20:57:58   probe atas2D/tema: latih 4500
-20:58:03   probe atas2D/pola: latih 1183
-20:58:05   probe atas2D/jenis: latih 4016
-20:58:06 kelompok atas3D: 9812 item
-20:58:14 kelompok kepala: 20628 item
-20:58:21 kelompok aksen: 27353 item
-20:58:28 kelompok bawah2D: 17825 item
-20:58:34   probe bawah2D/tema: latih 4196
-20:58:39   probe bawah2D/pola: latih 2494
-20:58:41   probe bawah2D/jenis: latih 4072
-20:58:41 kelompok bawah3D: 5826 item
-20:58:48 kelompok wajah: 8350 item
-20:58:54 kelompok rambut: 17550 item
-20:58:57 kelompok sepatu: 7788 item
-21:19:03 bentuk 2D: 4197 diukur putaran ini, 15742 di cache, 15741 kartu diberi bentuk diukur, sisa antre 20541, 1203 dtk
-21:19:14 bukti: 75715 outfit manusia, gender 103331 item, tema berbukti 16120 item, 11 dtk
-21:19:14 bukti badan: 1248 bagian badan berbukti pemakaian (>= 3 outfit, pusat +0.06), 335 jelas cowok/cewek
-21:19:16 bentuk 3D: 11559 mesh diukur, 8947 berkerangka badan, 11559 kartu diberi bentuk 3D
-21:19:18 selesai: 136051 kartu, 1292 dtk
+21:38:13 embedding 143958 | potongan 2D 42864 | meta 141553
+21:38:17 kelompok atas2D: 20919 item
+21:38:23   probe atas2D/tema: latih 4500
+21:38:28   probe atas2D/pola: latih 1183
+21:38:30   probe atas2D/jenis: latih 4016
+21:38:31 kelompok atas3D: 9812 item
+21:38:39 kelompok kepala: 20628 item
+21:38:46 kelompok aksen: 27353 item
+21:38:53 kelompok bawah2D: 17825 item
+21:38:58   probe bawah2D/tema: latih 4196
+21:39:04   probe bawah2D/pola: latih 2494
+21:39:05   probe bawah2D/jenis: latih 4072
+21:39:06 kelompok bawah3D: 5826 item
+21:39:13 kelompok wajah: 8350 item
+21:39:18 kelompok rambut: 17550 item
+21:39:22 kelompok sepatu: 7788 item
+21:59:28 bentuk 2D: 4143 diukur putaran ini, 19885 di cache, 19884 kartu diberi bentuk diukur, sisa antre 16398, 1203 dtk
+21:59:39 bukti: 75715 outfit manusia, gender 103335 item, tema berbukti 16120 item, 12 dtk
+21:59:39 bukti badan: 1248 bagian badan berbukti pemakaian (>= 3 outfit, pusat +0.06), 347 jelas cowok/cewek
+21:59:41 bentuk 3D: 11559 mesh diukur, 8947 berkerangka badan, 11559 kartu diberi bentuk 3D
+21:59:44 selesai: 136051 kartu, 1293 dtk

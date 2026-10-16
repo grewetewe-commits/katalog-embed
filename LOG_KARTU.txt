@@ -1,19 +1,19 @@
-10:34:49 embedding 141412 | potongan 2D 41868 | meta 138684
-10:34:52 kelompok atas2D: 20375 item
-10:34:57   probe atas2D/tema: latih 4391
-10:35:02   probe atas2D/pola: latih 1159
-10:35:05   probe atas2D/jenis: latih 3891
-10:35:06 kelompok atas3D: 9669 item
-10:35:13 kelompok kepala: 20267 item
-10:35:20 kelompok aksen: 26772 item
-10:35:28 kelompok bawah2D: 17396 item
-10:35:33   probe bawah2D/tema: latih 4086
-10:35:38   probe bawah2D/pola: latih 2442
-10:35:40   probe bawah2D/jenis: latih 3982
-10:35:41 kelompok bawah3D: 5758 item
-10:35:47 kelompok wajah: 8200 item
-10:35:53 kelompok rambut: 17211 item
-10:35:56 kelompok sepatu: 7681 item
-10:36:10 bukti: 73233 outfit manusia, gender 101134 item, tema berbukti 15814 item, 11 dtk
-10:41:59 bentuk 2D: 2999 diukur putaran ini, 2999 di cache, 2999 kartu diberi bentuk diukur, sisa antre 32367, 349 dtk
-10:42:01 selesai: 133329 kartu, 435 dtk
+10:50:53 embedding 141412 | potongan 2D 41868 | meta 138684
+10:50:56 kelompok atas2D: 20375 item
+10:51:02   probe atas2D/tema: latih 4391
+10:51:07   probe atas2D/pola: latih 1159
+10:51:09   probe atas2D/jenis: latih 3891
+10:51:11 kelompok atas3D: 9669 item
+10:51:18 kelompok kepala: 20267 item
+10:51:25 kelompok aksen: 26772 item
+10:51:33 kelompok bawah2D: 17396 item
+10:51:38   probe bawah2D/tema: latih 4086
+10:51:44   probe bawah2D/pola: latih 2442
+10:51:45   probe bawah2D/jenis: latih 3982
+10:51:46 kelompok bawah3D: 5758 item
+10:51:53 kelompok wajah: 8200 item
+10:51:58 kelompok rambut: 17211 item
+10:52:02 kelompok sepatu: 7681 item
+10:55:55 bentuk 2D: 2999 diukur putaran ini, 2999 di cache, 2999 kartu diberi bentuk diukur, sisa antre 32367, 231 dtk
+10:56:06 bukti: 73233 outfit manusia, gender 101134 item, tema berbukti 15814 item, 11 dtk
+10:56:08 selesai: 133329 kartu, 317 dtk

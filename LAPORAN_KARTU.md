@@ -1,4 +1,4 @@
-# Laporan Kartu Item (MATA v2) — versi 1792147319
+# Laporan Kartu Item (MATA v2) — versi 1792148166
 
 Kartu dibaca dari GAMBAR item (CLIP zero-shot, model sama dengan otak.py); nama hanya bukti tambahan.
 
@@ -49,9 +49,9 @@ Outfit buatan manusia dipakai sebagai bukti pemakaian: **73233**.
 
 | ambang | benar | diputuskan | item uji |
 |---|---|---|---|
-| 0.1 | 1340 (94.9%) | 1412 | 2690 |
-| 0.15 | 1230 (95.3%) | 1290 | 2690 |
-| 0.25 | 973 (96.7%) | 1006 | 2690 |
+| 0.1 | 1426 (95.2%) | 1498 | 2690 |
+| 0.15 | 1313 (95.5%) | 1375 | 2690 |
+| 0.25 | 1041 (97.1%) | 1072 | 2690 |
 
 ### Tema berbukti vs label emas (baju/celana 2D)
 

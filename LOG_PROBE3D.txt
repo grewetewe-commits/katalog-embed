@@ -1,0 +1,20 @@
+====================================================================== 126884250250747
+[kunci=False] HTTP 403 | {"errors":[{"code":0,"message":"Invalid authentication data provided"}]}
+
+[kunci=True] HTTP 403 | {"errors":[{"code":0,"message":"Scope not authorized."}]}
+
+====================================================================== 72558563872966
+[kunci=False] HTTP 403 | {"errors":[{"code":0,"message":"Invalid authentication data provided"}]}
+
+[kunci=True] HTTP 403 | {"errors":[{"code":0,"message":"Scope not authorized."}]}
+
+====================================================================== 8565346973
+[kunci=False] HTTP 403 | {"errors":[{"code":0,"message":"Invalid authentication data provided"}]}
+
+[kunci=True] HTTP 403 | {"errors":[{"code":0,"message":"Scope not authorized."}]}
+
+====================================================================== 192557913
+[kunci=False] HTTP 403 | {"errors":[{"code":0,"message":"Invalid authentication data provided"}]}
+
+[kunci=True] HTTP 403 | {"errors":[{"code":0,"message":"Scope not authorized."}]}
+

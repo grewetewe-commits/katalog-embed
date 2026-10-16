@@ -42,6 +42,13 @@ jobs:
           key: emb-v2-${{ github.run_id }}
           restore-keys: emb-v2-
 
+      - name: Pulihkan cache bentuk 2D
+        uses: actions/cache/restore@v4
+        with:
+          path: cache_bentuk
+          key: bentuk2d-v1-${{ github.run_id }}
+          restore-keys: bentuk2d-v1-
+
       - name: Pasang dependensi
         run: |
           python -m pip install --upgrade pip
@@ -65,6 +72,13 @@ jobs:
         env:
           HF_HUB_DISABLE_TELEMETRY: "1"
         run: python kartu_item.py 2>&1 | tail -n 40
+
+      - name: Simpan cache bentuk 2D
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: cache_bentuk
+          key: bentuk2d-v1-${{ github.run_id }}
 
       - name: Simpan sidik jari ke cache
         if: always()

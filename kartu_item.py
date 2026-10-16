@@ -36,7 +36,11 @@ P_EMB = os.path.join(CACHE_DIR, "emb.npz")
 P_E2D = os.path.join(CACHE_DIR, "emb2d.npz")
 P_STATE = "data/panen.json.gz"
 SHARD = 8
-SKEMA = 3             # 2: kolom 19 "fungsi" kaos klasik; 3: kolom 20-25 BUKTI (gender, tema berbukti, tema cocok) -- bukti_item.py
+SKEMA = 4             # 2: kolom 19 "fungsi" kaos klasik; 3: kolom 20-25 BUKTI (gender, tema berbukti, tema cocok) -- bukti_item.py
+                      # 4: kolom 26-27 BENTUK 2D DIUKUR (leher, bit bahu/crop/badan/kaus kaki) -- bentuk2d.py
+P_BENTUK = os.path.join(os.environ.get("CACHE_BENTUK", "cache_bentuk"), "bentuk2d.json")
+BATAS_BENTUK = int(os.environ.get("BATAS_BENTUK", "3000"))      # item 2D baru yang diukur per putaran (thumbnail 420)
+MENIT_BENTUK = float(os.environ.get("MENIT_BENTUK", "12"))      # batas waktu pengukuran per putaran
 SUHU = 100.0          # suhu softmax CLIP (sama dengan otak.py)
 BOBOT_NAMA = 0.35     # fusi lunak: bukti nama menambah massa peluang, gambar tetap dominan
 
@@ -649,7 +653,9 @@ def label_semua():
             "bentuk": {k: {a: [x[0] for x in b] for a, b in v.items()} for k, v in BENTUK.items()},
             "kolom": ["kelompok", "jenis", "jenisP", "tema1", "tema1P", "tema2", "tema2P", "subjek1", "subjek1P", "subjek2",
                       "subjek2P", "pola", "polaP", "lengan", "panjang", "fit", "depan", "temaGambar", "fungsi",
-                      "gender", "genderN", "temaB", "temaBPoin", "temaBSumber", "temaCocok"],
+                      "gender", "genderN", "temaB", "temaBPoin", "temaBSumber", "temaCocok", "leher", "bentukBit"],
+            "bentukBit": {"bahuTerbuka": 1, "crop": 2, "celanaMenutupBadan": 4, "kausKakiStoking": 8, "diukur": 16},
+            "leher": "kedalaman bukaan leher baju 2D, % tinggi badan (diukur piksel; kecil = kerah tinggi, besar = leher rendah)",
             "gender": "0..200: 100 netral, <100 cowok, >100 cewek (bukti nama + pemakaian di outfit manusia)",
             "temaBSumber": {"nama": BUKTI.SUMBER_NAMA, "unsur": BUKTI.SUMBER_UNSUR, "gaya": BUKTI.SUMBER_GAYA,
                             "pakai": BUKTI.SUMBER_PAKAI},
@@ -672,6 +678,72 @@ def tulis(kartu, versi, evals):
     with open("kartu/info.json.tmp", "w", encoding="utf-8") as f:
         json.dump(info, f, ensure_ascii=False, separators=(",", ":"))
     os.replace("kartu/info.json.tmp", "kartu/info.json")
+
+
+def bentuk_2d(kartu, meta):
+    """BENTUK 2D DIUKUR dari piksel thumbnail resmi (bentuk2d.py), bertahap dengan cache. Menimpa tebakan CLIP untuk
+    lengan/panjang baju & celana 2D, mengisi fungsi baju/celana (lapisan kulit), dan kolom 26-27 (leher, bit bentuk).
+    Uji emas (uji2d/bentuk_nilai.json): lapisan kulit 116/119, lengan panjang 22/24, tanpa lengan 6/6, celana panjang 16/18,
+    celana pendek/rok 11/16."""
+    import bentuk2d as B2
+    try:
+        cache = json.load(open(P_BENTUK, encoding="utf-8"))
+    except Exception:
+        cache = {}
+    calon = [i for i, b in kartu.items() if int((meta.get(str(i)) or {}).get("t") or 0) in (11, 12)
+             and (str(i) not in cache or (cache[str(i)] or {}).get("v") != B2.VERSI_BENTUK)]
+    calon.sort(key=lambda i: -int((meta.get(str(i)) or {}).get("f") or 0))   # yang paling difavoritkan dulu
+    t0, baru = time.time(), 0
+    for a in range(0, min(len(calon), BATAS_BENTUK), 50):
+        if time.time() - t0 > MENIT_BENTUK * 60:
+            break
+        p = calon[a:a + 50]
+        gb = B2.thumb(p, jeda=0.2)
+        for i in p:
+            if i in gb:
+                try:
+                    cache[str(i)] = B2.ukur(gb[i])
+                    baru += 1
+                except Exception:
+                    pass
+    if baru:
+        os.makedirs(os.path.dirname(P_BENTUK), exist_ok=True)
+        with open(P_BENTUK + ".tmp", "w", encoding="utf-8") as f:
+            json.dump(cache, f, separators=(",", ":"))
+        os.replace(P_BENTUK + ".tmp", P_BENTUK)
+    BA, BB = BENTUK["atas"], BENTUK["bawah"]
+    ia = {nm: {lab[0]: k for k, lab in enumerate(BA[nm])} for nm in BA}
+    ib = {nm: {lab[0]: k for k, lab in enumerate(BB[nm])} for nm in BB}
+    n = 0
+    for i, b in kartu.items():
+        f = cache.get(str(i))
+        t = int((meta.get(str(i)) or {}).get("t") or 0)
+        if not f or t not in (11, 12):
+            b += [-1, -1]
+            continue
+        r = B2.baca(f, t)
+        bits = 16
+        if t == 11:
+            b[13] = ia["lengan"].get(r.get("lengan"), b[13])
+            if r.get("crop"):
+                b[14] = ia["panjang"]["crop"]
+                bits |= 2
+            if r.get("bahu") == "terbuka":
+                bits |= 1
+            b[18] = 1 if r.get("fungsi") == "badan" else 0
+            b += [int(f.get("leher", 0)), bits]
+        else:
+            b[14] = ib["panjang"].get(r.get("panjang"), b[14])
+            if r.get("badan") == "tertutup":
+                bits |= 4
+            if r.get("kakiBawah"):
+                bits |= 8
+            b[18] = 1 if r.get("fungsi") == "badan" else 0
+            b += [-1, bits]
+        n += 1
+    log(f"bentuk 2D: {baru} diukur putaran ini, {len(cache)} di cache, {n} kartu diberi bentuk diukur, sisa antre "
+        f"{max(0, len(calon) - baru)}, {time.time() - t0:.0f} dtk")
+    return {"baru": baru, "cache": len(cache), "terpakai": n, "sisa": max(0, len(calon) - baru)}
 
 
 def perkaya_bukti(kartu, meta, st):
@@ -803,6 +875,14 @@ def main():
     teks = Teks(stub=stub)
     kartu, evals, contoh = bangun(teks, ids, E, e2, meta)
     bukti = perkaya_bukti(kartu, meta, getattr(muat, "st", {}) or {})
+    try:
+        bentuk = bentuk_2d(kartu, meta) if BATAS_BENTUK > 0 and not stub else None
+    except Exception as ex:
+        log("bentuk 2D gagal (kartu tetap ditulis):", ex)
+        bentuk = None
+    if bentuk is None:
+        for b in kartu.values():
+            b += [-1, -1]
     versi = int(time.time())
     tulis(kartu, versi, evals)
     if bukti.get("graf"):

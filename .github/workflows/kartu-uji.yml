@@ -4,7 +4,7 @@ name: Kartu Item (uji)
 on:
   push:
     branches: [claude/kartu-item]
-    paths: [kartu_item.py, bukti_item.py, lembar_kartu.py, .github/workflows/kartu-uji.yml]
+    paths: [kartu_item.py, bukti_item.py, bentuk2d.py, lembar_kartu.py, .github/workflows/kartu-uji.yml]
   workflow_dispatch:
 
 permissions:
@@ -17,7 +17,7 @@ concurrency:
 jobs:
   kartu:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -34,6 +34,12 @@ jobs:
           path: cache
           key: emb-v2-kartu-${{ github.run_id }}
           restore-keys: emb-v2-
+      - name: Pulihkan cache bentuk 2D (diukur bertahap)
+        uses: actions/cache/restore@v4
+        with:
+          path: cache_bentuk
+          key: bentuk2d-v1-${{ github.run_id }}
+          restore-keys: bentuk2d-v1-
       - name: Ambil data panen terbaru dari main
         run: |
           git fetch --depth 1 origin main
@@ -49,6 +55,12 @@ jobs:
         run: |
           ls -la cache || true
           python kartu_item.py --uji 126884250250747 72558563872966 1028859 14328141014 8565346973 6554200369 192557913 78504769792948 126582482792163 93519364113971 382538059 7192553841 14027730224 15901064855 98089688160090 116973312880668 98757749181872 5731050224 301820310 18832937926 122234019472336 132200141502925 83668736552435 2>&1 | tee kartu_log.txt
+      - name: Simpan cache bentuk 2D
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: cache_bentuk
+          key: bentuk2d-v1-${{ github.run_id }}
       - name: Lembar kontak (thumbnail + kartu) untuk diperiksa mata
         continue-on-error: true
         run: |

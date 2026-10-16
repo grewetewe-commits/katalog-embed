@@ -438,7 +438,8 @@ def gabung_probe(Pimg, XX, labels, kel, nama_l, toks):
     if aktif.any():
         netral = Zp[:, aktif].mean(axis=1, keepdims=True)
         Zp[:, ~aktif] = netral
-    L = np.log(np.maximum(Pimg, 1e-9)) + log_softmax(Zp)
+    # rata-rata log (bukan jumlah): urutan label sama, peluang tidak terlalu yakin (lembar kontak: "I love mm2" ninja 85)
+    L = 0.5 * np.log(np.maximum(Pimg, 1e-9)) + 0.5 * log_softmax(Zp)
     L -= L.max(axis=1, keepdims=True)
     P = np.exp(L)
     return P / P.sum(axis=1, keepdims=True), len(ys)

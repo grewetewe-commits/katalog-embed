@@ -1,4 +1,4 @@
-# Laporan Kartu Item (MATA v2) — versi 1792132306
+# Laporan Kartu Item (MATA v2) — versi 1792132593
 
 Kartu dibaca dari GAMBAR item (CLIP zero-shot, model sama dengan otak.py); nama hanya bukti tambahan.
 
@@ -48,10 +48,10 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 
 | tipe | facet | n | benar | akurasi | tanpa kartu |
 |---|---|---|---|---|---|
-| baju 2D | jenis | 57 | 27 | 47% | 0 |
+| baju 2D | jenis | 57 | 28 | 49% | 0 |
 | baju 2D | tema | 37 | 24 | 65% | 0 |
 | baju 2D | pola | 54 | 17 | 31% | 0 |
-| celana 2D | jenis | 43 | 23 | 53% | 0 |
+| celana 2D | jenis | 43 | 24 | 56% | 0 |
 | celana 2D | tema | 23 | 12 | 52% | 0 |
 | celana 2D | pola | 48 | 20 | 42% | 0 |
 | kaos klasik | fungsi | 55 | 48 | 87% | 0 |
@@ -62,68 +62,68 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 - `72558563872966` Black Cowboy Hat (kepala): jenis=topi_koboi(81) | tema=koboi(100)/formal(0) | subjek=rantai(12)/tanpa(12) | [gambar:koboi]
 - `1028859` Pirate Captain's Hat (kepala): jenis=topi_lain(41) | tema=bajak_laut(100)/halloween(0) | subjek=tengkorak(86)/hantu(3) | [gambar:bajak_laut]
 - `14328141014` Gojo (wajah): jenis=kacamata_hitam(74) | tema=anime(37)/steampunk(9) | subjek=bulan(40)/mata(16) | [gambar:steampunk]
-- `8565346973` 🤍 Maid Dress (atas): jenis=gaun(79) | tema=maid(97)/punk(1) | subjek=salib(6)/rantai(6) | pola=bulu(56) | lengan=panjang panjang=normal fit=pas depan=tertutup | [gambar:maid]
-- `6554200369` Grey Suit w/ Black Vest [+] (atas): jenis=jas(38) | tema=formal(97)/gothic(1) | subjek=kelelawar(10)/salib(8) | pola=bulu(47) | lengan=tanpa panjang=normal fit=pas depan=terbuka | [gambar:formal]
+- `8565346973` 🤍 Maid Dress (atas): jenis=gaun(54) | tema=maid(67)/punk(4) | subjek=salib(6)/rantai(6) | pola=bulu(26) | lengan=panjang panjang=normal fit=pas depan=tertutup | [gambar:maid]
+- `6554200369` Grey Suit w/ Black Vest [+] (atas): jenis=jas(31) | tema=formal(69)/gothic(4) | subjek=kelelawar(10)/salib(8) | pola=bulu(31) | lengan=tanpa panjang=normal fit=pas depan=terbuka | [gambar:formal]
 - `192557913` Sparkling Angel Wings (aksen): jenis=sayap(98) | tema=malaikat(88)/peri(10) | subjek=bulan(23)/kupu_kupu(21) | [gambar:malaikat]
 - `78504769792948` Bloody Silver Dermal Piercing Under Eye Right (wajah): jenis=tindik(78) | tema=horor(45)/steampunk(26) | subjek=mata(50)/bulan(32) | [gambar:steampunk]
-- `126582482792163` Pastel Goth (atas): jenis=kostum_penuh(97) | tema=kawaii(82)/gothic(18) | subjek=pita(23)/hantu(9) | pola=polkadot(100) | lengan=pendek panjang=normal fit=longgar depan=tertutup | [gambar:kawaii]
+- `126582482792163` Pastel Goth (atas): jenis=kostum_penuh(65) | tema=kawaii(70)/gothic(18) | subjek=pita(23)/hantu(9) | pola=polkadot(97) | lengan=pendek panjang=normal fit=longgar depan=tertutup | [gambar:kawaii]
 - `93519364113971` kawaii curious droopy cat ears in full black (kepala): jenis=telinga(46) | tema=kawaii(35)/formal(13) | subjek=kucing(36)/bulan(17) | [gambar:formal]
-- `382538059` Green Jersey (atas): jenis=jersey(100) | tema=sporty(100)/y2k(0) | subjek=katak(24)/bintang(9) | pola=bunga(68) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:sporty]
+- `382538059` Green Jersey (atas): jenis=jersey(93) | tema=sporty(96)/y2k(1) | subjek=katak(24)/bintang(9) | pola=bunga(33) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:sporty]
 - `7192553841` Zip Hoodie - Black (atas): jenis=jaket(49) | tema=gothic(45)/formal(19) | subjek=salib(23)/kelelawar(12) | pola=kulit(59) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:gothic]
 - `14027730224` ♡ kawaii baby pink pastel bow headband (kepala): jenis=pita_bando(93) | tema=coquette(79)/kawaii(19) | subjek=pita(79)/kelinci(4) | [gambar:coquette]
-- `15901064855` black grunge dark y2k dh emo boy punk evade (bawah): jenis=jeans(99) | tema=y2k(49)/punk(35) | subjek=bulan(6)/rantai(6) | pola=denim(99) | panjang=pendek fit=lebar | [gambar:gothic]
-- `98089688160090` 🖤 Black leather jacket with spikes and skull  (atas): jenis=jaket(60) | tema=gothic(76)/punk(23) | subjek=tengkorak(44)/laba_laba(11) | pola=kulit(98) | lengan=tanpa panjang=crop fit=longgar depan=tertutup | [gambar:gothic]
+- `15901064855` black grunge dark y2k dh emo boy punk evade (bawah): jenis=jeans(79) | tema=y2k(31)/punk(27) | subjek=bulan(6)/rantai(6) | pola=denim(87) | panjang=pendek fit=lebar | [gambar:gothic]
+- `98089688160090` 🖤 Black leather jacket with spikes and skull  (atas): jenis=jaket(50) | tema=gothic(48)/punk(26) | subjek=tengkorak(44)/laba_laba(11) | pola=kulit(81) | lengan=tanpa panjang=crop fit=longgar depan=tertutup | [gambar:gothic]
 - `116973312880668` Arisu's Sword of Light: Supernova MK.II (aksen): jenis=senjata(74) | tema=cyber(64)/polisi(9) | subjek=petir(50)/hiu(6) | [gambar:cyber]
 - `98757749181872` ♡ coquette curls with pink bow blonde (rambut): tema=coquette(62)/kawaii(37) | [gambar:kawaii]
 - `5731050224` Gold Crown of O’s (kepala): jenis=mahkota(100) | tema=kerajaan(100)/gaun_elegan(0) | subjek=mahkota(100)/rantai(0) | [gambar:kerajaan]
 - `301820310` Lin's Glasses (wajah): jenis=kacamata(96) | tema=streetwear(13)/medis(11) | subjek=tanpa(23)/tulisan(9) | [gambar:streetwear]
 - `18832937926` ♡ kawaii pumpkin bear hood (kepala): jenis=tudung(37) | tema=kawaii(76)/halloween(18) | subjek=beruang(63)/labu(18) | [gambar:kawaii]
 - `122234019472336` Spooky Halloween Pumpkin Cat Hat (kepala): jenis=topi_lain(38) | tema=halloween(99)/kostum_hewan(0) | subjek=labu(82)/kucing(18) | [gambar:halloween]
-- `132200141502925` ★🧸🎃˚. ɞ Preppy Halloween pumpkin bear ˚. ᵎᵎ (atas): jenis=kaos(41) | tema=halloween(95)/kawaii(4) | subjek=labu(45)/beruang(19) | pola=pelangi(78) | lengan=panjang panjang=crop fit=longgar depan=terbuka | [gambar:halloween]
-- `83668736552435` ★🧸🎃˚. ɞ Halloween jellycat pumpkin bear pjs˚. ᵎᵎ (bawah): jenis=jeans(40) | tema=halloween(98)/kawaii(1) | subjek=labu(48)/beruang(18) | pola=kotak(36) | panjang=pendek fit=lebar | [gambar:halloween]
+- `132200141502925` ★🧸🎃˚. ɞ Preppy Halloween pumpkin bear ˚. ᵎᵎ (atas): jenis=kaos(26) | tema=halloween(77)/kawaii(11) | subjek=labu(45)/beruang(19) | pola=pelangi(47) | lengan=panjang panjang=crop fit=longgar depan=terbuka | [gambar:halloween]
+- `83668736552435` ★🧸🎃˚. ɞ Halloween jellycat pumpkin bear pjs˚. ᵎᵎ (bawah): jenis=jeans(26) | tema=halloween(74)/kawaii(5) | subjek=labu(48)/beruang(18) | pola=kotak(24) | panjang=pendek fit=lebar | [gambar:halloween]
 
 ## Contoh: tema dari nama ≠ tema dari gambar (gambar yakin)
 
-- `1064059` space c.bmp — nama: antariksa | jenis=jaket(93) | tema=antariksa(79)/cyber(21) | subjek=wajah_anime(13)/tulisan(9) | pola=loreng(74) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:cyber] | fungsi=grafis
-- `1239904` Akatsuki — nama: anime | jenis=kaos(97) | tema=anime(97)/horor(2) | subjek=api(18)/buah(14) | pola=bulu(56) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:horor] | fungsi=grafis
-- `1260428` Guitar Hero 2 Logo — nama: superhero | jenis=kaos(99) | tema=superhero(94)/punk(5) | subjek=logo(28)/musik(26) | pola=kotak(49) | lengan=panjang panjang=normal fit=pas depan=tertutup | [gambar:ninja] | fungsi=grafis
-- `1397335` Me with snow wolf shirt. — nama: musim_dingin | jenis=hoodie(63) | tema=musim_dingin(97)/streetwear(2) | subjek=kartun(9)/hiu(7) | pola=polos(79) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:polisi] | fungsi=grafis
-- `1431511` ninja shirt — nama: ninja | jenis=kaos(95) | tema=ninja(97)/biasa(2) | subjek=logo(25)/tulisan(9) | pola=catur(33) | lengan=pendek panjang=normal fit=pas depan=tertutup | [gambar:gothic] | fungsi=aksesori
-- `1475939` Noob shirt — nama: novelty | jenis=kaos(56) | tema=novelty(100)/formal(0) | subjek=logo(8)/hati(7) | pola=pelangi(84) | lengan=tanpa panjang=normal fit=pas depan=terbuka | [gambar:kawaii] | fungsi=badan
-- `1503598` Evil Camo V.S. Magma — nama: militer | jenis=jas(96) | tema=militer(50)/badut(22) | subjek=wajah_anime(9)/buah(9) | pola=loreng(89) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:iblis] | fungsi=grafis
-- `1515399` My cute kitty! :) — nama: kawaii | jenis=kaos(95) | tema=kawaii(66)/superhero(25) | subjek=kucing(76)/anjing(6) | pola=polkadot(95) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:kostum_hewan] | fungsi=grafis
-- `1521989` shadow military lvl 1 — nama: militer | jenis=rompi(88) | tema=militer(93)/cyber(2) | subjek=logo(13)/katak(11) | pola=garis(34) | lengan=tanpa panjang=normal fit=pas depan=terbuka | [gambar:pantai] | fungsi=grafis
-- `1558188` Random Anime Character I made — nama: anime | jenis=jas(44) | tema=anime(84)/superhero(8) | subjek=wajah_anime(39)/naga(8) | pola=polos(98) | lengan=panjang panjang=panjang fit=longgar depan=tertutup | [gambar:vampir] | fungsi=grafis
-- `1591061` Cute Wolf — nama: kawaii | jenis=kaos(99) | tema=kawaii(95)/punk(4) | subjek=anjing(69)/wajah_anime(5) | pola=grafis(82) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:kostum_hewan] | fungsi=badan
-- `1606929` the football shirt for eagles22 — nama: sporty | jenis=kaos(57) | tema=sporty(96)/y2k(4) | subjek=tulisan(37)/petir(13) | pola=polkadot(98) | lengan=pendek panjang=normal fit=longgar depan=terbuka | [gambar:y2k] | fungsi=grafis
-- `1621982` Yellow Dragon of the Western Winds — nama: koboi | jenis=kemeja(96) | tema=koboi(84)/y2k(6) | subjek=naga(92)/dinosaurus(2) | pola=grafis(96) | lengan=pendek panjang=crop fit=longgar depan=terbuka | [gambar:kerajaan] | fungsi=grafis
-- `1636113` Ninja Drone Of Shadows Version 2 — nama: ninja | jenis=jas(82) | tema=ninja(91)/gothic(4) | subjek=laba_laba(87)/ular(1) | pola=renda(86) | lengan=panjang panjang=crop fit=pas depan=tertutup | [gambar:steampunk] | fungsi=aksesori
-- `1639327` Cyber Suit35 — nama: cyber | jenis=kostum_penuh(55) | tema=cyber(63)/sporty(31) | subjek=logo(32)/bendera(10) | pola=catur(52) | lengan=tanpa panjang=normal fit=pas depan=tertutup | [gambar:sporty] | fungsi=grafis
-- `1639359` Cyber Suit31 — nama: cyber | jenis=jas(73) | tema=cyber(99)/ninja(0) | subjek=pita(24)/rantai(15) | pola=catur(65) | lengan=tanpa panjang=crop fit=longgar depan=tertutup | [gambar:pantai] | fungsi=aksesori
-- `1639368` Cyber Suit29 — nama: cyber | jenis=rompi(44) | tema=cyber(93)/kawaii(4) | subjek=bulan(7)/bunga(6) | pola=catur(100) | lengan=tanpa panjang=crop fit=longgar depan=tertutup | [gambar:peri] | fungsi=grafis
-- `1639414` Cyber Suit22 — nama: cyber | jenis=kaos(65) | tema=cyber(99)/streetwear(0) | subjek=bendera(16)/logo(15) | pola=catur(68) | lengan=pendek panjang=normal fit=pas depan=tertutup | [gambar:musim_dingin] | fungsi=aksesori
-- `1639419` Cyber Suit21 — nama: cyber | jenis=kaos(72) | tema=cyber(100)/malaikat(0) | subjek=petir(23)/hiu(12) | pola=pelangi(82) | lengan=panjang panjang=panjang fit=longgar depan=tertutup | [gambar:punk] | fungsi=grafis
-- `1639424` Cyber Suit20 — nama: cyber | jenis=kaos(89) | tema=cyber(84)/antariksa(14) | subjek=bulan(14)/petir(11) | pola=bunga(84) | lengan=panjang panjang=crop fit=pas depan=terbuka | [gambar:kawaii] | fungsi=badan
-- `1639431` Cyber ###### — nama: cyber | jenis=jas(70) | tema=cyber(97)/penyihir(2) | subjek=bintang(15)/bulan(14) | pola=kilau(87) | lengan=pendek panjang=crop fit=longgar depan=tertutup | [gambar:steampunk] | fungsi=aksesori
-- `1639438` Cyber Suit18 — nama: cyber | jenis=jubah(87) | tema=cyber(92)/musim_dingin(2) | subjek=bulan(29)/hiu(17) | pola=kilau(44) | lengan=pendek panjang=normal fit=pas depan=tertutup | [gambar:pantai] | fungsi=pakaian
-- `1639470` Cyber Suit14 — nama: cyber | jenis=jaket(39) | tema=cyber(67)/gothic(21) | subjek=bulan(27)/rantai(17) | pola=catur(89) | lengan=tanpa panjang=normal fit=pas depan=tertutup | [gambar:gothic] | fungsi=aksesori
-- `1639518` Cyber ##### — nama: cyber | jenis=hoodie(58) | tema=cyber(100)/sporty(0) | subjek=hiu(18)/logo(17) | pola=kilau(56) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:sporty] | fungsi=grafis
-- `1648160` ninja — nama: ninja | jenis=jas(45) | tema=ninja(96)/badut(2) | subjek=logo(44)/tulisan(5) | pola=polkadot(50) | lengan=panjang panjang=normal fit=pas depan=tertutup | [gambar:badut] | fungsi=grafis
-- `1705783` Halloween Tails — nama: halloween | jenis=jubah(72) | tema=halloween(57)/kostum_hewan(19) | subjek=kucing(43)/hiu(13) | pola=pelangi(42) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:kostum_hewan] | fungsi=grafis
-- `1726226` Cutsey_Cosplay_by_Halogrunt — nama: anime | jenis=kaos(70) | tema=anime(82)/badut(10) | subjek=kucing(27)/katak(17) | pola=bulu(80) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:badut] | fungsi=grafis
-- `1740755` Get a suit — nama: formal | jenis=jas(78) | tema=badut(57)/formal(41) | subjek=logo(9)/bulan(9) | pola=garis(99) | lengan=panjang panjang=normal fit=pas depan=tertutup | [gambar:badut] | fungsi=grafis
-- `1749694` Striped Suit — nama: formal | jenis=jas(89) | tema=cyber(57)/formal(36) | subjek=logo(23)/petir(9) | pola=garis(93) | lengan=panjang panjang=normal fit=pas depan=tertutup | [gambar:iblis] | fungsi=aksesori
-- `1753596` Cowboy NeckHat — nama: koboi | jenis=kostum_penuh(92) | tema=koboi(90)/halloween(7) | subjek=labu(77)/makanan(3) | pola=bulu(87) | lengan=tanpa panjang=crop fit=longgar depan=terbuka | [gambar:halloween] | fungsi=aksesori
-- `1756352` cute — nama: kawaii | jenis=hoodie(48) | tema=kawaii(58)/novelty(34) | subjek=api(27)/petir(11) | pola=pelangi(96) | lengan=pendek panjang=crop fit=longgar depan=terbuka | [gambar:badut] | fungsi=grafis
-- `1769012` CUTE! — nama: kawaii | jenis=hoodie(52) | tema=formal(52)/kawaii(45) | subjek=bebek(36)/logo(11) | pola=polkadot(83) | lengan=pendek panjang=crop fit=longgar depan=tertutup | [gambar:kostum_hewan] | fungsi=grafis
-- `1769022` I-Pod tux — nama: formal | jenis=hoodie(48) | tema=formal(74)/y2k(10) | subjek=bebek(40)/logo(8) | pola=garis(84) | lengan=panjang panjang=panjang fit=longgar depan=tertutup | [gambar:bajak_laut] | fungsi=grafis
-- `1769048` Luke Tux — nama: formal | jenis=hoodie(81) | tema=formal(99)/kawaii(0) | subjek=bebek(31)/logo(11) | pola=bulu(84) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:bajak_laut] | fungsi=grafis
-- `1769060` Metal Tux — nama: formal | jenis=jaket(42) | tema=formal(68)/natal(23) | subjek=bebek(17)/katak(13) | pola=bulu(79) | lengan=pendek panjang=normal fit=longgar depan=tertutup | [gambar:natal] | fungsi=grafis
-- `1769091` Robin Tux — nama: formal | jenis=jaket(73) | tema=formal(76)/ninja(9) | subjek=bebek(44)/katak(8) | pola=bulu(38) | lengan=pendek panjang=crop fit=longgar depan=tertutup | [gambar:ninja] | fungsi=grafis
-- `1769097` ROBO TUX BEEP BOOP BOP! — nama: formal | jenis=jas(84) | tema=formal(93)/novelty(3) | subjek=hati(41)/logo(12) | pola=pelangi(97) | lengan=panjang panjang=crop fit=longgar depan=terbuka | [gambar:badut] | fungsi=grafis
-- `1769130` Spy Tux — nama: formal | jenis=jaket(79) | tema=formal(76)/cyber(11) | subjek=katak(20)/bebek(11) | pola=garis(95) | lengan=tanpa panjang=normal fit=longgar depan=tertutup | [gambar:cyber] | fungsi=grafis
-- `1769138` Super Tux!!! — nama: formal | jenis=jaket(47) | tema=formal(91)/novelty(7) | subjek=bebek(33)/logo(8) | pola=garis(62) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:superhero] | fungsi=grafis
-- `1769153` Toxic Tux XD — nama: formal | jenis=jaket(66) | tema=kawaii(53)/formal(38) | subjek=katak(44)/bebek(12) | pola=pelangi(65) | lengan=tanpa panjang=crop fit=longgar depan=tertutup | [gambar:kawaii] | fungsi=grafis
+- `1064059` space c.bmp — nama: antariksa | jenis=jaket(57) | tema=antariksa(68)/cyber(22) | subjek=wajah_anime(13)/tulisan(9) | pola=loreng(42) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:cyber] | fungsi=grafis
+- `1239904` Akatsuki — nama: anime | jenis=kaos(67) | tema=anime(73)/horor(6) | subjek=api(18)/buah(14) | pola=bulu(38) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:horor] | fungsi=grafis
+- `1260428` Guitar Hero 2 Logo — nama: superhero | jenis=kaos(86) | tema=superhero(73)/punk(12) | subjek=logo(28)/musik(26) | pola=kotak(25) | lengan=panjang panjang=normal fit=pas depan=tertutup | [gambar:ninja] | fungsi=grafis
+- `1397335` Me with snow wolf shirt. — nama: musim_dingin | jenis=hoodie(45) | tema=musim_dingin(76)/streetwear(7) | subjek=kartun(9)/hiu(7) | pola=polos(43) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:polisi] | fungsi=grafis
+- `1431511` ninja shirt — nama: ninja | jenis=kaos(70) | tema=ninja(71)/biasa(6) | subjek=logo(25)/tulisan(9) | pola=catur(20) | lengan=pendek panjang=normal fit=pas depan=tertutup | [gambar:gothic] | fungsi=aksesori
+- `1475939` Noob shirt — nama: novelty | jenis=kaos(49) | tema=novelty(85)/formal(2) | subjek=logo(8)/hati(7) | pola=pelangi(51) | lengan=tanpa panjang=normal fit=pas depan=terbuka | [gambar:kawaii] | fungsi=badan
+- `1515399` My cute kitty! :) — nama: kawaii | jenis=kaos(71) | tema=kawaii(54)/superhero(17) | subjek=kucing(76)/anjing(6) | pola=polkadot(76) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:kostum_hewan] | fungsi=grafis
+- `1521989` shadow military lvl 1 — nama: militer | jenis=rompi(47) | tema=militer(63)/cyber(6) | subjek=logo(13)/katak(11) | pola=garis(21) | lengan=tanpa panjang=normal fit=pas depan=terbuka | [gambar:pantai] | fungsi=grafis
+- `1558188` Random Anime Character I made — nama: anime | jenis=jas(28) | tema=anime(60)/superhero(10) | subjek=wajah_anime(39)/naga(8) | pola=polos(80) | lengan=panjang panjang=panjang fit=longgar depan=tertutup | [gambar:vampir] | fungsi=grafis
+- `1591061` Cute Wolf — nama: kawaii | jenis=kaos(79) | tema=kawaii(76)/punk(10) | subjek=anjing(69)/wajah_anime(5) | pola=grafis(67) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:kostum_hewan] | fungsi=badan
+- `1606929` the football shirt for eagles22 — nama: sporty | jenis=kaos(50) | tema=sporty(84)/y2k(12) | subjek=tulisan(37)/petir(13) | pola=polkadot(72) | lengan=pendek panjang=normal fit=longgar depan=terbuka | [gambar:y2k] | fungsi=grafis
+- `1621982` Yellow Dragon of the Western Winds — nama: koboi | jenis=kemeja(66) | tema=koboi(58)/y2k(8) | subjek=naga(92)/dinosaurus(2) | pola=grafis(68) | lengan=pendek panjang=crop fit=longgar depan=terbuka | [gambar:kerajaan] | fungsi=grafis
+- `1636113` Ninja Drone Of Shadows Version 2 — nama: ninja | jenis=jas(51) | tema=ninja(64)/gothic(8) | subjek=laba_laba(87)/ular(1) | pola=renda(53) | lengan=panjang panjang=crop fit=pas depan=tertutup | [gambar:steampunk] | fungsi=aksesori
+- `1639327` Cyber Suit35 — nama: cyber | jenis=kostum_penuh(40) | tema=cyber(53)/sporty(20) | subjek=logo(32)/bendera(10) | pola=catur(32) | lengan=tanpa panjang=normal fit=pas depan=tertutup | [gambar:sporty] | fungsi=grafis
+- `1639359` Cyber Suit31 — nama: cyber | jenis=jas(52) | tema=cyber(82)/ninja(3) | subjek=pita(24)/rantai(15) | pola=catur(43) | lengan=tanpa panjang=crop fit=longgar depan=tertutup | [gambar:pantai] | fungsi=aksesori
+- `1639368` Cyber Suit29 — nama: cyber | jenis=rompi(28) | tema=cyber(66)/kawaii(8) | subjek=bulan(7)/bunga(6) | pola=catur(93) | lengan=tanpa panjang=crop fit=longgar depan=tertutup | [gambar:peri] | fungsi=grafis
+- `1639414` Cyber Suit22 — nama: cyber | jenis=kaos(38) | tema=cyber(81)/streetwear(3) | subjek=bendera(16)/logo(15) | pola=catur(42) | lengan=pendek panjang=normal fit=pas depan=tertutup | [gambar:musim_dingin] | fungsi=aksesori
+- `1639419` Cyber Suit21 — nama: cyber | jenis=kaos(45) | tema=cyber(90)/malaikat(3) | subjek=petir(23)/hiu(12) | pola=pelangi(50) | lengan=panjang panjang=panjang fit=longgar depan=tertutup | [gambar:punk] | fungsi=grafis
+- `1639424` Cyber Suit20 — nama: cyber | jenis=kaos(56) | tema=cyber(63)/antariksa(15) | subjek=bulan(14)/petir(11) | pola=bunga(57) | lengan=panjang panjang=crop fit=pas depan=terbuka | [gambar:kawaii] | fungsi=badan
+- `1639431` Cyber ###### — nama: cyber | jenis=jas(41) | tema=cyber(78)/penyihir(8) | subjek=bintang(15)/bulan(14) | pola=kilau(56) | lengan=pendek panjang=crop fit=longgar depan=tertutup | [gambar:steampunk] | fungsi=aksesori
+- `1639438` Cyber Suit18 — nama: cyber | jenis=jubah(64) | tema=cyber(62)/musim_dingin(5) | subjek=bulan(29)/hiu(17) | pola=kilau(34) | lengan=pendek panjang=normal fit=pas depan=tertutup | [gambar:pantai] | fungsi=pakaian
+- `1639470` Cyber Suit14 — nama: cyber | jenis=jaket(24) | tema=cyber(55)/gothic(16) | subjek=bulan(27)/rantai(17) | pola=catur(52) | lengan=tanpa panjang=normal fit=pas depan=tertutup | [gambar:gothic] | fungsi=aksesori
+- `1639518` Cyber ##### — nama: cyber | jenis=hoodie(37) | tema=cyber(94)/sporty(2) | subjek=hiu(18)/logo(17) | pola=kilau(30) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:sporty] | fungsi=grafis
+- `1648160` ninja — nama: ninja | jenis=jas(27) | tema=ninja(75)/badut(8) | subjek=logo(44)/tulisan(5) | pola=polkadot(30) | lengan=panjang panjang=normal fit=pas depan=tertutup | [gambar:badut] | fungsi=grafis
+- `1705783` Halloween Tails — nama: halloween | jenis=jubah(47) | tema=halloween(50)/kostum_hewan(14) | subjek=kucing(43)/hiu(13) | pola=pelangi(29) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:kostum_hewan] | fungsi=grafis
+- `1726226` Cutsey_Cosplay_by_Halogrunt — nama: anime | jenis=kaos(42) | tema=anime(60)/badut(12) | subjek=kucing(27)/katak(17) | pola=bulu(61) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:badut] | fungsi=grafis
+- `1753596` Cowboy NeckHat — nama: koboi | jenis=kostum_penuh(66) | tema=koboi(69)/halloween(12) | subjek=labu(77)/makanan(3) | pola=bulu(61) | lengan=tanpa panjang=crop fit=longgar depan=terbuka | [gambar:halloween] | fungsi=aksesori
+- `1756352` cute — nama: kawaii | jenis=hoodie(29) | tema=kawaii(52)/novelty(20) | subjek=api(27)/petir(11) | pola=pelangi(77) | lengan=pendek panjang=crop fit=longgar depan=terbuka | [gambar:badut] | fungsi=grafis
+- `1769022` I-Pod tux — nama: formal | jenis=hoodie(35) | tema=formal(57)/y2k(11) | subjek=bebek(40)/logo(8) | pola=garis(57) | lengan=panjang panjang=panjang fit=longgar depan=tertutup | [gambar:bajak_laut] | fungsi=grafis
+- `1769048` Luke Tux — nama: formal | jenis=hoodie(53) | tema=formal(86)/kawaii(4) | subjek=bebek(31)/logo(11) | pola=bulu(51) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:bajak_laut] | fungsi=grafis
+- `1769060` Metal Tux — nama: formal | jenis=jaket(26) | tema=formal(56)/natal(17) | subjek=bebek(17)/katak(13) | pola=bulu(52) | lengan=pendek panjang=normal fit=longgar depan=tertutup | [gambar:natal] | fungsi=grafis
+- `1769091` Robin Tux — nama: formal | jenis=jaket(44) | tema=formal(56)/ninja(10) | subjek=bebek(44)/katak(8) | pola=bulu(29) | lengan=pendek panjang=crop fit=longgar depan=tertutup | [gambar:ninja] | fungsi=grafis
+- `1769097` ROBO TUX BEEP BOOP BOP! — nama: formal | jenis=jas(53) | tema=formal(69)/novelty(8) | subjek=hati(41)/logo(12) | pola=pelangi(77) | lengan=panjang panjang=crop fit=longgar depan=terbuka | [gambar:badut] | fungsi=grafis
+- `1769130` Spy Tux — nama: formal | jenis=jaket(53) | tema=formal(57)/cyber(12) | subjek=katak(20)/bebek(11) | pola=garis(70) | lengan=tanpa panjang=normal fit=longgar depan=tertutup | [gambar:cyber] | fungsi=grafis
+- `1769138` Super Tux!!! — nama: formal | jenis=jaket(29) | tema=formal(70)/novelty(12) | subjek=bebek(33)/logo(8) | pola=garis(39) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:superhero] | fungsi=grafis
+- `1770016` School Icon — nama: sekolah | jenis=kaos(63) | tema=sekolah(60)/sporty(27) | subjek=beruang(75)/logo(10) | pola=grafis(42) | lengan=pendek panjang=crop fit=pas depan=tertutup | [gambar:sporty] | fungsi=grafis
+- `1771956` Disco Tux — nama: formal | jenis=jas(29) | tema=formal(54)/kawaii(12) | subjek=bebek(10)/kartun(8) | pola=bulu(89) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:gothic] | fungsi=grafis
+- `1771962` Ingured Tux — nama: formal | jenis=hoodie(41) | tema=formal(66)/kawaii(13) | subjek=bebek(31)/logo(9) | pola=bulu(57) | lengan=pendek panjang=crop fit=longgar depan=tertutup | [gambar:kostum_hewan] | fungsi=grafis
+- `1771965` Jedi Tux — nama: formal | jenis=hoodie(48) | tema=formal(82)/kawaii(8) | subjek=bebek(26)/logo(12) | pola=bulu(29) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:bajak_laut] | fungsi=grafis
+- `1773652` LOOK A WATER DRIP!(shirt) — nama: streetwear | jenis=kaos(97) | tema=streetwear(81)/kerajaan(5) | subjek=bebek(29)/katak(12) | pola=pelangi(73) | lengan=pendek panjang=crop fit=longgar depan=terbuka | [gambar:novelty] | fungsi=grafis
 
 ## Contoh acak per kelompok
 
@@ -155,58 +155,58 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 - `6797949923` Cyan Mecha Arms (Under-Hanging) - LIGHT SERIES — jenis=kalung(24) | tema=cyber(56)/coquette(7) | subjek=rantai(34)/hati(7) | [gambar:cyber]
 
 ### atas
-- `4959177259` T Shirt — jenis=kaos(86) | tema=biasa(77)/gothic(4) | subjek=kelelawar(9)/salib(8) | pola=polos(100) | lengan=panjang panjang=normal fit=pas depan=terbuka | [gambar:gothic]
+- `4959177259` T Shirt — jenis=kaos(60) | tema=biasa(27)/gothic(6) | subjek=kelelawar(9)/salib(8) | pola=polos(82) | lengan=panjang panjang=normal fit=pas depan=terbuka | [gambar:gothic]
 - `72083925872383` ꒰ ♡ ꒱: pink ruffly sleeves — jenis=zirah(80) | tema=steampunk(35)/ksatria(13) | subjek=rantai(30)/hantu(8) | pola=polos(40) | lengan=tanpa panjang=panjang fit=pas depan=tertutup | [gambar:steampunk]
 - `9239352995` Dark Blue Denim Jacket — jenis=jaket(77) | tema=formal(22)/polisi(17) | subjek=bulan(13)/tanpa(12) | pola=denim(91) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:formal]
 - `14011573651` Y2K Sweater Striped Pattern Dark Purple — jenis=sweater(53) | tema=y2k(38)/antariksa(7) | subjek=beruang(10)/tanpa(9) | pola=garis(43) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:antariksa]
 - `14021071118` Connect 2023 T-shirt — jenis=kaos(83) | tema=cyber(19)/y2k(14) | subjek=logo(38)/tulisan(20) | pola=tulisan(44) | lengan=pendek panjang=normal fit=pas depan=terbuka | [gambar:cyber]
-- `3559538167` ouran — jenis=jas(100) | tema=formal(100)/sekolah(0) | subjek=pita(7)/uang(6) | pola=kilau(92) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:formal]
-- `5446553424` Pink baby looney tunes crop — jenis=crop(95) | tema=kawaii(98)/peri(1) | subjek=makanan(12)/bunga(9) | pola=pelangi(100) | lengan=panjang panjang=panjang fit=longgar depan=tertutup | [gambar:kawaii]
+- `3559538167` ouran — jenis=jas(99) | tema=formal(91)/sekolah(2) | subjek=pita(7)/uang(6) | pola=kilau(57) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:formal]
+- `5446553424` Pink baby looney tunes crop — jenis=crop(73) | tema=kawaii(69)/peri(8) | subjek=makanan(12)/bunga(9) | pola=pelangi(98) | lengan=panjang panjang=panjang fit=longgar depan=tertutup | [gambar:kawaii]
 - `13409194429` 🎇Glowing Wizard Staff on Hand - Black — jenis=kaos(37) | tema=steampunk(56)/penyihir(35) | subjek=petir(38)/musik(14) | pola=polos(23) | lengan=pendek panjang=normal fit=pas depan=tertutup | [gambar:steampunk]
-- `1636113` Ninja Drone Of Shadows Version 2 — jenis=jas(82) | tema=ninja(91)/gothic(4) | subjek=laba_laba(87)/ular(1) | pola=renda(86) | lengan=panjang panjang=crop fit=pas depan=tertutup | [gambar:steampunk] | fungsi=aksesori
+- `1636113` Ninja Drone Of Shadows Version 2 — jenis=jas(51) | tema=ninja(64)/gothic(8) | subjek=laba_laba(87)/ular(1) | pola=renda(53) | lengan=panjang panjang=crop fit=pas depan=tertutup | [gambar:steampunk] | fungsi=aksesori
 - `71870711226994` Cute Ruffled Bunny Bow Sleeves in Pink  — jenis=gaun(63) | tema=kawaii(29)/gaun_elegan(26) | subjek=hantu(38)/kelinci(20) | pola=renda(70) | lengan=tanpa panjang=normal fit=longgar depan=tertutup | [gambar:gaun_elegan]
 - `12767304443` 💅Long French Tip Nails - White — jenis=tanktop(19) | tema=kawaii(27)/coquette(11) | subjek=petir(36)/pita(11) | pola=garis(59) | lengan=tanpa panjang=normal fit=pas depan=tertutup | [gambar:kawaii]
-- `4352782701` Astolfo — jenis=seragam(39) | tema=koboi(33)/kerajaan(19) | subjek=mahkota(20)/naga(5) | pola=bulu(92) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:steampunk]
+- `4352782701` Astolfo — jenis=seragam(21) | tema=koboi(15)/kerajaan(12) | subjek=mahkota(20)/naga(5) | pola=bulu(65) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:steampunk]
 - `12250528705` Logo White Piqué Polo — jenis=kemeja(38) | tema=sporty(68)/biasa(5) | subjek=logo(39)/bintang(16) | pola=polos(64) | lengan=pendek panjang=normal fit=pas depan=terbuka | [gambar:sporty]
-- `5046688487` FNAF — jenis=seragam(33) | tema=halloween(91)/penyihir(3) | subjek=kupu_kupu(9)/kelelawar(7) | pola=kilau(93) | lengan=tanpa panjang=crop fit=longgar depan=tertutup | [gambar:penyihir]
+- `5046688487` FNAF — jenis=seragam(19) | tema=halloween(45)/penyihir(8) | subjek=kupu_kupu(9)/kelelawar(7) | pola=kilau(57) | lengan=tanpa panjang=crop fit=longgar depan=tertutup | [gambar:penyihir]
 - `18810149315` Hex Purple Hoodie With White Logo — jenis=hoodie(96) | tema=sporty(45)/musim_dingin(10) | subjek=logo(47)/bintang(19) | pola=polos(41) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:sporty]
 - `14966571421` businessman suit — jenis=jas(80) | tema=formal(99)/gothic(0) | subjek=tanpa(15)/salib(14) | pola=polos(43) | lengan=panjang panjang=normal fit=pas depan=terbuka | [gambar:formal]
-- `4995876755` Tupac '96 Tee — jenis=kaos(90) | tema=anime(33)/malaikat(30) | subjek=wajah_anime(8)/hantu(6) | pola=grafis(63) | lengan=pendek panjang=normal fit=pas depan=tertutup | [gambar:malaikat]
-- `383137196` Rainbow Model Hoodie — jenis=hoodie(98) | tema=badut(34)/cyber(26) | subjek=kupu_kupu(17)/pita(8) | pola=pelangi(100) | lengan=panjang panjang=crop fit=pas depan=terbuka | [gambar:badut]
-- `6473942024` Stich — jenis=crop(66) | tema=kawaii(39)/antariksa(17) | subjek=beruang(13)/kelinci(7) | pola=polos(75) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:kawaii]
-- `6465374553` FNF — jenis=kaos(99) | tema=novelty(85)/iblis(8) | subjek=bendera(9)/kartun(7) | pola=polos(38) | lengan=tanpa panjang=normal fit=pas depan=tertutup | [gambar:novelty]
-- `5044152285` USSF Uniform - Urban Shirt (2020) — jenis=seragam(60) | tema=militer(100)/ksatria(0) | subjek=ular(11)/bendera(7) | pola=loreng(100) | lengan=tanpa panjang=normal fit=longgar depan=terbuka | [gambar:militer]
+- `4995876755` Tupac '96 Tee — jenis=kaos(67) | tema=anime(17)/malaikat(16) | subjek=wajah_anime(8)/hantu(6) | pola=grafis(37) | lengan=pendek panjang=normal fit=pas depan=tertutup | [gambar:malaikat]
+- `383137196` Rainbow Model Hoodie — jenis=hoodie(84) | tema=badut(19)/cyber(17) | subjek=kupu_kupu(17)/pita(8) | pola=pelangi(100) | lengan=panjang panjang=crop fit=pas depan=terbuka | [gambar:badut]
+- `6473942024` Stich — jenis=crop(55) | tema=kawaii(17)/antariksa(12) | subjek=beruang(13)/kelinci(7) | pola=polos(48) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:kawaii]
+- `6465374553` FNF — jenis=kaos(78) | tema=novelty(42)/iblis(13) | subjek=bendera(9)/kartun(7) | pola=polos(24) | lengan=tanpa panjang=normal fit=pas depan=tertutup | [gambar:novelty]
+- `5044152285` USSF Uniform - Urban Shirt (2020) — jenis=seragam(38) | tema=militer(98)/ksatria(0) | subjek=ular(11)/bendera(7) | pola=loreng(98) | lengan=tanpa panjang=normal fit=longgar depan=terbuka | [gambar:militer]
 - `12767112374` 💅French Tip Nails - Pink — jenis=tanktop(32) | tema=kawaii(88)/coquette(2) | subjek=wajah_anime(18)/buah(12) | pola=garis(33) | lengan=tanpa panjang=panjang fit=longgar depan=tertutup | [gambar:kawaii]
 - `16313741407` white cat plush (holdable) — jenis=jaket(41) | tema=gothic(39)/peri(20) | subjek=kucing(37)/bunga(14) | pola=bunga(29) | lengan=tanpa panjang=crop fit=pas depan=tertutup | [gambar:gothic]
 - `9239956594` Black Vest — jenis=rompi(50) | tema=formal(56)/gaun_elegan(18) | subjek=salib(33)/tanpa(24) | pola=kulit(65) | lengan=tanpa panjang=normal fit=pas depan=terbuka | [gambar:formal]
-- `6011527357` purple — jenis=crop(31) | tema=punk(43)/y2k(22) | subjek=bulan(10)/bintang(9) | pola=kilau(98) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:gothic]
+- `6011527357` purple — jenis=crop(19) | tema=punk(24)/y2k(17) | subjek=bulan(10)/bintang(9) | pola=kilau(72) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:gothic]
 
 ### bawah
-- `6554515689` Snow pants☃️❄️ — jenis=legging(77) | tema=musim_dingin(58)/biasa(8) | subjek=mahkota(12)/rantai(6) | pola=polos(49) | panjang=selutut fit=lebar | [gambar:biasa]
+- `6554515689` Snow pants☃️❄️ — jenis=legging(41) | tema=musim_dingin(44)/biasa(6) | subjek=mahkota(12)/rantai(6) | pola=polos(24) | panjang=selutut fit=lebar | [gambar:biasa]
 - `16766000908` ☆ grey high waist pleated skirt — jenis=rok_pendek(72) | tema=sekolah(34)/formal(17) | subjek=kelelawar(28)/salib(10) | pola=polos(25) | panjang=pendek fit=ketat | [gambar:sekolah]
-- `6002275179` [REALE] Legitimate Business — jenis=bawahan_gaun(75) | tema=formal(92)/tradisional(3) | subjek=salib(20)/laba_laba(6) | pola=garis(90) | panjang=panjang fit=ketat | [gambar:formal]
+- `6002275179` [REALE] Legitimate Business — jenis=bawahan_gaun(46) | tema=formal(62)/tradisional(6) | subjek=salib(20)/laba_laba(6) | pola=garis(61) | panjang=panjang fit=ketat | [gambar:formal]
 - `9353911507` Cute Blue Checkered Goth Pleated Skirt — jenis=rok_pendek(71) | tema=gothic(21)/kawaii(18) | subjek=musik(35)/bendera(8) | pola=kotak(64) | panjang=pendek fit=lebar | [gambar:punk]
-- `5500894433` Mariachi Sombrero (-) — jenis=zirah_bawah(86) | tema=kerajaan(92)/formal(4) | subjek=mahkota(21)/tengkorak(17) | pola=kilau(52) | panjang=panjang fit=ketat | [gambar:bajak_laut]
-- `6566410954` Grey gothic high waisted pants — jenis=jeans(93) | tema=gothic(84)/punk(13) | subjek=tengkorak(7)/logo(6) | pola=denim(90) | panjang=panjang fit=lebar | [gambar:formal]
+- `5500894433` Mariachi Sombrero (-) — jenis=zirah_bawah(56) | tema=kerajaan(57)/formal(12) | subjek=mahkota(21)/tengkorak(17) | pola=kilau(32) | panjang=panjang fit=ketat | [gambar:bajak_laut]
+- `6566410954` Grey gothic high waisted pants — jenis=jeans(72) | tema=gothic(64)/punk(15) | subjek=tengkorak(7)/logo(6) | pola=denim(60) | panjang=panjang fit=lebar | [gambar:formal]
 - `12788765480` Long Flowy Skirt - Blue — jenis=rok_panjang(54) | tema=gaun_elegan(65)/penyihir(11) | subjek=petir(21)/bendera(18) | pola=pelangi(32) | panjang=selutut fit=lebar | [gambar:gaun_elegan]
-- `5323898396` Hod [-] — jenis=celana_kain(100) | tema=formal(100)/kerajaan(0) | subjek=labu(9)/salib(7) | pola=polos(68) | panjang=panjang fit=ketat | [gambar:formal]
-- `4787878139` Lulu Lemon Yoga pants & Air Force 1s — jenis=legging(65) | tema=biasa(54)/musim_dingin(11) | subjek=salib(5)/kelelawar(5) | pola=polos(59) | panjang=panjang fit=lebar | [gambar:formal]
-- `6106663574` pink skirt  — jenis=rok_pendek(95) | tema=kawaii(92)/coquette(6) | subjek=pita(9)/buah(9) | pola=garis(56) | panjang=selutut fit=lebar | [gambar:kawaii]
+- `5323898396` Hod [-] — jenis=celana_kain(97) | tema=formal(96)/kerajaan(2) | subjek=labu(9)/salib(7) | pola=polos(41) | panjang=panjang fit=ketat | [gambar:formal]
+- `4787878139` Lulu Lemon Yoga pants & Air Force 1s — jenis=legging(31) | tema=biasa(18)/musim_dingin(8) | subjek=salib(5)/kelelawar(5) | pola=polos(35) | panjang=panjang fit=lebar | [gambar:formal]
+- `6106663574` pink skirt  — jenis=rok_pendek(76) | tema=kawaii(58)/coquette(15) | subjek=pita(9)/buah(9) | pola=garis(34) | panjang=selutut fit=lebar | [gambar:kawaii]
 - `89872257725735` Skirt Black Chic Layered Ruffle Mini Short Y2K — jenis=rok_pendek(40) | tema=y2k(35)/gaun_elegan(19) | subjek=bunga(28)/pita(15) | pola=polos(27) | panjang=selutut fit=lebar | [gambar:gaun_elegan]
 - `15815643357` Ankle Snow Boots — jenis=zirah_bawah(29) | tema=musim_dingin(40)/medis(15) | subjek=mahkota(21)/makanan(8) | pola=garis(30) | panjang=pendek fit=lebar | [gambar:medis]
 - `86660277439344`  1.0 Blocky Belted Jeans and Shoes — jenis=jeans(44) | tema=koboi(16)/kerajaan(12) | subjek=mahkota(41)/bulan(8) | pola=denim(53) | panjang=pendek fit=lebar | [gambar:koboi]
 - `15253448762` Phoenix UFO Aura — jenis=bawahan_gaun(42) | tema=penyihir(25)/superhero(18) | subjek=bintang(38)/bulan(12) | pola=pelangi(62) | panjang=selutut fit=ketat | [gambar:penyihir]
-- `4822560548` Bluey (Pants) — jenis=overall(81) | tema=kostum_hewan(45)/kawaii(23) | subjek=hantu(12)/hiu(10) | pola=denim(92) | panjang=pendek fit=lebar | [gambar:kawaii]
-- `5168804217` pants fuego arcoiris cool 😎😎😎👍 — jenis=rok_pendek(42) | tema=streetwear(32)/antariksa(27) | subjek=api(15)/petir(9) | pola=pelangi(100) | panjang=pendek fit=lebar | [gambar:y2k]
-- `7124183470` [𝓚] Donald - — jenis=celana_kain(63) | tema=polisi(80)/anime(5) | subjek=bulan(5)/bintang(5) | pola=denim(81) | panjang=pendek fit=lebar | [gambar:biasa]
+- `4822560548` Bluey (Pants) — jenis=overall(53) | tema=kostum_hewan(21)/kawaii(15) | subjek=hantu(12)/hiu(10) | pola=denim(61) | panjang=pendek fit=lebar | [gambar:kawaii]
+- `5168804217` pants fuego arcoiris cool 😎😎😎👍 — jenis=rok_pendek(31) | tema=streetwear(16)/antariksa(15) | subjek=api(15)/petir(9) | pola=pelangi(99) | panjang=pendek fit=lebar | [gambar:y2k]
+- `7124183470` [𝓚] Donald - — jenis=celana_kain(36) | tema=polisi(32)/anime(8) | subjek=bulan(5)/bintang(5) | pola=denim(46) | panjang=pendek fit=lebar | [gambar:biasa]
 - `76315271208132` Vintage Baggy Skater Pants (Grey) — jenis=jeans(49) | tema=punk(17)/y2k(15) | subjek=tanpa(21)/salib(11) | pola=denim(66) | panjang=selutut fit=lebar | [gambar:punk]
 - `96622013932427` 2000s mini dress with flowy sleeves black — jenis=bawahan_gaun(57) | tema=y2k(35)/formal(34) | subjek=salib(13)/tanpa(9) | pola=polos(37) | panjang=selutut fit=ketat | [gambar:formal]
-- `1047501012` Jeans — jenis=jeans(99) | tema=koboi(58)/biasa(13) | subjek=tanpa(5)/buah(4) | pola=denim(100) | panjang=pendek fit=lebar | [gambar:biasa]
+- `1047501012` Jeans — jenis=jeans(83) | tema=koboi(23)/biasa(11) | subjek=tanpa(5)/buah(4) | pola=denim(93) | panjang=pendek fit=lebar | [gambar:biasa]
 - `83884066853774` Baggy Jeans w/ Crosses Blocky 1.0 — jenis=jeans(39) | tema=gothic(36)/militer(16) | subjek=salib(69)/rantai(5) | pola=denim(46) | panjang=pendek fit=lebar | [gambar:gothic]
 - `17731146547` Silk Zebra Dress — jenis=bawahan_gaun(54) | tema=gothic(19)/kostum_hewan(10) | subjek=rantai(29)/ular(21) | pola=motif_hewan(67) | panjang=pendek fit=ketat | [gambar:gothic]
-- `6575860593` POOP STAINS (green) — jenis=jogger(95) | tema=cyber(16)/y2k(16) | subjek=petir(6)/mahkota(6) | pola=denim(88) | panjang=panjang fit=lebar | [gambar:formal]
-- `6522289448` King Fallen Pant - TDS — jenis=celana_kain(53) | tema=kerajaan(41)/formal(33) | subjek=salib(5)/bebek(4) | pola=polos(68) | panjang=panjang fit=lebar | [gambar:formal]
-- `4527755510` Dark Cult Robe — jenis=celana_kain(39) | tema=formal(35)/militer(10) | subjek=salib(4)/kelelawar(4) | pola=kulit(34) | panjang=panjang fit=lebar | [gambar:vampir]
+- `6575860593` POOP STAINS (green) — jenis=jogger(61) | tema=cyber(9)/y2k(9) | subjek=petir(6)/mahkota(6) | pola=denim(44) | panjang=panjang fit=lebar | [gambar:formal]
+- `6522289448` King Fallen Pant - TDS — jenis=celana_kain(27) | tema=kerajaan(40)/formal(12) | subjek=salib(5)/bebek(4) | pola=polos(36) | panjang=panjang fit=lebar | [gambar:formal]
+- `4527755510` Dark Cult Robe — jenis=celana_kain(23) | tema=formal(13)/militer(7) | subjek=salib(4)/kelelawar(4) | pola=kulit(21) | panjang=panjang fit=lebar | [gambar:vampir]
 
 ### kepala
 - `6133255800` Snow Fuzzy Headband — jenis=pita_bando(43) | tema=musim_dingin(39)/medis(13) | subjek=hantu(19)/makanan(15) | [gambar:medis]
@@ -319,8 +319,8 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 ## Sebaran tema (fusi) per kelompok
 
 - aksen: kawaii 293, malaikat 194, gothic 179, coquette 152, formal 138, kostum_hewan 130, punk 107, steampunk 105, cyber 99, militer 99, peri 98, iblis 96
-- atas: kawaii 919, formal 647, biasa 278, gothic 269, punk 259, sporty 229, steampunk 216, militer 213, cyber 204, y2k 175, coquette 165, halloween 162
-- bawah: formal 655, kawaii 616, y2k 425, biasa 360, gothic 327, punk 282, sekolah 274, coquette 245, musim_dingin 234, militer 184, maid 179, halloween 161
+- atas: kawaii 910, formal 650, biasa 277, punk 263, gothic 259, sporty 229, steampunk 220, militer 211, cyber 201, y2k 180, halloween 163, coquette 163
+- bawah: formal 652, kawaii 614, y2k 431, biasa 359, gothic 320, punk 294, sekolah 269, coquette 246, musim_dingin 236, militer 183, maid 178, halloween 160
 - kepala: coquette 238, kawaii 216, kerajaan 176, formal 163, malaikat 148, militer 142, gothic 122, peri 113, kostum_hewan 110, iblis 100, penyihir 98, polisi 94
 - rambut: kawaii 436, gothic 388, coquette 234, anime 182, steampunk 171, gaun_elegan 166, koboi 152, musim_dingin 142, punk 136, malaikat 119, iblis 90, y2k 83
 - sepatu: kawaii 348, gothic 249, coquette 246, sporty 205, musim_dingin 191, y2k 157, kostum_hewan 146, pantai 130, militer 113, punk 110, gaun_elegan 97, formal 89

@@ -1,17 +1,17 @@
-06:30:35 embedding 141412 | potongan 2D 41868 | meta 138684
-06:30:38 kelompok atas2D: 20375 item
-06:30:44   probe atas2D/tema: latih 4391
-06:30:49   probe atas2D/pola: latih 1159
-06:30:51   probe atas2D/jenis: latih 3891
-06:30:53 kelompok atas3D: 9669 item
-06:31:00 kelompok kepala: 20267 item
-06:31:07 kelompok aksen: 26772 item
-06:31:14 kelompok bawah2D: 17396 item
-06:31:20   probe bawah2D/tema: latih 4086
-06:31:25   probe bawah2D/pola: latih 2442
-06:31:27   probe bawah2D/jenis: latih 3982
-06:31:28 kelompok bawah3D: 5758 item
-06:31:34 kelompok wajah: 8200 item
-06:31:40 kelompok rambut: 17211 item
-06:31:43 kelompok sepatu: 7681 item
-06:31:48 selesai: 133329 kartu, 75 dtk
+06:35:46 embedding 141412 | potongan 2D 41868 | meta 138684
+06:35:49 kelompok atas2D: 20375 item
+06:35:52   probe atas2D/tema: latih 4391
+06:35:55   probe atas2D/pola: latih 1159
+06:35:57   probe atas2D/jenis: latih 3891
+06:35:58 kelompok atas3D: 9669 item
+06:36:03 kelompok kepala: 20267 item
+06:36:07 kelompok aksen: 26772 item
+06:36:12 kelompok bawah2D: 17396 item
+06:36:16   probe bawah2D/tema: latih 4086
+06:36:19   probe bawah2D/pola: latih 2442
+06:36:20   probe bawah2D/jenis: latih 3982
+06:36:21 kelompok bawah3D: 5758 item
+06:36:25 kelompok wajah: 8200 item
+06:36:29 kelompok rambut: 17211 item
+06:36:31 kelompok sepatu: 7681 item
+06:36:34 selesai: 133329 kartu, 51 dtk

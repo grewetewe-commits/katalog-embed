@@ -4,7 +4,7 @@ name: Kartu Item (uji)
 on:
   push:
     branches: [claude/kartu-item]
-    paths: [kartu_item.py, .github/workflows/kartu-uji.yml]
+    paths: [kartu_item.py, probe_3d.py, .github/workflows/kartu-uji.yml]
   workflow_dispatch:
 
 permissions:
@@ -43,12 +43,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install "numpy<2" "transformers>=4.40,<4.50" pillow
+      - name: Probe format 3D resmi (verifikasi, tidak menulis apa pun)
+        continue-on-error: true
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: |
+          pip install requests >/dev/null
+          python probe_3d.py 126884250250747 72558563872966 8565346973 192557913 2>&1 | tee probe_log.txt
       - name: Baca kartu item
         env:
           HF_HUB_DISABLE_TELEMETRY: "1"
         run: |
           ls -la cache || true
-          python kartu_item.py --uji 72558563872966 1028859 14328141014 8565346973 6554200369 192557913 78504769792948 126582482792163 93519364113971 382538059 7192553841 14027730224 15901064855 98089688160090 116973312880668 98757749181872 5731050224 301820310 18832937926 122234019472336 132200141502925 83668736552435 2>&1 | tee kartu_log.txt
+          python kartu_item.py --uji 126884250250747 72558563872966 1028859 14328141014 8565346973 6554200369 192557913 78504769792948 126582482792163 93519364113971 382538059 7192553841 14027730224 15901064855 98089688160090 116973312880668 98757749181872 5731050224 301820310 18832937926 122234019472336 132200141502925 83668736552435 2>&1 | tee kartu_log.txt
       - name: Simpan hasil uji ke branch
         if: success()
         run: |
@@ -57,6 +64,7 @@ jobs:
           git reset -q -- data model
           git checkout -- data model 2>/dev/null || true
           tail -n 60 kartu_log.txt > LOG_KARTU.txt
-          git add kartu LAPORAN_KARTU.md LOG_KARTU.txt
+          cp probe_log.txt LOG_PROBE3D.txt 2>/dev/null || true
+          git add kartu LAPORAN_KARTU.md LOG_KARTU.txt LOG_PROBE3D.txt 2>/dev/null || git add kartu LAPORAN_KARTU.md LOG_KARTU.txt
           git commit -m "Kartu item: hasil uji (otomatis)" || echo "tidak ada perubahan"
           git push origin HEAD:claude/kartu-item

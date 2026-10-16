@@ -46,6 +46,7 @@ ASET_KE_KEL = {11: "atas", 2: "atas", 64: "atas", 65: "atas", 67: "atas", 68: "a
                8: "kepala", 42: "wajah", 41: "rambut",
                43: "aksen", 44: "aksen", 45: "aksen", 46: "aksen", 47: "aksen",          # Neck Shoulder Front Back Waist
                70: "sepatu", 71: "sepatu"}
+KELOMPOK = ["atas", "bawah", "kepala", "wajah", "rambut", "aksen", "sepatu"]  # urutan = kode kolom 0 kartu
 KEL_NOUN = {"atas": "top", "bawah": "bottom clothing", "kepala": "hat", "wajah": "face accessory", "rambut": "hairstyle",
             "aksen": "accessory", "sepatu": "shoe"}
 ASET_2D = {11, 12, 2}
@@ -55,7 +56,8 @@ ASET_2D = {11, 12, 2}
 # Tiap label: (kunci, [deskripsi untuk kalimat CLIP], [kata nama untuk fusi])
 # ---------------------------------------------------------------------------------------------
 TEMA = [
-    ("biasa", ["plain simple everyday casual", "basic casual"], ["basic", "plain", "simple", "casual", "polos"]),
+    ("biasa", ["plain simple everyday casual", "basic casual", "an ordinary normal outfit with no special theme"],
+     ["basic", "plain", "simple", "casual", "polos"]),
     ("streetwear", ["trendy urban streetwear", "hypebeast streetwear"], ["streetwear", "hypebeast", "drip", "bape", "stussy"]),
     ("sporty", ["sporty athletic", "sports team jersey"], ["sport", "sporty", "athletic", "jersey", "soccer", "football", "basketball", "gym"]),
     ("formal", ["formal business suit and tie", "classy formal tuxedo"], ["suit", "tuxedo", "tux", "blazer", "formal", "business"]),
@@ -135,7 +137,8 @@ SUBJEK = [
     ("rantai", ["metal chains", "silver chains"], ["chain", "chains", "rantai"]),
 ]
 POLA = [
-    ("polos", ["plain solid color", "a single solid color"], ["plain", "solid", "basic", "polos"]),
+    ("polos", ["plain solid color", "a single solid color", "plain black with no pattern", "plain white with no pattern"],
+     ["plain", "solid", "basic", "polos"]),
     ("garis", ["striped", "stripes pattern"], ["stripe", "stripes", "striped"]),
     ("kotak", ["plaid tartan", "flannel plaid"], ["plaid", "tartan", "flannel"]),
     ("catur", ["checkered checkerboard", "checker pattern"], ["checkered", "checker", "checkerboard"]),
@@ -148,7 +151,7 @@ POLA = [
     ("pelangi", ["rainbow tie-dye", "multicolor rainbow"], ["rainbow", "tie dye", "tiedye", "pelangi"]),
     ("renda", ["lace", "frilly lace"], ["lace", "renda", "frilly"]),
     ("denim", ["blue denim", "jean denim fabric"], ["denim", "jeans", "jean"]),
-    ("kulit", ["black leather", "shiny leather"], ["leather", "kulit"]),
+    ("kulit", ["shiny leather material with stitching", "glossy leather texture"], ["leather", "kulit"]),
     ("kilau", ["sparkly sequins and glitter", "shiny glitter"], ["glitter", "sparkle", "sparkly", "sequin", "rhinestone"]),
     ("bulu", ["fluffy fur", "faux fur"], ["fur", "fluffy", "furry"]),
 ]
@@ -158,7 +161,7 @@ JENIS = {
         ("lengan_panjang", ["a long sleeve shirt"], ["long sleeve", "longsleeve"]),
         ("hoodie", ["a hoodie sweatshirt with hood"], ["hoodie", "hoody", "hooded"]),
         ("sweater", ["a knit sweater or cardigan"], ["sweater", "cardigan", "knit", "jumper", "pullover"]),
-        ("jaket", ["a jacket or coat"], ["jacket", "coat", "puffer", "bomber", "windbreaker", "jaket"]),
+        ("jaket", ["a jacket or coat", "a zip-up jacket", "a leather biker jacket"],["jacket", "coat", "puffer", "bomber", "windbreaker", "jaket"]),
         ("jas", ["a blazer suit jacket"], ["suit", "blazer", "tuxedo", "jas"]),
         ("kemeja", ["a button-up collared shirt"], ["button", "collared", "dress shirt", "kemeja", "polo"]),
         ("crop", ["a crop top showing the belly"], ["crop", "cropped"]),
@@ -305,13 +308,43 @@ def vektor_label(teks, labels, noun, ada_kalimat=True):
     return np.stack(out)
 
 
-def softmax_terkoreksi(X, T):
-    """logit CLIP dikurangi rata-rata per label di kelompok ini (bias kalimat), lalu softmax"""
+def softmax_terkoreksi(X, T, alfa=1.0):
+    """logit CLIP dikurangi alfa x rata-rata per label di kelompok ini (bias kalimat), lalu softmax.
+    alfa 0 = CLIP mentah (label "umum" seperti kulit/hitam menang terus), 1 = tiap label disamaratakan (label langka
+    terlalu sering). Alfa dipilih per facet dari data (lihat pilih_alfa)."""
     L = SUHU * (X @ T.T)
-    L = L - L.mean(axis=0, keepdims=True)
+    if alfa:
+        L = L - alfa * L.mean(axis=0, keepdims=True)
     L = L - L.max(axis=1, keepdims=True)
     P = np.exp(L)
     return P / P.sum(axis=1, keepdims=True)
+
+
+ALFA_CALON = (0.0, 0.25, 0.5, 0.75, 1.0)
+NETRAL = ("biasa", "tanpa", "polos", "lain", "topi_lain")
+
+
+def pilih_alfa(X, T, labels, nama_l, toks):
+    """kalibrasi berbasis data: alfa dengan kecocokan top-1 gambar-vs-nama tertinggi (label nama tunggal, bukan netral).
+    -> (alfa, {alfa: (cocok1, cocok2, total)})"""
+    baris, target = [], []
+    for r in range(X.shape[0]):
+        ln = label_nama(labels, nama_l[r], toks[r])
+        if ln is not None and labels[ln][0] not in NETRAL:
+            baris.append(r)
+            target.append(ln)
+    skor = {}
+    if len(baris) < 30:
+        return 0.5, skor
+    Xs, tg = X[baris], np.array(target)
+    for a in ALFA_CALON:
+        L = SUHU * (X @ T.T)
+        mu = L.mean(axis=0, keepdims=True)
+        Ls = SUHU * (Xs @ T.T) - a * mu
+        o = np.argsort(-Ls, axis=1)[:, :2]
+        skor[a] = (int((o[:, 0] == tg).sum()), int((o == tg[:, None]).any(axis=1).sum()), len(baris))
+    terbaik = max(ALFA_CALON, key=lambda a: (skor[a][0], -abs(a - 0.5)))
+    return terbaik, skor
 
 
 def fusi_nama(P, labels, nama_l, toks):
@@ -383,7 +416,7 @@ def bangun(teks, ids, E, e2, meta, hanya=None):
         kel = ASET_KE_KEL.get(int(m.get("t") or 0))
         if kel:
             kel_items[kel].append(i)
-    kartu, evals, contoh = {}, collections.defaultdict(lambda: [0, 0]), []
+    kartu, evals, contoh = {}, {}, []
     for kel, daftar in kel_items.items():
         noun = KEL_NOUN[kel]
         n = len(daftar)
@@ -410,21 +443,16 @@ def bangun(teks, ids, E, e2, meta, hanya=None):
             facets.append(("jenis", JENIS[kel], Xk, noun))
         for nm, labels, XX, nn in facets:
             T = vektor_label(teks, labels, nn)
-            Pimg = softmax_terkoreksi(XX, T)
-            # evaluasi jujur: gambar saja vs label nama (hanya nama yang menunjuk tepat satu label)
-            for r in range(n):
-                ln = label_nama(labels, nama_l[r], toks[r])
-                if ln is not None and labels[ln][0] not in ("biasa", "tanpa", "polos", "lain", "topi_lain"):
-                    e = evals[f"{kel}/{nm}"]
-                    e[1] += 1
-                    o = np.argsort(-Pimg[r])[:2]
-                    if ln in o:
-                        e[0] += 1
+            # evaluasi jujur: gambar saja vs label nama (hanya nama yang menunjuk tepat satu label), sekaligus kalibrasi
+            alfa, skor = pilih_alfa(XX, T, labels, nama_l, toks)
+            if skor:
+                evals[f"{kel}/{nm}"] = {"alfa": alfa, "skor": skor}
+            Pimg = softmax_terkoreksi(XX, T, alfa)
             Pf = fusi_nama(Pimg, labels, nama_l, toks)
-            hasil[nm] = (top2(Pf), int(np.argmax(Pimg[0])) if n else -1, Pimg)
+            hasil[nm] = (top2(Pf), None, Pimg)
         for nm, sub in (BENTUK.get(kel) or {}).items():
             T = vektor_label(teks, [(a, b, []) for a, b in sub], noun)
-            hasil["b_" + nm] = (top2(softmax_terkoreksi(Xk, T)), None, None)
+            hasil["b_" + nm] = (top2(softmax_terkoreksi(Xk, T, 0.5)), None, None)
         for r, i in enumerate(daftar):
             def tp(nm, k=2):
                 if nm not in hasil:
@@ -434,8 +462,9 @@ def bangun(teks, ids, E, e2, meta, hanya=None):
                 for q in range(k):
                     out += [int(o[r, q]), int(round(100 * float(p[r, q])))]
                 return out
-            # baris: [jenis, p, tema1, p, tema2, p, subjek1, p, subjek2, p, pola, p, b_lengan, b_panjang, b_fit, b_depan, imgTema]
-            b = tp("jenis", 1) + tp("tema") + tp("subjek") + tp("pola", 1)
+            # baris: [kel, jenis, p, tema1, p, tema2, p, subjek1, p, subjek2, p, pola, p, b_lengan, b_panjang, b_fit, b_depan,
+            #         imgTema]  (indeks 0-based di sini; -1 = tidak ada)
+            b = [KELOMPOK.index(kel)] + tp("jenis", 1) + tp("tema") + tp("subjek") + tp("pola", 1)
             for nm in ("b_lengan", "b_panjang", "b_fit", "b_depan"):
                 b.append(int(hasil[nm][0][0][r, 0]) if nm in hasil else -1)
             b.append(int(np.argmax(hasil["tema"][2][r])))  # tema menurut GAMBAR saja (transparansi)
@@ -450,52 +479,62 @@ def label_baca(kel, b):
     def nm(lst, j):
         return lst[j][0] if 0 <= j < len(lst) else "-"
     s = []
-    if kel in JENIS and b[0] >= 0:
-        s.append(f"jenis={nm(JENIS[kel], b[0])}({b[1]})")
-    s.append(f"tema={nm(TEMA, b[2])}({b[3]})/{nm(TEMA, b[4])}({b[5]})")
-    if b[6] >= 0:
-        s.append(f"subjek={nm(SUBJEK, b[6])}({b[7]})/{nm(SUBJEK, b[8])}({b[9]})")
-    if b[10] >= 0:
-        s.append(f"pola={nm(POLA, b[10])}({b[11]})")
+    if kel in JENIS and b[1] >= 0:
+        s.append(f"jenis={nm(JENIS[kel], b[1])}({b[2]})")
+    s.append(f"tema={nm(TEMA, b[3])}({b[4]})/{nm(TEMA, b[5])}({b[6]})")
+    if b[7] >= 0:
+        s.append(f"subjek={nm(SUBJEK, b[7])}({b[8]})/{nm(SUBJEK, b[9])}({b[10]})")
+    if b[11] >= 0:
+        s.append(f"pola={nm(POLA, b[11])}({b[12]})")
     bt = BENTUK.get(kel)
     if bt:
         bb = []
         for k, nmb in enumerate(("lengan", "panjang", "fit", "depan")):
-            if nmb in bt and b[12 + k] >= 0:
-                bb.append(f"{nmb}={bt[nmb][b[12 + k]][0]}")
+            if nmb in bt and b[13 + k] >= 0:
+                bb.append(f"{nmb}={bt[nmb][b[13 + k]][0]}")
         s.append(" ".join(bb))
-    s.append(f"[gambar:{nm(TEMA, b[16])}]")
+    s.append(f"[gambar:{nm(TEMA, b[17])}]")
     return " | ".join(s)
 
 
-def tulis(kartu, versi):
+def label_semua():
+    return {"kelompok": KELOMPOK, "tema": [t[0] for t in TEMA], "subjek": [t[0] for t in SUBJEK], "pola": [t[0] for t in POLA],
+            "jenis": {k: [t[0] for t in v] for k, v in JENIS.items()},
+            "bentuk": {k: {a: [x[0] for x in b] for a, b in v.items()} for k, v in BENTUK.items()},
+            "kolom": ["kelompok", "jenis", "jenisP", "tema1", "tema1P", "tema2", "tema2P", "subjek1", "subjek1P", "subjek2",
+                      "subjek2P", "pola", "polaP", "lengan", "panjang", "fit", "depan", "temaGambar"],
+            "kelompokAset": {str(k): v for k, v in ASET_KE_KEL.items()}}
+
+
+def tulis(kartu, versi, evals):
+    """kartu/info.json (kecil: versi, label, kalibrasi) + kartu/kartu_{0..7}.json (baris per item, shard = id % 8)"""
     os.makedirs("kartu", exist_ok=True)
-    label = {"tema": [t[0] for t in TEMA], "subjek": [t[0] for t in SUBJEK], "pola": [t[0] for t in POLA],
-             "jenis": {k: [t[0] for t in v] for k, v in JENIS.items()},
-             "bentuk": {k: {a: [x[0] for x in b] for a, b in v.items()} for k, v in BENTUK.items()},
-             "kolom": ["jenis", "jenisP", "tema1", "tema1P", "tema2", "tema2P", "subjek1", "subjek1P", "subjek2", "subjek2P",
-                       "pola", "polaP", "lengan", "panjangAtas|panjangBawah", "fit", "depan", "temaGambar"],
-             "kelompokAset": {str(k): v for k, v in ASET_KE_KEL.items()}}
     sh = [dict() for _ in range(SHARD)]
     for i, b in kartu.items():
         sh[i % SHARD][str(i)] = b
     for s in range(SHARD):
         with open(f"kartu/kartu_{s}.json.tmp", "w", encoding="utf-8") as f:
-            json.dump({"versi": versi, "skema": SKEMA, "label": label if s == 0 else None, "d": sh[s]}, f,
-                      ensure_ascii=False, separators=(",", ":"))
+            json.dump({"versi": versi, "skema": SKEMA, "d": sh[s]}, f, ensure_ascii=False, separators=(",", ":"))
         os.replace(f"kartu/kartu_{s}.json.tmp", f"kartu/kartu_{s}.json")
+    info = {"versi": versi, "skema": SKEMA, "n": len(kartu), "shard": SHARD, "model": MODEL_ID, "label": label_semua(),
+            "kalibrasi": {k: v["alfa"] for k, v in evals.items()}}
+    with open("kartu/info.json.tmp", "w", encoding="utf-8") as f:
+        json.dump(info, f, ensure_ascii=False, separators=(",", ":"))
+    os.replace("kartu/info.json.tmp", "kartu/info.json")
 
 
 def laporan(kartu, evals, contoh, meta, uji, versi):
     L = [f"# Laporan Kartu Item (MATA v2) — versi {versi}", "",
          "Kartu dibaca dari GAMBAR item (CLIP zero-shot, model sama dengan otak.py); nama hanya bukti tambahan.", "",
          f"- Item berkartu: **{len(kartu)}**", "",
-         "## Akurasi gambar saja vs nama (label nama hanya bila nama menunjuk tepat satu label; top-2)", "",
-         "| kelompok/facet | cocok | total | % |", "|---|---|---|---|"]
+         "## Kalibrasi & akurasi gambar saja vs nama", "",
+         "Label nama hanya dipakai bila nama menunjuk tepat satu label (bukan label netral). alfa = koreksi bias kalimat CLIP",
+         "yang dipilih otomatis (kecocokan top-1 tertinggi).", "",
+         "| kelompok/facet | n | alfa dipilih | top-1 | top-2 | top-1 alfa 0 | top-1 alfa 1 |", "|---|---|---|---|---|---|---|"]
     for k in sorted(evals):
-        a, t = evals[k]
-        if t >= 20:
-            L.append(f"| {k} | {a} | {t} | {100 * a / t:.0f}% |")
+        a, sk = evals[k]["alfa"], evals[k]["skor"]
+        c1, c2, t = sk[a]
+        L.append(f"| {k} | {t} | {a} | {100 * c1 / t:.0f}% | {100 * c2 / t:.0f}% | {100 * sk[0.0][0] / t:.0f}% | {100 * sk[1.0][0] / t:.0f}% |")
     L += ["", "Catatan: angka ini batas bawah kasar — nama Roblox sering tidak menyebut apa yang terlihat, dan label nama sendiri bisa salah.", ""]
     if uji:
         L += ["## Item uji", ""]
@@ -509,7 +548,7 @@ def laporan(kartu, evals, contoh, meta, uji, versi):
     beda = []
     for kel, i, nm, b in contoh:
         tl = label_nama(TEMA, nm.lower(), token(nm))
-        if tl is not None and b[16] != tl and TEMA[b[16]][0] != "biasa" and b[3] >= 50:
+        if tl is not None and b[17] != tl and TEMA[b[17]][0] != "biasa" and b[4] >= 50:
             beda.append((kel, i, nm, b, tl))
     L += ["## Contoh: tema dari nama ≠ tema dari gambar (gambar yakin)", ""]
     for kel, i, nm, b, tl in beda[:40]:
@@ -529,7 +568,7 @@ def laporan(kartu, evals, contoh, meta, uji, versi):
     # sebaran tema per kelompok
     L += ["## Sebaran tema (fusi) per kelompok", ""]
     for kel in sorted(per):
-        c = collections.Counter(TEMA[b[2]][0] for _, _, b in per[kel])
+        c = collections.Counter(TEMA[b[3]][0] for _, _, b in per[kel])
         L.append(f"- {kel}: " + ", ".join(f"{k} {v}" for k, v in c.most_common(12)))
     with open("LAPORAN_KARTU.md", "w", encoding="utf-8") as f:
         f.write("\n".join(L) + "\n")
@@ -545,7 +584,7 @@ def main():
     teks = Teks(stub=stub)
     kartu, evals, contoh = bangun(teks, ids, E, e2, meta)
     versi = int(time.time())
-    tulis(kartu, versi)
+    tulis(kartu, versi, evals)
     laporan(kartu, evals, contoh, meta, uji, versi)
     log(f"selesai: {len(kartu)} kartu, {time.time() - t0:.0f} dtk")
 

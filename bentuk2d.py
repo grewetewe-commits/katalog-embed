@@ -1,0 +1,168 @@
+#!/usr/bin/env python3
+"""
+BENTUK 2D DARI PIKSEL (rev 31) -- mengukur, bukan menebak, potongan baju/celana klasik 2D dari thumbnail resmi 420 px.
+
+Thumbnail baju/celana klasik Roblox SELALU memakai manekin kotak (R6) dengan pose & kamera yang sama (diperiksa di
+uji2d/mentah: 12 gambar, posisi kepala/badan/lengan/kaki identik). Bagian yang TIDAK tertutup pakaian menampakkan warna
+manekin abu (#abaca7: r~g, b sedikit lebih rendah; sama dengan otak.py w2_manekin). Maka per wilayah badan kita ukur
+berapa persen tertutup pakaian:
+  leher   : kedalaman bukaan leher dari bawah dagu (V/scoop rendah sering cewek; kerah tinggi/crew menyentuh leher)
+  bahu    : bahu terbuka (off-shoulder / tank)
+  lengan  : panjang lengan (tanpa / pendek / panjang) dari pita atas->bawah
+  crop    : perut terbuka
+  kaki    : panjang celana/rok (pendek / selutut / panjang)
+  badan   : celana yang menutup badan (overall / kostum penuh)
+  cakupan : total tertutup -> lapisan kulit / aksesori dilukis (bukan pakaian)
+Koordinat wilayah dalam piksel gambar 420x420 (dicek dengan overlay di lembar uji).
+"""
+import io, json, os, sys, time
+import numpy as np
+import requests
+from PIL import Image
+
+H = {"User-Agent": "KatalogPraktis-kartu/1.0 (GitHub Actions; github.com/grewetewe-commits/katalog-embed)"}
+VERSI_BENTUK = 1
+W = {  # (x0, y0, x1, y1) inklusif-eksklusif, gambar 420
+    "leher": (182, 136, 226, 200),
+    "leher_lebar": (160, 136, 248, 146),
+    "bahuL": (152, 128, 180, 146),
+    "bahuR": (228, 128, 256, 146),
+    "badan": (152, 128, 256, 238),
+    "crop": (160, 206, 250, 236),
+    "lenganL": (104, 124, 150, 230),
+    "lenganR": (258, 130, 336, 268),
+    "kaki": (160, 240, 262, 336),
+}
+TINGGI_BADAN = 238 - 128
+
+
+def manekin(rgb):
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    gs = np.maximum(g, 1e-6)
+    rg, bg = r / gs, b / gs
+    return (g >= 60) & (g <= 240) & (rg >= 0.98) & (rg <= 1.015) & (bg >= 0.95) & (bg <= 0.99)
+
+
+def _box(m, k):
+    x0, y0, x1, y1 = W[k]
+    return m[y0:y1, x0:x1]
+
+
+def ukur(im):
+    """PIL RGBA 420 -> dict fitur 0..100 (persen) ; None bila ukuran tak sesuai"""
+    if im.size != (420, 420):
+        im = im.resize((420, 420), Image.BILINEAR)
+    a = np.asarray(im.convert("RGBA")).astype(np.float32)
+    rgb, al = a[..., :3], a[..., 3] > 128
+    man = manekin(rgb) & al
+    kain = al & ~man
+
+    def cak(k):
+        o = _box(al, k)
+        n = o.sum()
+        return float(_box(kain, k).sum() / n) if n > 0 else 0.0
+
+    def pita(k, nb):
+        """cakupan per pita horizontal atas->bawah"""
+        x0, y0, x1, y1 = W[k]
+        out = []
+        for j in range(nb):
+            ya = y0 + (y1 - y0) * j // nb
+            yb = y0 + (y1 - y0) * (j + 1) // nb
+            o = al[ya:yb, x0:x1]
+            n = o.sum()
+            out.append(float(kain[ya:yb, x0:x1].sum() / n) if n > 0 else 0.0)
+        return out
+
+    def bawah(cs, amb=0.5):
+        """pita terbawah yang masih tertutup (celana/rok: sampai mana ke bawah)"""
+        j = -1
+        for k, c in enumerate(cs):
+            if c >= amb:
+                j = k
+        return (j + 1) / len(cs)
+
+    def panjang(cs, amb=0.5):
+        n = 0
+        for c in cs:
+            if c >= amb:
+                n += 1
+            else:
+                break
+        return n / len(cs)
+
+    # leher: baris demi baris dari bawah dagu, berapa dalam manekin masih terlihat di tengah dada
+    x0, y0, x1, y1 = W["leher"]
+    dalam = 0
+    for y in range(y0, y1):
+        o = al[y, x0:x1]
+        n = o.sum()
+        if n == 0:
+            break
+        fm = man[y, x0:x1].sum() / n
+        if fm >= 0.35:
+            dalam += 1
+        else:
+            break
+    lL, lR = pita("lenganL", 5), pita("lenganR", 5)
+    kk = pita("kaki", 5)
+    f = {
+        "v": VERSI_BENTUK,
+        "leher": int(round(100 * dalam / TINGGI_BADAN)),
+        "leherLebar": int(round(100 * (1 - cak("leher_lebar")))),
+        "bahu": int(round(100 * (1 - (cak("bahuL") + cak("bahuR")) / 2))),
+        "badan": int(round(100 * cak("badan"))),
+        "crop": int(round(100 * (1 - cak("crop")))),
+        "lengan": int(round(100 * (panjang(lL) + panjang(lR)) / 2)),
+        "lenganCak": int(round(100 * (sum(lL) + sum(lR)) / 10)),
+        "kaki": int(round(100 * bawah(kk))),
+        "kakiCak": int(round(100 * sum(kk) / 5)),
+    }
+    tot = al[128:338, 104:336].sum()
+    f["cakupan"] = int(round(100 * kain[128:338, 104:336].sum() / max(1, tot)))
+    return f
+
+
+def baca(f, t):
+    """fitur -> label yang bisa dibaca map/manusia. t = tipe aset (11 baju, 12 celana)."""
+    out = {}
+    if t == 11:
+        if f["cakupan"] < 12 or (f["badan"] < 15 and f["lenganCak"] < 15):
+            out["fungsi"] = "badan"            # hampir tak menutup: shading/riasan/tekstur kulit
+        out["lengan"] = "tanpa" if f["lenganCak"] < 20 else ("pendek" if f["lengan"] < 80 else "panjang")
+        out["leher"] = "tinggi" if f["leher"] <= 6 else ("sedang" if f["leher"] <= 22 else "rendah")
+        if f["bahu"] >= 60 and f["badan"] >= 30:
+            out["bahu"] = "terbuka"
+        if f["crop"] >= 55 and f["badan"] >= 25:
+            out["crop"] = True
+    elif t == 12:
+        if f["kakiCak"] < 10 and f["badan"] < 15:
+            out["fungsi"] = "badan"
+        out["panjang"] = "pendek" if f["kaki"] <= 40 else ("selutut" if f["kaki"] <= 60 else "panjang")
+        if f["badan"] >= 60:
+            out["badan"] = "tertutup"           # overall / kostum / setelan badan
+    return out
+
+
+def thumb(ids, ukuran="420x420", jeda=0.4):
+    out = {}
+    for a in range(0, len(ids), 50):
+        p = ids[a:a + 50]
+        for coba in range(3):
+            try:
+                r = requests.get("https://thumbnails.roblox.com/v1/assets", headers=H, timeout=30,
+                                 params={"assetIds": ",".join(map(str, p)), "returnPolicy": "PlaceHolder", "size": ukuran,
+                                         "format": "Png", "isCircular": "false"})
+                for e in r.json().get("data", []):
+                    if e.get("state") == "Completed" and e.get("imageUrl"):
+                        try:
+                            b = requests.get(e["imageUrl"], headers=H, timeout=30).content
+                            out[int(e["targetId"])] = Image.open(io.BytesIO(b)).convert("RGBA")
+                        except Exception:
+                            pass
+                break
+            except Exception as ex:
+                print("thumbnail gagal:", ex, flush=True)
+                time.sleep(3)
+        time.sleep(jeda)
+    return out

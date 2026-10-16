@@ -102,7 +102,7 @@
 | tebalRata | 1.01 | 0.92 | 0.63 |
 | tudung | -0.02 | 0.02 | 0.36 |
 
-### dipakai cewek (n=119) vs dipakai cowok (n=0) — gender dari pemakaian, bukan nama
+### dipakai cewek (n=124) vs dipakai cowok (n=0) — gender dari pemakaian, bukan nama
 | fitur | median cewek | median cowok | AUC |
 |---|---|---|---|
 
@@ -310,29 +310,29 @@
 | tebalRata | 0.65 | 0.69 | 0.50 |
 | tudung | 0.01 | 0.06 | 0.39 |
 
-### dipakai cewek (n=141) vs dipakai cowok (n=9) — gender dari pemakaian, bukan nama
+### dipakai cewek (n=153) vs dipakai cowok (n=9) — gender dari pemakaian, bukan nama
 | fitur | median cewek | median cowok | AUC |
 |---|---|---|---|
 | D | 0.80 | 0.68 | 0.38 |
 | H | 1.16 | 0.45 | 0.63 |
 | W | 3.37 | 0.62 | 0.73 |
-| dadaRasio | 0.90 | 0.97 | 0.34 |
+| dadaRasio | 0.91 | 0.97 | 0.35 |
 | dadaTonjol | -0.01 | 0.00 | 0.38 |
-| depanTerbuka | 100.00 | 0.00 | 0.85 |
-| flare | 1.17 | 0.79 | 0.80 |
-| kakiCelah | 6.00 | 0.00 | 0.83 |
-| kakiCelahMax | 6.00 | 0.00 | 0.76 |
-| lebarBawah | 2.88 | 0.24 | 0.87 |
+| depanTerbuka | 100.00 | 0.00 | 0.86 |
+| flare | 1.17 | 0.79 | 0.81 |
+| kakiCelah | 6.00 | 0.00 | 0.84 |
+| kakiCelahMax | 6.00 | 0.00 | 0.77 |
+| lebarBawah | 2.90 | 0.24 | 0.87 |
 | luar09 | 61.00 | 0.00 | 0.82 |
-| luar09Bawah | 0.00 | 100.00 | 0.20 |
-| luar11 | 41.00 | 0.00 | 0.79 |
-| luar11Bawah | 0.00 | 100.00 | 0.19 |
-| luar13 | 23.00 | 0.00 | 0.76 |
-| luar13Bawah | 1.00 | 100.00 | 0.21 |
-| ntex | 3.00 | 3.00 | 0.49 |
+| luar09Bawah | 0.00 | 100.00 | 0.19 |
+| luar11 | 41.00 | 0.00 | 0.80 |
+| luar11Bawah | 0.00 | 100.00 | 0.18 |
+| luar13 | 23.00 | 0.00 | 0.77 |
+| luar13Bawah | 1.00 | 100.00 | 0.20 |
+| ntex | 3.00 | 3.00 | 0.50 |
 | nv | 2290.00 | 2376.00 | 0.33 |
 | tebalRata | 0.53 | 0.60 | 0.32 |
-| tudung | 0.03 | -0.05 | 0.71 |
+| tudung | 0.02 | -0.05 | 0.72 |
 
 ### Hasil baca (bentuk3d.baca) per kata nama
 - bahu_terbuka → lengan: panjang 123, tanpa 33, pendek 17

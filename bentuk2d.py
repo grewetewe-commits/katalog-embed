@@ -21,7 +21,7 @@ import requests
 from PIL import Image
 
 H = {"User-Agent": "KatalogPraktis-kartu/1.0 (GitHub Actions; github.com/grewetewe-commits/katalog-embed)"}
-VERSI_BENTUK = 3   # 2: warna manekin diperketat (baju putih/krem tidak terbaca manekin); 3: celana sobek di lutut tetap panjang
+VERSI_BENTUK = 4   # 2: warna manekin diperketat; 3-4: celana sobek di lutut (pita tertutup beda warna) tetap panjang
 W = {  # (x0, y0, x1, y1) inklusif-eksklusif, gambar 420
     "leher": (182, 136, 226, 200),
     "leher_lebar": (160, 136, 248, 146),
@@ -107,8 +107,11 @@ def ukur(im):
         while j < nb:
             if sama(j):
                 akhir = j
-            elif j + 1 < nb and sama(j + 1):
-                akhir = j + 1           # satu pita beda lalu warna celana berlanjut: sobekan/lutut, bukan ujung celana
+            elif cs[j] >= amb and j + 1 < nb and sama(j + 1):
+                # satu pita TERTUTUP tapi beda warna (kulit dilukis di sobekan lutut) lalu warna celana berlanjut = celana
+                # panjang sobek. Pita yang terbuka (paha telanjang) tidak dilewati: rok/celana pendek + stoking tetap pendek
+                # (v3 tanpa syarat ini: pendek 7/16 vs 11/16)
+                akhir = j + 1
                 j += 1
             else:
                 break

@@ -34,7 +34,7 @@ P_EMB = os.path.join(CACHE_DIR, "emb.npz")
 P_E2D = os.path.join(CACHE_DIR, "emb2d.npz")
 P_STATE = "data/panen.json.gz"
 SHARD = 8
-SKEMA = 1
+SKEMA = 2             # 2: kolom ke-19 "fungsi" (kaos klasik: pakaian/lapisan kulit/aksesori lukis/gambar)
 SUHU = 100.0          # suhu softmax CLIP (sama dengan otak.py)
 BOBOT_NAMA = 0.35     # fusi lunak: bukti nama menambah massa peluang, gambar tetap dominan
 
@@ -244,6 +244,18 @@ BENTUK = {
         "fit": [("lebar", ["wide and baggy"]), ("ketat", ["skinny and tight"])],
     },
 }
+# FUNGSI item 2D (uji emas 16 Okt: 70% "kaos" TShirt klasik BUKAN gambar kaos -- shading perut/otot, kalung dilukis, dsb.)
+FUNGSI = [("pakaian", ["a piece of clothing", "a shirt or pants garment"], []),
+          ("badan", ["soft gray body shading, abs, belly button or collarbone shadows drawn on skin", "skin shading overlay"],
+           ["shading", "shade", "abs", "belly", "navel", "collarbone", "ribcage", "blush", "skin", "body"]),
+          ("aksesori", ["a necklace, chain or jewelry drawn on the body", "a painted belt or strap"],
+           ["necklace", "chain", "pearls", "pendant", "kalung", "choker", "piercing"]),
+          ("grafis", ["a picture, cartoon character, logo, flag or text printed", "a graphic sticker image"],
+           ["logo", "flag", "sticker", "decal"])]
+# 2D: kata nama untuk PROBE (pengawasan lemah). "shirt" ada di hampir semua nama aset Shirt -> bukan bukti kaos.
+KATA_2D = {("atas", "kaos"): ["tee", "t-shirt", "tshirt", "kaos"]}
+KAL_KAIN = ["a photo of {d} {n}", "{d} {n}, product photo on white background", "a {n}: {d}"]
+MIN_PROBE = 200       # data latih minimal per facet; label dengan < 15 contoh tidak diberi suara oleh probe
 KALIMAT = ["a 3d render of {d} roblox {n}", "a roblox avatar {n}, {d}", "{d} {n}"]
 KALIMAT_2D = ["a blocky white roblox mannequin wearing a {n}: {d}", "a roblox classic clothing {n} on a blocky avatar, {d}",
               "{d} {n} worn by a blocky white mannequin"]
@@ -377,6 +389,65 @@ def top2(P):
     return o, p
 
 
+def latih_probe(X, y, ncls, iters=400, lr=0.05, l2=1e-4):
+    """regresi softmax seimbang kelas (Adam, numpy). Fitur gambar CLIP -> label dari NAMA item lain (pengawasan lemah).
+    Uji emas 16 Okt (uji2d/): baju 2D jenis 26%->49%, celana 2D jenis 14%->53%, tema baju 41%->62% bila digabung zero-shot."""
+    N, D = X.shape
+    Xb = np.hstack([X * 10.0, np.ones((N, 1), dtype=np.float32)])
+    cnt = np.bincount(y, minlength=ncls).astype(np.float32)
+    wk = np.where(cnt > 0, 1.0 / np.sqrt(np.maximum(cnt, 1)), 0.0)
+    ws = wk[y]
+    ws = ws / ws.sum()
+    W = np.zeros((D + 1, ncls), dtype=np.float32)
+    m = np.zeros_like(W)
+    v = np.zeros_like(W)
+    Y = np.zeros((N, ncls), dtype=np.float32)
+    Y[np.arange(N), y] = 1
+    for t in range(1, iters + 1):
+        Z = Xb @ W
+        Z -= Z.max(axis=1, keepdims=True)
+        P = np.exp(Z)
+        P /= P.sum(axis=1, keepdims=True)
+        G = Xb.T @ ((P - Y) * ws[:, None]) + l2 * W
+        m = 0.9 * m + 0.1 * G
+        v = 0.999 * v + 0.001 * G * G
+        W -= lr * (m / (1 - 0.9 ** t)) / (np.sqrt(v / (1 - 0.999 ** t)) + 1e-8)
+    return W
+
+
+def log_softmax(Z):
+    Z = Z - Z.max(axis=1, keepdims=True)
+    return Z - np.log(np.exp(Z).sum(axis=1, keepdims=True))
+
+
+def gabung_probe(Pimg, XX, labels, kel, nama_l, toks):
+    """P gambar (zero-shot) x P probe (dilatih dari nama item lain) -> P gabungan. Label tanpa cukup contoh: probe netral."""
+    ys, rows = [], []
+    for r in range(XX.shape[0]):
+        hit = [j for j, lab in enumerate(labels) if kata_2d(kel, lab) and ada_kata(nama_l[r], toks[r], kata_2d(kel, lab))]
+        if len(hit) == 1:
+            ys.append(hit[0])
+            rows.append(r)
+    if len(ys) < MIN_PROBE:
+        return Pimg, 0
+    ys = np.array(ys, dtype=np.int64)
+    cnt = np.bincount(ys, minlength=len(labels))
+    W = latih_probe(XX[rows].astype(np.float32), ys, len(labels))
+    Zp = np.hstack([XX.astype(np.float32) * 10.0, np.ones((XX.shape[0], 1), dtype=np.float32)]) @ W
+    aktif = cnt >= 15
+    if aktif.any():
+        netral = Zp[:, aktif].mean(axis=1, keepdims=True)
+        Zp[:, ~aktif] = netral
+    L = np.log(np.maximum(Pimg, 1e-9)) + log_softmax(Zp)
+    L -= L.max(axis=1, keepdims=True)
+    P = np.exp(L)
+    return P / P.sum(axis=1, keepdims=True), len(ys)
+
+
+def kata_2d(kel, lab):
+    return KATA_2D.get((kel, lab[0]), lab[2])
+
+
 # ---------------------------------------------------------------------------------------------
 def muat():
     d = np.load(P_EMB, allow_pickle=False)
@@ -466,8 +537,22 @@ def bangun(teks, ids, E, e2, meta, hanya=None):
             if skor:
                 evals[f"{kel}{varian}/{nm}"] = {"alfa": alfa, "skor": skor}
             Pimg = softmax_terkoreksi(XX, T, alfa)
-            Pf = fusi_nama(Pimg, labels, nama_l, toks)
+            Pg = Pimg
+            if varian == "2D" and nm in ("tema", "pola", "jenis"):
+                # rev 30: baju/celana 2D -- gambar 150 px manekin terlalu kabur untuk zero-shot saja; probe dari nama item lain
+                Pg, nLatih = gabung_probe(Pimg, XX, labels, kel, nama_l, toks)
+                log(f"  probe {kel}{varian}/{nm}: latih {nLatih}")
+            Pf = fusi_nama(Pg, labels, nama_l, toks)
             hasil[nm] = (top2(Pf), None, Pimg)
+        # FUNGSI kaos klasik (TShirt): gambar potongan (tanpa ikon kaos) zero-shot; uji emas 51/55 benar
+        if varian == "2D" and kel == "atas":
+            kaos = [r for r, i in enumerate(daftar) if int(meta[str(i)].get("t") or 0) == 2]
+            if kaos:
+                T = vektor_label(teks, FUNGSI, "t-shirt graphic", KAL_KAIN)
+                Pk = softmax_terkoreksi(Xk[kaos], T, 0.5)
+                fk = np.full(n, -1, dtype=np.int64)
+                fk[kaos] = np.argmax(fusi_nama(Pk, FUNGSI, [nama_l[r] for r in kaos], [toks[r] for r in kaos]), axis=1)
+                hasil["fungsi"] = fk
         for nm, sb in (BENTUK.get(kel) or {}).items():
             T = vektor_label(teks, [(a, b, []) for a, b in sb], noun, kal_t)
             hasil["b_" + nm] = (top2(softmax_terkoreksi(Xk, T, 0.5)), None, None)
@@ -486,6 +571,7 @@ def bangun(teks, ids, E, e2, meta, hanya=None):
             for nm in ("b_lengan", "b_panjang", "b_fit", "b_depan"):
                 b.append(int(hasil[nm][0][0][r, 0]) if nm in hasil else -1)
             b.append(int(np.argmax(hasil["tema"][2][r])))  # tema menurut GAMBAR saja (transparansi)
+            b.append(int(hasil["fungsi"][r]) if "fungsi" in hasil else -1)  # skema 2: fungsi (kaos klasik saja)
             kartu[i] = b
             if r < 3000:
                 contoh.append((kel, i, nama[r], b))
@@ -512,7 +598,45 @@ def label_baca(kel, b):
                 bb.append(f"{nmb}={bt[nmb][b[13 + k]][0]}")
         s.append(" ".join(bb))
     s.append(f"[gambar:{nm(TEMA, b[17])}]")
+    if len(b) > 18 and b[18] >= 0:
+        s.append(f"fungsi={nm(FUNGSI, b[18])}")
     return " | ".join(s)
+
+
+def nilai_emas(kartu):
+    """akurasi kartu AKHIR (setelah fusi nama) terhadap label emas manual uji2d/emas.json (gambar 420 dilihat mata).
+    -> daftar baris tabel markdown; kosong bila berkas emas tidak ada."""
+    try:
+        sampel = json.load(open("uji2d/sampel.json", encoding="utf-8"))["sampel"]
+        emas = json.load(open("uji2d/emas.json", encoding="utf-8"))
+    except Exception:
+        return []
+    per_t = collections.defaultdict(list)
+    for i, t in sampel:
+        per_t[str(t)].append(int(i))
+    kol = {"jenis": 1, "tema": 3, "pola": 11, "fungsi": 18}
+    out = []
+    for t, nmT in (("11", "baju 2D"), ("12", "celana 2D"), ("2", "kaos klasik")):
+        for f, c in kol.items():
+            gold = (emas.get(t) or {}).get(f)
+            if not gold:
+                continue
+            kel = "bawah" if t == "12" else "atas"
+            labels = {"jenis": JENIS[kel], "tema": TEMA, "pola": POLA, "fungsi": FUNGSI}[f]
+            nama = [x[0] for x in labels]
+            benar = n = tanpa = 0
+            for i, g in zip(per_t[t], gold):
+                if g is None:
+                    continue
+                b = kartu.get(i)
+                if not b or len(b) <= c or b[c] < 0:
+                    tanpa += 1
+                    continue
+                n += 1
+                benar += int(nama[b[c]] == g)
+            if n:
+                out.append(f"| {nmT} | {f} | {n} | {benar} | {100 * benar / n:.0f}% | {tanpa} |")
+    return out
 
 
 def label_semua():
@@ -520,7 +644,8 @@ def label_semua():
             "jenis": {k: [t[0] for t in v] for k, v in JENIS.items()},
             "bentuk": {k: {a: [x[0] for x in b] for a, b in v.items()} for k, v in BENTUK.items()},
             "kolom": ["kelompok", "jenis", "jenisP", "tema1", "tema1P", "tema2", "tema2P", "subjek1", "subjek1P", "subjek2",
-                      "subjek2P", "pola", "polaP", "lengan", "panjang", "fit", "depan", "temaGambar"],
+                      "subjek2P", "pola", "polaP", "lengan", "panjang", "fit", "depan", "temaGambar", "fungsi"],
+            "fungsi": [t[0] for t in FUNGSI],
             "kelompokAset": {str(k): v for k, v in ASET_KE_KEL.items()}}
 
 
@@ -554,6 +679,12 @@ def laporan(kartu, evals, contoh, meta, uji, versi):
         c1, c2, t = sk[a]
         L.append(f"| {k} | {t} | {a} | {100 * c1 / t:.0f}% | {100 * c2 / t:.0f}% | {100 * sk[0.0][0] / t:.0f}% | {100 * sk[1.0][0] / t:.0f}% |")
     L += ["", "Catatan: angka ini batas bawah kasar — nama Roblox sering tidak menyebut apa yang terlihat, dan label nama sendiri bisa salah.", ""]
+    em = nilai_emas(kartu)
+    if em:
+        L += ["## Akurasi terhadap LABEL EMAS (dilihat mata, gambar 420 px; uji2d/emas.json)", "",
+              "Garis dasar fase 1 (16 Okt pagi, sampel sama, top-1 gambar saja): baju jenis 26%, celana jenis 14%, baju tema 41%,",
+              "celana tema 35%, pola 39-40%, kaos fungsi belum ada.", "",
+              "| tipe | facet | n | benar | akurasi | tanpa kartu |", "|---|---|---|---|---|---|"] + em + [""]
     if uji:
         L += ["## Item uji", ""]
         for i in uji:

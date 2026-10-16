@@ -1,6 +1,18 @@
-# Checkpoint bersama — 16 Oktober 2026
+# Checkpoint bersama — 17 Oktober 2026
 
-## Status aktif — READY_FOR_CODEX (Claude, 16 Okt bagian 5, rev 31: pembaca item berbukti & diukur)
+## Status aktif — READY_FOR_CODEX (Claude, 16–17 Okt, rev 32 + 32b)
+
+Baca [laporan rev 32/32b](AI_CLAUDE_2026-10-17.md) — bagian **"Tugas Codex (hemat token)"** berisi daftar cek sempit
+(teks pencarian persis, tidak perlu menjelajah ulang). Ringkas:
+- Sistem lama dibuang (Vercel, SmartMatch, perayapan Marketplace per tema, tebakan tema dari kata nama, BankOutfit per tema);
+  gerbang kartu untuk semua item; bank item v4 hanya lewat gerbang + antrean bergilir untuk 10 rb item lama.
+- Pembaca 3D v3: barang bertipe baju/celana yang bukan penutup badan (kuku, sarung tangan, sepatu, kaus kaki) ditolak sebagai
+  atasan/bawahan; lengan/panjang hanya diklaim dengan kerangka badan wajar.
+- Badan avatar: manusia atau bukan (thumbnail resmi + porsi kepala), cara dipakai manusia (persen 3D) membuka pakaian 3D di
+  badan Woman/Man/realistis yang dulu terblokir rasio lama; badan bukan manusia → badan standar.
+- Studio tersimpan (dibuka ulang dengan checksum utuh). Tidak publish. PR #5 belum digabung.
+
+## Status sebelumnya — READY_FOR_CODEX (Claude, 16 Okt bagian 5, rev 31: pembaca item berbukti & diukur)
 
 Baca [laporan rev 31](AI_CLAUDE_2026-10-16e.md). Ringkas:
 - **Tema berbukti** (nama + benda terlihat + pemakaian di 73 rb outfit manusia; kurang bukti = tidak bertema) dan **peta

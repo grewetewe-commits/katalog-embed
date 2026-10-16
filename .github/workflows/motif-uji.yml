@@ -1,0 +1,56 @@
+name: Motif (uji)
+
+# Uji motif diukur dari piksel (motif.py) di branch kerja. Tidak menyentuh main, model/, meta/, bank/.
+on:
+  push:
+    branches: [claude/kartu-item]
+    paths: [motif.py, .github/workflows/motif-uji.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: motif-uji
+  cancel-in-progress: true
+
+jobs:
+  motif:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Pulihkan thumbnail motif (cache)
+        uses: actions/cache/restore@v4
+        with:
+          path: cache_motif
+          key: motif-v1-${{ github.run_id }}
+          restore-keys: motif-v1-
+      - name: Ambil data panen terbaru dari main
+        run: |
+          git fetch --depth 1 origin main
+          git checkout origin/main -- data/panen.json.gz
+      - name: Pasang dependensi
+        run: pip install "numpy<2" scipy pillow requests
+      - name: Ukur motif
+        run: python motif.py 2>&1 | tail -60
+      - name: Simpan cache thumbnail
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: cache_motif
+          key: motif-v1-${{ github.run_id }}
+      - name: Simpan hasil uji ke branch
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git reset -q -- data
+          git checkout -- data 2>/dev/null || true
+          git add LAPORAN_MOTIF.md uji2d/motif_fitur.json kartu/lembar/motif_*.jpg
+          git commit -m "Motif: hasil uji (otomatis)" || echo "tidak ada perubahan"
+          git pull --rebase -q origin claude/kartu-item || true
+          git push origin HEAD:claude/kartu-item

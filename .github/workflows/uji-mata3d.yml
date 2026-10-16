@@ -1,0 +1,41 @@
+name: Uji mata 3D (file 3D resmi)
+
+# Butuh secret ROBLOX_API_KEY dengan izin Open Cloud "thumbnails: read". Tanpa izin itu hasilnya HTTP 403 (dicatat di log).
+on:
+  push:
+    branches: [claude/kartu-item]
+    paths: [mata3d.py, .github/workflows/uji-mata3d.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: uji-mata3d
+  cancel-in-progress: true
+
+jobs:
+  uji:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Pasang dependensi
+        run: pip install "numpy<2" requests
+      - name: Ambil & ukur file 3D
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+        run: python mata3d.py 2>&1 | tee uji3d_log.txt
+      - name: Simpan hasil ke branch
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p uji3d && cp uji3d_log.txt uji3d/LOG.txt
+          git add uji3d
+          git commit -m "Uji mata 3D: hasil (otomatis)" || echo "tidak ada perubahan"
+          git pull --rebase -q origin claude/kartu-item || true
+          git push origin HEAD:claude/kartu-item

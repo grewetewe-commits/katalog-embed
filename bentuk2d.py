@@ -21,7 +21,7 @@ import requests
 from PIL import Image
 
 H = {"User-Agent": "KatalogPraktis-kartu/1.0 (GitHub Actions; github.com/grewetewe-commits/katalog-embed)"}
-VERSI_BENTUK = 1
+VERSI_BENTUK = 2   # 2: warna manekin diperketat (baju putih/krem tidak lagi terbaca manekin)
 W = {  # (x0, y0, x1, y1) inklusif-eksklusif, gambar 420
     "leher": (182, 136, 226, 200),
     "leher_lebar": (160, 136, 248, 146),
@@ -37,10 +37,12 @@ TINGGI_BADAN = 238 - 128
 
 
 def manekin(rgb):
+    """warna manekin thumbnail diukur di uji2d/mentah (kepala, badan, lengan, kaki): r/g 1,000-1,008, b/g 0,975-0,984.
+    Batas sempit supaya baju putih (b/g ~1) dan krem (b/g < 0,96) tidak terbaca manekin."""
     r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
     gs = np.maximum(g, 1e-6)
     rg, bg = r / gs, b / gs
-    return (g >= 60) & (g <= 240) & (rg >= 0.98) & (rg <= 1.015) & (bg >= 0.95) & (bg <= 0.99)
+    return (g >= 60) & (g <= 250) & (rg >= 0.995) & (rg <= 1.012) & (bg >= 0.968) & (bg <= 0.988)
 
 
 def _box(m, k):

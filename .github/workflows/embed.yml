@@ -71,8 +71,8 @@ jobs:
         continue-on-error: true
         env:
           HF_HUB_DISABLE_TELEMETRY: "1"
-          BATAS_BENTUK: "6000"
-          MENIT_BENTUK: "14"
+          BATAS_BENTUK: "12000"
+          MENIT_BENTUK: "18"
         run: python kartu_item.py 2>&1 | tail -n 40
 
       - name: Simpan cache bentuk 2D

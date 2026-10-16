@@ -44,6 +44,7 @@ KATA = {
 def main():
     import mata3d
     H3 = mata3d.muat_hasil()
+    RK = mata3d.muat_rangka()
     with gzip.open("data/panen.json.gz", "rt", encoding="utf-8") as f:
         meta = json.load(f).get("meta", {})
     kartu = {}
@@ -57,7 +58,7 @@ def main():
         if not isinstance(f, dict) or "prof" not in f:
             continue
         nm = ((meta.get(i) or {}).get("n") or "").lower()
-        fit = B3.fitur(f)
+        fit = B3.fitur(f, RK.get(i))
         lab = {k for k, rx in KATA.items() if re.search(rx, nm)}
         b = kartu.get(i)
         g = None

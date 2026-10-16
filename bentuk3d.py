@@ -12,7 +12,10 @@ BAWAH = {66, 69, 72}
 SEPATU = {70, 71}
 
 
-def fitur(f):
+def fitur(f, rk=None):
+    """rk = fakta map (fisik3d/rangka.json): ro = letak manekin acuan (WrapLayer.ReferenceOrigin) di bingkai mesh ->
+    KERANGKA BADAN: yb/yt = tinggi ujung bawah/atas pakaian terhadap pusat manekin (stud). Diukur 16 Okt pada 8.133 mesh:
+    celana panjang berujung di -2,73 (mata kaki), atasan di +1,9 (bahu), pinggang celana +0,6 -> kerangka konsisten."""
     if not isinstance(f, dict) or "prof" not in f:
         return {}
     pr = f["prof"]
@@ -43,13 +46,17 @@ def fitur(f):
         o["dadaRasio"] = max(up) / max(1e-3, max(mid))
     o["tebalRata"] = float(np.mean([d[k] for k in ada])) if ada else None
     o["depanTerbuka"] = f.get("depanTerbuka", 0)
+    ro = (rk or {}).get("ro") if isinstance(rk, dict) else None
+    if isinstance(ro, list) and len(ro) == 3:
+        ry = ro[1] / 100
+        o["yb"], o["yt"] = -o["H"] / 2 - ry, o["H"] / 2 - ry
     return o
 
 
 def baca(o, t):
     """label terbaca dari fitur; HANYA yang lolos uji 16 Okt (4.044 mesh, pembanding kata nama yang berisik):
-      bawahan  potong  rok/gaun = tebal >= 0,95 stud & dua kaki tidak terpisah (kecuali panjang >= 2,6 & ada celah kaki)
-                       -> benar: celana panjang 88%, celana pendek 95%, rok 68%, gaun 82% (rata-rata 83%)
+      bawahan  potong  kategori resmi Roblox (72 rok/gaun, 66 celana, 69 celana pendek); gaun bila menutup badan atas
+                       (ujung atas >= +1,2 stud di kerangka badan). Tanpa tipe: tebal >= 0,95 & dua kaki tidak terpisah.
                panjang celana: < 1,7 stud pendek, < 2,6 selutut, sisanya panjang (celana panjang 78%, pendek 68% tepat)
                        rok/gaun: < 1,35 pendek, < 2,9 sedang, sisanya panjang
                melebar ke bawah: rok/gaun dengan lebar bawah >= 1,4x lebar pinggang (ukuran langsung)
@@ -63,18 +70,33 @@ def baca(o, t):
         return out
     if t in BAWAH:
         h = o["H"]
-        if h < 1.0 and 0.85 <= o["D"] < 0.95 and o["kakiCelahMax"] == 0:
+        if t not in (66, 69, 72) and h < 1.0 and 0.85 <= o["D"] < 0.95 and o["kakiCelahMax"] == 0:
             # sangat pendek & tebal tanggung: rok mini ketat dan celana pendek tak terbedakan -> tidak mengklaim potongan
             out["panjang"] = "pendek"
             return out
-        rok = o["D"] >= 0.95 and o["kakiCelah"] < 1.5 and not (h >= 2.6 and o["kakiCelahMax"] >= 1)
+        # potongan: KATEGORI RESMI Roblox dulu (72 DressSkirt, 66 Pants, 69 Shorts -- fakta katalog, bukan tebakan; kata nama
+        # "skirt/dress" 97% bertipe 72, "pants/jeans" 96% bertipe 66). Geometri (tebal & celah kaki) hanya bila tipe tak tersedia.
+        if t == 72:
+            rok = True
+        elif t in (66, 69):
+            rok = False
+        else:
+            rok = o["D"] >= 0.95 and o["kakiCelah"] < 1.5 and not (h >= 2.6 and o["kakiCelahMax"] >= 1)
         out["potong"] = "rok" if rok else "celana"
-        if rok:
+        yb, yt = o.get("yb"), o.get("yt")
+        if yb is not None:
+            # KERANGKA BADAN (uji 16 Okt, kata nama sebagai pembanding): ujung bawah <= -2,2 = sampai mata kaki
+            # (celana panjang 93% tepat, maxi 79%), <= -0,9 = sekitar lutut, selain itu pendek (mini 93%, celana pendek 70%)
+            out["panjang"] = "panjang" if yb <= -2.2 else (("sedang" if rok else "selutut") if yb <= -0.9 else "pendek")
+            out["ukurBadan"] = True
+            if rok and yt is not None and yt >= 1.2:
+                out["potong"] = "gaun"      # menutup badan atas (gaun 96%, rok 90% tepat)
+        elif rok:
             out["panjang"] = "pendek" if h < 1.35 else ("sedang" if h < 2.9 else "panjang")
-            if (o.get("flare") or 0) >= 1.4:
-                out["mengembang"] = True
         else:
             out["panjang"] = "pendek" if h < 1.7 else ("selutut" if h < 2.6 else "panjang")
+        if rok and (o.get("flare") or 0) >= 1.4:
+            out["mengembang"] = True
     elif t in ATAS:
         if o["luar09"] <= 1 and o["W"] < 1.5:
             out["lengan"] = "tanpa"

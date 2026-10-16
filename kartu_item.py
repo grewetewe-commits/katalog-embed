@@ -675,7 +675,8 @@ def label_semua():
                       "gender", "genderN", "temaB", "temaBPoin", "temaBSumber", "temaCocok", "leher", "bentukBit",
                       "lebar3D", "tinggi3D", "tebal3D", "bit3D", "lengan3D", "panjang3D", "tebalKain3D"],
             "bentuk3d": {"ukuran": "lebar3D/tinggi3D/tebal3D = stud x20 (kotak batas mesh resmi); tebalKain3D = cm",
-                         "bit": {"diukur": 1, "celana": 2, "rokGaun": 4, "melebarKeBawah": 8, "bot": 16},
+                         "bit": {"diukur": 1, "celana": 2, "rokGaun": 4, "melebarKeBawah": 8, "bot": 16, "gaun": 32,
+                                 "panjangTerhadapBadan": 64},
                          "lengan": ["tanpa", "pendek", "panjang"], "panjang": ["pendek", "sedang/selutut", "panjang"]},
             "bentukBit": {"bahuTerbuka": 1, "crop": 2, "celanaMenutupBadan": 4, "kausKakiStoking": 8, "diukur": 16},
             "leher": "kedalaman bukaan leher baju 2D, % tinggi badan (diukur piksel; kecil = kerah tinggi, besar = leher rendah)",
@@ -777,6 +778,7 @@ def bentuk_3d(kartu, meta):
     import bentuk3d as B3
     import mata3d as M3
     H3 = M3.muat_hasil()
+    RK = M3.muat_rangka()
     BA, BB = BENTUK["atas"], BENTUK["bawah"]
     ia = {lab[0]: k for k, lab in enumerate(BA["lengan"])}
     ib = {lab[0]: k for k, lab in enumerate(BB["panjang"])}
@@ -790,14 +792,18 @@ def bentuk_3d(kartu, meta):
         if b is None or not isinstance(f, dict) or "prof" not in f:
             continue
         t = int(f.get("t") or (meta.get(sid) or {}).get("t") or 0)
-        o = B3.fitur(f)
+        o = B3.fitur(f, RK.get(sid))
         r = B3.baca(o, t)
         bit = 1
         lg, pj = -1, -1
         if r.get("potong") == "celana":
             bit |= 2
-        elif r.get("potong") == "rok":
+        elif r.get("potong") in ("rok", "gaun"):
             bit |= 4
+            if r["potong"] == "gaun":
+                bit |= 32
+        if r.get("ukurBadan"):
+            bit |= 64
         if r.get("mengembang"):
             bit |= 8
         if r.get("tinggi") == "bot":
@@ -813,7 +819,7 @@ def bentuk_3d(kartu, meta):
         cap = lambda x: int(max(0, min(254, round(x))))
         per[i] = [cap(o["W"] * 20), cap(o["H"] * 20), cap(o["D"] * 20), bit, lg, pj, cap((o.get("tebalRata") or 0) * 100)]
         n += 1
-    log(f"bentuk 3D: {len(H3)} mesh diukur, {n} kartu diberi bentuk 3D")
+    log(f"bentuk 3D: {len(H3)} mesh diukur, {len(RK)} berkerangka badan, {n} kartu diberi bentuk 3D")
     return per
 
 

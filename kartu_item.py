@@ -27,6 +27,8 @@ Tidak ada API berbayar. Tidak menulis model/, meta/, bank/ (milik otak.py).
 """
 import os, sys, json, gzip, re, time, math, collections
 import numpy as np
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import bukti_item as BUKTI
 
 MODEL_ID = "openai/clip-vit-base-patch32"
 CACHE_DIR = os.environ.get("CACHE_DIR", "cache")
@@ -34,7 +36,7 @@ P_EMB = os.path.join(CACHE_DIR, "emb.npz")
 P_E2D = os.path.join(CACHE_DIR, "emb2d.npz")
 P_STATE = "data/panen.json.gz"
 SHARD = 8
-SKEMA = 2             # 2: kolom ke-19 "fungsi" (kaos klasik: pakaian/lapisan kulit/aksesori lukis/gambar)
+SKEMA = 3             # 2: kolom 19 "fungsi" kaos klasik; 3: kolom 20-25 BUKTI (gender, tema berbukti, tema cocok) -- bukti_item.py
 SUHU = 100.0          # suhu softmax CLIP (sama dengan otak.py)
 BOBOT_NAMA = 0.35     # fusi lunak: bukti nama menambah massa peluang, gambar tetap dominan
 
@@ -469,6 +471,7 @@ def muat():
         st = json.load(f)
     meta = st.get("meta", {})
     log(f"embedding {len(ids)} | potongan 2D {len(e2)} | meta {len(meta)}")
+    muat.st = st
     return ids, E, e2, meta
 
 
@@ -645,7 +648,11 @@ def label_semua():
             "jenis": {k: [t[0] for t in v] for k, v in JENIS.items()},
             "bentuk": {k: {a: [x[0] for x in b] for a, b in v.items()} for k, v in BENTUK.items()},
             "kolom": ["kelompok", "jenis", "jenisP", "tema1", "tema1P", "tema2", "tema2P", "subjek1", "subjek1P", "subjek2",
-                      "subjek2P", "pola", "polaP", "lengan", "panjang", "fit", "depan", "temaGambar", "fungsi"],
+                      "subjek2P", "pola", "polaP", "lengan", "panjang", "fit", "depan", "temaGambar", "fungsi",
+                      "gender", "genderN", "temaB", "temaBPoin", "temaBSumber", "temaCocok"],
+            "gender": "0..200: 100 netral, <100 cowok, >100 cewek (bukti nama + pemakaian di outfit manusia)",
+            "temaBSumber": {"nama": BUKTI.SUMBER_NAMA, "unsur": BUKTI.SUMBER_UNSUR, "gaya": BUKTI.SUMBER_GAYA,
+                            "pakai": BUKTI.SUMBER_PAKAI},
             "fungsi": [t[0] for t in FUNGSI],
             "kelompokAset": {str(k): v for k, v in ASET_KE_KEL.items()}}
 
@@ -667,7 +674,27 @@ def tulis(kartu, versi, evals):
     os.replace("kartu/info.json.tmp", "kartu/info.json")
 
 
-def laporan(kartu, evals, contoh, meta, uji, versi):
+def perkaya_bukti(kartu, meta, st):
+    """kolom 20-25: gender & tema dari BUKTI (bukti_item.py). Tanpa data outfit -> kolom kosong (-1), kartu tetap jalan."""
+    t0 = time.time()
+    lab = label_semua()
+    outs = BUKTI.daftar_outfit(st)
+    gb = BUKTI.gender_bukti(kartu, meta, outs, lab) if outs else {}
+    tb = BUKTI.tema_bukti(kartu, meta, outs, lab, TEMA, ada_kata, token)
+    for i, b in kartu.items():
+        g = gb.get(i)
+        b += [int(round(100 + 100 * g[0])) if g else -1, min(254, g[1]) if g else -1]
+        t = tb.get(i, (-1, 0, 0, -1))
+        b += [t[0], t[1], t[2], t[3]]
+    nama_t = [t[0] for t in TEMA]
+    graf = BUKTI.graf_tema(tb, outs, nama_t) if outs else None
+    ug = BUKTI.uji_gender(kartu, meta, outs, lab) if outs else []
+    log(f"bukti: {len(outs)} outfit manusia, gender {len(gb)} item, tema berbukti "
+        f"{sum(1 for v in tb.values() if v[0] >= 0)} item, {time.time() - t0:.0f} dtk")
+    return {"outs": len(outs), "graf": graf, "uji_gender": ug, "tb": tb}
+
+
+def laporan(kartu, evals, contoh, meta, uji, versi, bukti=None):
     L = [f"# Laporan Kartu Item (MATA v2) — versi {versi}", "",
          "Kartu dibaca dari GAMBAR item (CLIP zero-shot, model sama dengan otak.py); nama hanya bukti tambahan.", "",
          f"- Item berkartu: **{len(kartu)}**", "",
@@ -680,6 +707,48 @@ def laporan(kartu, evals, contoh, meta, uji, versi):
         c1, c2, t = sk[a]
         L.append(f"| {k} | {t} | {a} | {100 * c1 / t:.0f}% | {100 * c2 / t:.0f}% | {100 * sk[0.0][0] / t:.0f}% | {100 * sk[1.0][0] / t:.0f}% |")
     L += ["", "Catatan: angka ini batas bawah kasar — nama Roblox sering tidak menyebut apa yang terlihat, dan label nama sendiri bisa salah.", ""]
+    if bukti and bukti.get("outs"):
+        L += ["## Bukti (rev 31): gender & tema dari bukti, bukan tebakan satu sumber", "",
+              f"Outfit buatan manusia dipakai sebagai bukti pemakaian: **{bukti['outs']}**.", "",
+              "### Gender (uji jujur: benih nama 20% item disembunyikan, ditebak dari pemakaian)", "",
+              "| ambang | benar | diputuskan | item uji |", "|---|---|---|---|"]
+        for amb, ok, nn, nu in bukti["uji_gender"]:
+            L.append(f"| {amb} | {ok} ({100 * ok / max(nn, 1):.1f}%) | {nn} | {nu} |")
+        tb = bukti["tb"]
+        nama_t = [t[0] for t in TEMA]
+        try:
+            sampel = json.load(open("uji2d/sampel.json", encoding="utf-8"))["sampel"]
+            emas = json.load(open("uji2d/emas.json", encoding="utf-8"))
+            per = collections.defaultdict(list)
+            for i, t in sampel:
+                per[str(t)].append(int(i))
+            L += ["", "### Tema berbukti vs label emas (baju/celana 2D)", "",
+                  "| tipe | n | diputuskan | tepat saat diputuskan | kartu lama tepat |", "|---|---|---|---|---|"]
+            for t in ("11", "12"):
+                gold = emas[t]["tema"]
+                n = dip = tepat = lama = 0
+                for i, g in zip(per[t], gold):
+                    if g is None or i not in kartu:
+                        continue
+                    n += 1
+                    lama += int(nama_t[kartu[i][3]] == g)
+                    v = tb.get(i, (-1,))[0]
+                    if v >= 0:
+                        dip += 1
+                        tepat += int(nama_t[v] == g)
+                L.append(f"| {t} | {n} | {dip} | {tepat} | {lama} |")
+        except Exception:
+            pass
+        c = collections.Counter(nama_t[v[0]] for v in tb.values() if v[0] >= 0)
+        L += ["", f"Item bertema berbukti: {sum(c.values())} dari {len(tb)} (sisanya tidak bertema khusus).", "",
+              "Sebaran: " + ", ".join(f"{k} {v}" for k, v in c.most_common(25)), ""]
+        g = bukti.get("graf") or {}
+        L += ["### Sambungan tema (PMI positif, dari outfit manusia)", ""]
+        for t, _ in sorted((g.get("n_tema") or {}).items(), key=lambda x: -x[1])[:25]:
+            pos = [x for x in (g.get("sambung") or {}).get(t, []) if x[1] > 0][:5]
+            if pos:
+                L.append(f"- {t}: " + ", ".join(f"{a} ({p:.2f}, {n})" for a, p, n in pos))
+        L.append("")
     em = nilai_emas(kartu)
     if em:
         L += ["## Akurasi terhadap LABEL EMAS (dilihat mata, gambar 420 px; uji2d/emas.json)", "",
@@ -733,9 +802,13 @@ def main():
     ids, E, e2, meta = muat()
     teks = Teks(stub=stub)
     kartu, evals, contoh = bangun(teks, ids, E, e2, meta)
+    bukti = perkaya_bukti(kartu, meta, getattr(muat, "st", {}) or {})
     versi = int(time.time())
     tulis(kartu, versi, evals)
-    laporan(kartu, evals, contoh, meta, uji, versi)
+    if bukti.get("graf"):
+        with open("kartu/tema_graf.json", "w", encoding="utf-8") as f:
+            json.dump({"versi": versi, **bukti["graf"]}, f, ensure_ascii=False, separators=(",", ":"))
+    laporan(kartu, evals, contoh, meta, uji, versi, bukti)
     log(f"selesai: {len(kartu)} kartu, {time.time() - t0:.0f} dtk")
 
 

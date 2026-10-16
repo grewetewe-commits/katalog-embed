@@ -4,7 +4,7 @@ name: Kartu Item (uji)
 on:
   push:
     branches: [claude/kartu-item]
-    paths: [kartu_item.py, lembar_kartu.py, .github/workflows/kartu-uji.yml]
+    paths: [kartu_item.py, bukti_item.py, lembar_kartu.py, .github/workflows/kartu-uji.yml]
   workflow_dispatch:
 
 permissions:

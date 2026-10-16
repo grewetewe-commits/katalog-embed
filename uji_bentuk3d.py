@@ -38,6 +38,9 @@ KATA = {
     "puffer": r"\b(puffer|puffy|down jacket|bomber)\b",
     "oversized": r"\b(oversized?|baggy)\b",
     "bahu_terbuka": r"\b(off[- ]?shoulders?|strapless|tube)\b",
+    # rev 32b: barang bertipe baju/celana yang BUKAN penutup badan (pembanding untuk bukanPenutup)
+    "tangan_lengan": r"\b(nails?|gloves?|arm ?warmers?|bracelets?|watch|rings?|holdable|wand|cuffs?|bangles?|bouquet)\b",
+    "kaki_sepatu": r"\b(shoes?|sneakers?|boots?|heels|slippers|crocs|socks|anklets?|leg ?warmers?|sandals|loafers)\b",
 }
 
 
@@ -69,9 +72,10 @@ def main():
     kelompok = {"bawah (66 celana, 69 shorts, 72 rok/gaun)": {66, 69, 72},
                 "atas (64 kaos, 65 kemeja, 67 jaket, 68 sweater)": {64, 65, 67, 68}}
     uji = {
-        "bawah": [("celana_panjang", "celana_pendek"), ("celana_panjang", "rok"), ("celana_pendek", "rok"), ("gaun", "rok")],
+        "bawah": [("celana_panjang", "celana_pendek"), ("celana_panjang", "rok"), ("celana_pendek", "rok"), ("gaun", "rok"),
+                  ("kaki_sepatu", None)],
         "atas": [("lengan_panjang", "tanpa_lengan"), ("lengan_panjang", "lengan_pendek"), ("lengan_pendek", "tanpa_lengan"),
-                 ("crop", None), ("puffer", None), ("oversized", None), ("bahu_terbuka", None)],
+                 ("crop", None), ("puffer", None), ("oversized", None), ("bahu_terbuka", None), ("tangan_lengan", None)],
     }
     for judul, tipe in kelompok.items():
         R = [r for r in rows if r[1] in tipe]
@@ -110,6 +114,7 @@ def main():
         hit = {}
         for r in R:
             lb = B3.baca(r[3], r[1])
+            lb.setdefault("bukanPenutup", False)   # rev 32b: supaya terlihat proporsinya per kata nama
             for kk in r[4]:
                 for kl, v in lb.items():
                     hit.setdefault((kk, kl), {}).setdefault(str(v), 0)

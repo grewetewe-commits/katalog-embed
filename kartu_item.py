@@ -676,7 +676,7 @@ def label_semua():
                       "lebar3D", "tinggi3D", "tebal3D", "bit3D", "lengan3D", "panjang3D", "tebalKain3D"],
             "bentuk3d": {"ukuran": "lebar3D/tinggi3D/tebal3D = stud x20 (kotak batas mesh resmi); tebalKain3D = cm",
                          "bit": {"diukur": 1, "celana": 2, "rokGaun": 4, "melebarKeBawah": 8, "bot": 16, "gaun": 32,
-                                 "panjangTerhadapBadan": 64},
+                                 "diukurTerhadapBadan": 64, "bukanPenutupBadan": 128},
                          "lengan": ["tanpa", "pendek", "panjang"], "panjang": ["pendek", "sedang/selutut", "panjang"]},
             "bentukBit": {"bahuTerbuka": 1, "crop": 2, "celanaMenutupBadan": 4, "kausKakiStoking": 8, "diukur": 16},
             "leher": "kedalaman bukaan leher baju 2D, % tinggi badan (diukur piksel; kecil = kerah tinggi, besar = leher rendah)",
@@ -808,6 +808,8 @@ def bentuk_3d(kartu, meta):
             bit |= 8
         if r.get("tinggi") == "bot":
             bit |= 16
+        if r.get("bukanPenutup"):
+            bit |= 128      # rev 32b: bertipe baju/celana tapi tidak menutup badan (kuku, sarung tangan, sepatu, kaus kaki)
         if "lengan" in r:
             lg = ia.get(r["lengan"], -1)
             if lg >= 0:

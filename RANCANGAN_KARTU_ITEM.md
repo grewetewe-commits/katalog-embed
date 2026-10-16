@@ -21,7 +21,7 @@ semua kelompok item (baju/celana 2D, atasan/bawahan 3D, topi, aksesori wajah, ra
 |---|---|---|
 | Gambar item (thumbnail resmi, sudah di-embed CLIP oleh otak.py, 132 rb item) | semua kelompok | dipakai (fase 1) |
 | Potongan pakaian 2D tanpa manekin (emb2d otak.py, 40 rb item) | jenis/pola baju & celana 2D | dipakai (fase 1) |
-| Data 3D resmi `thumbnails.roblox.com/v1/assets-thumbnail-3d` (Beta) | bentuk & ukuran nyata, tampak multi-sudut | **terblokir**: API key repo ditolak "Scope not authorized" (probe 16 Okt). Perlu izin dari pemilik di Creator Dashboard; tidak memakai cookie akun. |
+| Data 3D resmi `thumbnails.roblox.com/v1/assets-thumbnail-3d` (Beta) | bentuk & ukuran nyata, tampak multi-sudut | **aktif sejak 16 Okt (rev 32)**: pemilik memberi izin `thumbnail:read` pada API key; `mata3d.py` mengukur mesh + kerangka badan dari map (`fisik3d/`). Tidak memakai cookie akun. |
 | Ukuran mesh di map (UkuranItemEngine/BodyContextKit) | ukuran pada badan | sudah ada di map, akan dihubungkan |
 | Nama + kreator | bukti lemah (fusi 35%), nama tokoh/merek | dipakai |
 | Tipe aset Roblox | kelompok slot | dipakai |

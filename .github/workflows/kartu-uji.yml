@@ -79,8 +79,8 @@ jobs:
           git reset -q -- data model
           git checkout -- data model 2>/dev/null || true
           tail -n 60 kartu_log.txt > LOG_KARTU.txt
-          cp probe_log.txt LOG_PROBE3D.txt 2>/dev/null || true
-          git add kartu LAPORAN_KARTU.md LOG_KARTU.txt LOG_PROBE3D.txt LAPORAN_3D.md 2>/dev/null || git add kartu LAPORAN_KARTU.md LOG_KARTU.txt
+          git add kartu LAPORAN_KARTU.md LOG_KARTU.txt
+          git add LAPORAN_3D.md 2>/dev/null || true
           git commit -m "Kartu item: hasil uji (otomatis)" || echo "tidak ada perubahan"
           git pull --rebase -q origin claude/kartu-item || true
           git push origin HEAD:claude/kartu-item

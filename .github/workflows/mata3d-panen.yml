@@ -1,7 +1,7 @@
 name: Mata 3D (panen bentuk)
 
 # Mengukur bentuk ASLI pakaian 3D dari file 3D resmi Roblox (mata3d.py --panen), bertahap, paling difavoritkan dulu.
-# Butuh secret ROBLOX_API_KEY dengan izin Open Cloud "thumbnail:read". Hasil: fisik3d/bentuk3d.json.gz (angka turunan saja,
+# Butuh secret ROBLOX_API_KEY dengan izin Open Cloud "thumbnail:read". Hasil: fisik3d/bentuk3d_{0..15}.json + rangka.json (angka turunan saja,
 # mesh tidak disimpan). Jadwal hanya aktif di cabang utama (aturan GitHub); di cabang lain jalankan manual.
 on:
   push:
@@ -36,6 +36,12 @@ jobs:
           python-version: "3.11"
       - name: Pasang dependensi
         run: pip install "numpy<2" requests
+      - name: Ambil kerangka badan dari map (DataStore fakta fisik lewat Open Cloud)
+        continue-on-error: true
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+          UNIVERSE_ID: "10753176264"
+        run: python mata3d.py --rangka 2>&1 | tail -3
       - name: Ukur bentuk 3D
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}

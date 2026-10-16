@@ -226,6 +226,70 @@ def simpan_hasil(hasil):
         os.replace(p + ".tmp", p)
 
 
+def ambil_rangka(universe=None, nshard=256):
+    """fakta fisik yang diukur MAP (FisikItemKit, DataStore KatalogItemFisik_v1 s_0..s_255) lewat Open Cloud v2 (izin
+    universe-datastores read, kunci yang sama). Yang dipakai: ro = WrapLayer.ReferenceOrigin (letak manekin acuan di bingkai
+    mesh pakaian = KERANGKA BADAN), s = ukuran Handle, a/ap = attachment, o/k/p = lapisan, m = peta PBR.
+    -> fisik3d/rangka.json (satu item per baris). Gagal baca = berkas lama dipertahankan."""
+    from urllib.parse import quote
+    uni = universe or (os.environ.get("UNIVERSE_ID") or "10753176264")
+    if not KEY:
+        print("rangka: kunci API tidak ada, dilewati", flush=True)
+        return
+    try:
+        lama = json.load(open(f"{D_HASIL}/rangka.json", encoding="utf-8"))
+    except Exception:
+        lama = {}
+    hasil, ok_n, gagal = dict(lama), 0, 0
+    for s in range(nshard):
+        url = (f"https://apis.roblox.com/cloud/v2/universes/{uni}/data-stores/{quote('KatalogItemFisik_v1')}"
+               f"/entries/{quote('s_' + str(s))}")
+        v = None
+        for k in range(3):
+            try:
+                r = requests.get(url, headers={"x-api-key": KEY}, timeout=30)
+                if r.status_code == 200:
+                    v = r.json().get("value")
+                    if isinstance(v, str):
+                        v = json.loads(v)
+                    break
+                if r.status_code == 404:
+                    break
+                if r.status_code in (401, 403):
+                    print("rangka: Open Cloud", r.status_code, r.text[:160], flush=True)
+                    return
+                if r.status_code == 429:
+                    time.sleep(10 * (k + 1))
+                    continue
+            except Exception:
+                time.sleep(3 * (k + 1))
+        if v is None:
+            gagal += 1
+            continue
+        ok_n += 1
+        if isinstance(v, dict):
+            for sid, f in v.items():
+                if isinstance(f, dict) and sid.isdigit():
+                    e = {k: f[k] for k in ("ro", "s", "a", "ap", "o", "k", "p", "m", "ms") if k in f}
+                    if e:
+                        hasil[sid] = e
+        time.sleep(0.15)
+    os.makedirs(D_HASIL, exist_ok=True)
+    baris = [json.dumps(k) + ":" + json.dumps(hasil[k], separators=(",", ":")) for k in sorted(hasil, key=int)]
+    with open(f"{D_HASIL}/rangka.json.tmp", "w", encoding="utf-8") as f:
+        f.write("{\n" + ",\n".join(baris) + "\n}\n")
+    os.replace(f"{D_HASIL}/rangka.json.tmp", f"{D_HASIL}/rangka.json")
+    n_ro = sum(1 for e in hasil.values() if "ro" in e)
+    print(f"rangka: {ok_n} shard terbaca ({gagal} kosong/gagal), {len(hasil)} item fakta, {n_ro} dengan kerangka badan", flush=True)
+
+
+def muat_rangka():
+    try:
+        return json.load(open(f"{D_HASIL}/rangka.json", encoding="utf-8"))
+    except Exception:
+        return {}
+
+
 def calon_panen(hasil, jenis):
     """item bertipe `jenis` dari data panen otak, paling difavoritkan dulu, yang belum diukur versi ini"""
     with gzip.open("data/panen.json.gz", "rt", encoding="utf-8") as f:
@@ -293,6 +357,9 @@ def uji_aset(ids):
 
 def main():
     print("kunci API terpasang:", bool(KEY), flush=True)
+    if "--rangka" in sys.argv:
+        ambil_rangka()
+        return
     if "--uji-aset" in sys.argv:
         uji_aset([int(x) for x in sys.argv[1:] if x.isdigit()] or [7192553841, 9438759973])
         return

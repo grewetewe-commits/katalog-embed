@@ -1,0 +1,3 @@
+11 {'fungsi_n': 60, 'fungsi_ok': 59, 'panjang_n': 24, 'panjang_ok': 20, 'kaos_n': 15, 'kaos_ok': 12, 'tanpa_n': 6, 'tanpa_ok': 6, 'crop_n': 2, 'crop_ok': 2}
+12 {'fungsi_n': 59, 'fungsi_ok': 57, 'pjg_n': 18, 'pjg_ok': 17, 'badan_n': 8, 'badan_ok': 5, 'pendek_n': 16, 'pendek_ok': 5}
+selesai

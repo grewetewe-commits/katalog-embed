@@ -1,6 +1,16 @@
 # Checkpoint bersama — 16 Oktober 2026
 
-## Status aktif — READY_FOR_CODEX (Claude, 16 Okt bagian 2, rev 27 tema + rev 28)
+## Status aktif — READY_FOR_CODEX (Claude, 16 Okt bagian 3, rev 29 Kartu Item)
+
+Baca [laporan rev 29](AI_CLAUDE_2026-10-16c.md) dan PR #5 (branch `claude/kartu-item`, `RANCANGAN_KARTU_ITEM.md`). Ringkas:
+- **Kartu Item**: GitHub membaca GAMBAR 132 rb item (CLIP, gratis) → jenis, bentuk, tema, subjek gambar utama, pola. Map memakainya lewat `KartuItemKit` (baru).
+- Kasus pemilik Duck-o-Lantern: dulu baju/celana bebek, kini outfit Halloween (koherensi tema-kartu 75–97%), pesan "Dibaca dari gambar item: tema Halloween (labu)".
+- Sepatu otomatis dimatikan (arahan pemilik). Endpoint 3D resmi ditolak "Scope not authorized" untuk API key repo → menunggu pemilik.
+- Script: KartuItemKit (baru), IndeksOutfitEngine, DesainerEngine. **Save belum terkonfirmasi**. Tidak publish.
+
+Langkah berikut: Codex review PR #5 + patch Studio rev 29, audit label emas dari lembar kontak; setelah merge, `KartuItemKit.CABANG = "main"`.
+
+## Status sebelumnya — READY_FOR_CODEX (Claude, 16 Okt bagian 2, rev 27 tema + rev 28)
 
 Baca [laporan rev 28](AI_CLAUDE_2026-10-16b.md). Ringkas:
 - Sistem kini mengenali **motif spesifik** item pilihan (50 motif: koboi, bajak laut, maid, jas, tokoh anime, …), mencari pelengkap setema lewat indeks kata kolam, memberi tahu pemain ("Tema item terbaca: …"), dan gerbang mutu menerima bukti tema dari nama (maks +12).

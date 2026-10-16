@@ -281,6 +281,29 @@ def ambil_rangka(universe=None, nshard=256):
     os.replace(f"{D_HASIL}/rangka.json.tmp", f"{D_HASIL}/rangka.json")
     n_ro = sum(1 for e in hasil.values() if "ro" in e)
     print(f"rangka: {ok_n} shard terbaca ({gagal} kosong/gagal), {len(hasil)} item fakta, {n_ro} dengan kerangka badan", flush=True)
+    tulis_perlu_ukur(hasil)
+
+
+def tulis_perlu_ukur(rangka, maks=6000):
+    """daftar item yang BELUM punya fakta ukur map -> fisik3d/perlu_ukur.json. Server map (FisikItemKit) membacanya dan
+    mengukur pelan di latar (LoadAsset 1 item / 2 dtk), lalu menulis ke DataStore yang dibaca lagi di sini. Lingkaran
+    tertutup GitHub <-> map tanpa layanan berbayar."""
+    perlu = []
+    for k, f in muat_hasil().items():           # pakaian 3D yang sudah diukur mesh-nya tapi belum berkerangka badan
+        if isinstance(f, dict) and "ro" not in (rangka.get(k) or {}):
+            perlu.append(int(k))
+    try:
+        antre = json.load(open(f"{D_HASIL}/antre_ukur.json", encoding="utf-8")).get("tipe", {})
+    except Exception:
+        antre = {}
+    for t in ("41", "8", "42", "43", "44", "45", "46", "47"):  # aksesori: titik pasang & ukuran
+        for i in antre.get(t, []):
+            if "ap" not in (rangka.get(str(i)) or {}):
+                perlu.append(int(i))
+    perlu = perlu[:maks]
+    with open(f"{D_HASIL}/perlu_ukur.json", "w", encoding="utf-8") as f:
+        json.dump({"w": int(time.time()), "ids": perlu}, f, separators=(",", ":"))
+    print(f"perlu ukur map: {len(perlu)} item", flush=True)
 
 
 def muat_rangka():

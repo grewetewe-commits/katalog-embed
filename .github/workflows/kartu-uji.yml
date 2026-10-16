@@ -4,7 +4,7 @@ name: Kartu Item (uji)
 on:
   push:
     branches: [claude/kartu-item]
-    paths: [kartu_item.py, bukti_item.py, bentuk2d.py, lembar_kartu.py, .github/workflows/kartu-uji.yml]
+    paths: [kartu_item.py, bukti_item.py, bentuk2d.py, bentuk3d.py, uji_bentuk3d.py, lembar_kartu.py, .github/workflows/kartu-uji.yml]
   workflow_dispatch:
 
 permissions:
@@ -55,6 +55,9 @@ jobs:
         run: |
           ls -la cache || true
           python kartu_item.py --uji 126884250250747 72558563872966 1028859 14328141014 8565346973 6554200369 192557913 78504769792948 126582482792163 93519364113971 382538059 7192553841 14027730224 15901064855 98089688160090 116973312880668 98757749181872 5731050224 301820310 18832937926 122234019472336 132200141502925 83668736552435 2>&1 | tee kartu_log.txt
+      - name: Uji bentuk 3D (mesh resmi vs kata nama & gender pemakaian)
+        continue-on-error: true
+        run: python uji_bentuk3d.py 2>&1 | tail -3
       - name: Simpan cache bentuk 2D
         if: always()
         uses: actions/cache/save@v4
@@ -75,7 +78,7 @@ jobs:
           git checkout -- data model 2>/dev/null || true
           tail -n 60 kartu_log.txt > LOG_KARTU.txt
           cp probe_log.txt LOG_PROBE3D.txt 2>/dev/null || true
-          git add kartu LAPORAN_KARTU.md LOG_KARTU.txt LOG_PROBE3D.txt 2>/dev/null || git add kartu LAPORAN_KARTU.md LOG_KARTU.txt
+          git add kartu LAPORAN_KARTU.md LOG_KARTU.txt LOG_PROBE3D.txt LAPORAN_3D.md 2>/dev/null || git add kartu LAPORAN_KARTU.md LOG_KARTU.txt
           git commit -m "Kartu item: hasil uji (otomatis)" || echo "tidak ada perubahan"
           git pull --rebase -q origin claude/kartu-item || true
           git push origin HEAD:claude/kartu-item

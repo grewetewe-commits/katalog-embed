@@ -36,7 +36,7 @@ P_EMB = os.path.join(CACHE_DIR, "emb.npz")
 P_E2D = os.path.join(CACHE_DIR, "emb2d.npz")
 P_STATE = "data/panen.json.gz"
 SHARD = 8
-SKEMA = 4             # 2: kolom 19 "fungsi" kaos klasik; 3: kolom 20-25 BUKTI (gender, tema berbukti, tema cocok) -- bukti_item.py
+SKEMA = 5             # 5: kolom 28-34 BENTUK 3D diukur dari mesh resmi (bentuk3d.py / mata3d.py); 2: kolom 19 "fungsi" kaos klasik; 3: kolom 20-25 BUKTI (gender, tema berbukti, tema cocok) -- bukti_item.py
                       # 4: kolom 26-27 BENTUK 2D DIUKUR (leher, bit bahu/crop/badan/kaus kaki) -- bentuk2d.py
 P_BENTUK = os.path.join(os.environ.get("CACHE_BENTUK", "cache_bentuk"), "bentuk2d.json")
 BATAS_BENTUK = int(os.environ.get("BATAS_BENTUK", "3000"))      # item 2D baru yang diukur per putaran (thumbnail 420)
@@ -619,6 +619,14 @@ def label_baca(kel, b):
             d.append(f"leher {b[25]}%")
         d += [nmb for bit, nmb in ((1, "bahu terbuka"), (2, "crop"), (4, "menutup badan"), (8, "kaus kaki/stoking")) if b[26] & bit]
         s.append("DIUKUR: " + (", ".join(d) or "-"))
+    if len(b) > 33 and b[30] >= 0:
+        d = [f"{b[27] / 20:.1f}x{b[28] / 20:.1f}x{b[29] / 20:.1f} stud"]
+        d += [nmb for bit, nmb in ((2, "celana"), (4, "rok/gaun"), (8, "melebar ke bawah"), (16, "bot")) if b[30] & bit]
+        if b[31] >= 0:
+            d.append(f"lengan {('tanpa', 'pendek', 'panjang')[b[31]]}")
+        if b[32] >= 0:
+            d.append(f"panjang {('pendek', 'sedang', 'panjang')[b[32]]}")
+        s.append("MESH 3D: " + ", ".join(d))
     return " | ".join(s)
 
 
@@ -664,7 +672,11 @@ def label_semua():
             "bentuk": {k: {a: [x[0] for x in b] for a, b in v.items()} for k, v in BENTUK.items()},
             "kolom": ["kelompok", "jenis", "jenisP", "tema1", "tema1P", "tema2", "tema2P", "subjek1", "subjek1P", "subjek2",
                       "subjek2P", "pola", "polaP", "lengan", "panjang", "fit", "depan", "temaGambar", "fungsi",
-                      "gender", "genderN", "temaB", "temaBPoin", "temaBSumber", "temaCocok", "leher", "bentukBit"],
+                      "gender", "genderN", "temaB", "temaBPoin", "temaBSumber", "temaCocok", "leher", "bentukBit",
+                      "lebar3D", "tinggi3D", "tebal3D", "bit3D", "lengan3D", "panjang3D", "tebalKain3D"],
+            "bentuk3d": {"ukuran": "lebar3D/tinggi3D/tebal3D = stud x20 (kotak batas mesh resmi); tebalKain3D = cm",
+                         "bit": {"diukur": 1, "celana": 2, "rokGaun": 4, "melebarKeBawah": 8, "bot": 16},
+                         "lengan": ["tanpa", "pendek", "panjang"], "panjang": ["pendek", "sedang/selutut", "panjang"]},
             "bentukBit": {"bahuTerbuka": 1, "crop": 2, "celanaMenutupBadan": 4, "kausKakiStoking": 8, "diukur": 16},
             "leher": "kedalaman bukaan leher baju 2D, % tinggi badan (diukur piksel; kecil = kerah tinggi, besar = leher rendah)",
             "gender": "0..200: 100 netral, <100 cowok, >100 cewek (bukti nama + pemakaian di outfit manusia)",
@@ -756,6 +768,53 @@ def bentuk_2d(kartu, meta):
     log(f"bentuk 2D: {baru} diukur putaran ini, {len(cache)} di cache, {n} kartu diberi bentuk diukur, sisa antre "
         f"{max(0, len(calon) - baru)}, {time.time() - t0:.0f} dtk")
     return {"baru": baru, "cache": len(cache), "terpakai": n, "sisa": max(0, len(calon) - baru), "per": per}
+
+
+def bentuk_3d(kartu, meta):
+    """BENTUK 3D DIUKUR dari mesh resmi Roblox (fisik3d/, dipanen mata3d.py --panen). Menimpa tebakan CLIP lengan (atasan
+    3D) & panjang (bawahan 3D) dengan ukuran, dan mengisi kolom 28-34 (lihat label "bentuk3d"). Hanya label yang lolos uji
+    (bentuk3d.baca, LAPORAN_3D.md). -> {id: [W, H, D (x20 stud), bit, lengan, panjang, tebal (cm)]}"""
+    import bentuk3d as B3
+    import mata3d as M3
+    H3 = M3.muat_hasil()
+    BA, BB = BENTUK["atas"], BENTUK["bawah"]
+    ia = {lab[0]: k for k, lab in enumerate(BA["lengan"])}
+    ib = {lab[0]: k for k, lab in enumerate(BB["panjang"])}
+    per, n = {}, 0
+    for sid, f in H3.items():
+        try:
+            i = int(sid)
+        except ValueError:
+            continue
+        b = kartu.get(i)
+        if b is None or not isinstance(f, dict) or "prof" not in f:
+            continue
+        t = int(f.get("t") or (meta.get(sid) or {}).get("t") or 0)
+        o = B3.fitur(f)
+        r = B3.baca(o, t)
+        bit = 1
+        lg, pj = -1, -1
+        if r.get("potong") == "celana":
+            bit |= 2
+        elif r.get("potong") == "rok":
+            bit |= 4
+        if r.get("mengembang"):
+            bit |= 8
+        if r.get("tinggi") == "bot":
+            bit |= 16
+        if "lengan" in r:
+            lg = ia.get(r["lengan"], -1)
+            if lg >= 0:
+                b[13] = lg
+        if "panjang" in r:
+            pj = {"pendek": 0, "selutut": 1, "sedang": 1, "panjang": 2}[r["panjang"]]
+            if t in B3.BAWAH:
+                b[14] = ib.get({0: "pendek", 1: "selutut", 2: "panjang"}[pj], b[14])
+        cap = lambda x: int(max(0, min(254, round(x))))
+        per[i] = [cap(o["W"] * 20), cap(o["H"] * 20), cap(o["D"] * 20), bit, lg, pj, cap((o.get("tebalRata") or 0) * 100)]
+        n += 1
+    log(f"bentuk 3D: {len(H3)} mesh diukur, {n} kartu diberi bentuk 3D")
+    return per
 
 
 def perkaya_bukti(kartu, meta, st, per_bentuk=None):
@@ -902,6 +961,14 @@ def main():
     for i, b in kartu.items():               # kolom 26-27 SETELAH kolom bukti 20-25
         lh, bits = per_b.get(i, (-1, -1))
         b += [lh, bits]
+    try:
+        per3 = bentuk_3d(kartu, meta) if not stub else {}
+    except Exception as ex:
+        log("bentuk 3D gagal (kartu tetap ditulis):", ex)
+        per3 = {}
+    kosong3 = [-1] * 7
+    for i, b in kartu.items():               # kolom 28-34
+        b += per3.get(i, kosong3)
     versi = int(time.time())
     tulis(kartu, versi, evals)
     if bukti.get("graf"):

@@ -25,7 +25,9 @@ import requests
 KEY = (os.environ.get("ROBLOX_API_KEY") or "").strip()
 H = {"User-Agent": "KatalogPraktis-kartu/1.0 (GitHub Actions; github.com/grewetewe-commits/katalog-embed)"}
 VERSI_3D = 1
-P_HASIL = "fisik3d/bentuk3d.json.gz"
+D_HASIL = "fisik3d"            # 16 shard teks fisik3d/bentuk3d_{0..15}.json (id % 16), satu item per baris:
+N_SHARD = 16                   # git hanya menyimpan selisih baris -> repo tidak membengkak tiap putaran panen
+P_LAMA = "fisik3d/bentuk3d.json.gz"
 _lok = threading.Lock()
 STAT = {"ok": 0, "pending": 0, "galat": 0, "429": 0, "tanpa_obj": 0}
 
@@ -194,18 +196,34 @@ def satu(aid, t):
 
 
 def muat_hasil():
-    try:
-        with gzip.open(P_HASIL, "rt", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return {}
+    hasil = {}
+    for s in range(N_SHARD):
+        try:
+            with open(f"{D_HASIL}/bentuk3d_{s}.json", encoding="utf-8") as f:
+                hasil.update(json.load(f))
+        except Exception:
+            pass
+    if os.path.exists(P_LAMA):          # format lama (satu gz) -> dipindah ke shard
+        try:
+            with gzip.open(P_LAMA, "rt", encoding="utf-8") as f:
+                for k, v in json.load(f).items():
+                    hasil.setdefault(k, v)
+        except Exception:
+            pass
+    return hasil
 
 
 def simpan_hasil(hasil):
-    os.makedirs(os.path.dirname(P_HASIL), exist_ok=True)
-    with gzip.open(P_HASIL + ".tmp", "wt", encoding="utf-8") as f:
-        json.dump(hasil, f, separators=(",", ":"))
-    os.replace(P_HASIL + ".tmp", P_HASIL)
+    os.makedirs(D_HASIL, exist_ok=True)
+    sh = [[] for _ in range(N_SHARD)]
+    for k in sorted(hasil, key=lambda x: int(x)):
+        sh[int(k) % N_SHARD].append(k)
+    for s in range(N_SHARD):
+        baris = [json.dumps(k) + ":" + json.dumps(hasil[k], separators=(",", ":")) for k in sh[s]]
+        p = f"{D_HASIL}/bentuk3d_{s}.json"
+        with open(p + ".tmp", "w", encoding="utf-8") as f:
+            f.write("{\n" + ",\n".join(baris) + "\n}\n")
+        os.replace(p + ".tmp", p)
 
 
 def calon_panen(hasil, jenis):

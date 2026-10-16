@@ -203,6 +203,9 @@ JENIS = {
         ("tanduk", ["horns"], ["horns", "horn", "tanduk"]),
         ("halo", ["a halo ring"], ["halo"]),
         ("topi_lain", ["a hat"], ["hat", "topi"]),
+        # tambahan 16 Okt (lembar kontak: anting & headphone yang diunggah sebagai topi terbaca mahkota/telinga)
+        ("anting", ["earrings"], ["earring", "earrings", "anting"]),
+        ("headphone", ["headphones or earmuffs"], ["headphone", "headphones", "headset", "earmuffs", "earmuff"]),
     ],
     "wajah": [
         ("kacamata", ["eyeglasses"], ["glasses", "spectacles", "kacamata"]),
@@ -226,6 +229,7 @@ JENIS = {
         ("boneka", ["a plush toy or pet"], ["plush", "plushie", "pet", "boneka"]),
         ("alat_musik", ["a musical instrument"], ["guitar", "violin", "bass"]),
         ("lain", ["a decorative accessory"], []),
+        ("headphone", ["headphones around the neck"], ["headphone", "headphones", "headset"]),
     ],
 }
 BENTUK = {
@@ -241,6 +245,8 @@ BENTUK = {
     },
 }
 KALIMAT = ["a 3d render of {d} roblox {n}", "a roblox avatar {n}, {d}", "{d} {n}"]
+KALIMAT_2D = ["a blocky white roblox mannequin wearing a {n}: {d}", "a roblox classic clothing {n} on a blocky avatar, {d}",
+              "{d} {n} worn by a blocky white mannequin"]
 
 
 def log(*a):
@@ -297,12 +303,12 @@ class Teks:
         return np.stack(hasil)
 
 
-def vektor_label(teks, labels, noun, ada_kalimat=True):
+def vektor_label(teks, labels, noun, kal_t=None):
     """rata-rata ensemble kalimat per label -> matriks (L, 512) ternormalisasi"""
     out = []
     for lab in labels:
         desk = lab[1]
-        kal = [t.format(d=d, n=noun) for d in desk for t in KALIMAT] if ada_kalimat else list(desk)
+        kal = [t.format(d=d, n=noun) for d in desk for t in (kal_t or KALIMAT)]
         v = teks(kal).mean(axis=0)
         out.append(v / np.linalg.norm(v))
     return np.stack(out)
@@ -417,10 +423,22 @@ def bangun(teks, ids, E, e2, meta, hanya=None):
         if kel:
             kel_items[kel].append(i)
     kartu, evals, contoh = {}, {}, []
+    # baju/celana/kaos KLASIK 2D tampil di manekin kotak; kalimat CLIP-nya harus menyebut manekin itu, kalau tidak siluet
+    # manekin terbaca "zirah"/"kostum" (lembar kontak 16 Okt: 9 dari 36 baju 2D jadi zirah). 3D tampil sendiri.
+    sub = []
     for kel, daftar in kel_items.items():
+        if kel in ("atas", "bawah"):
+            d2 = [i for i in daftar if int(meta[str(i)].get("t") or 0) in ASET_2D]
+            d3 = [i for i in daftar if int(meta[str(i)].get("t") or 0) not in ASET_2D]
+            sub += [(kel, "2D", d2, KALIMAT_2D), (kel, "3D", d3, KALIMAT)]
+        else:
+            sub.append((kel, "", daftar, KALIMAT))
+    for kel, varian, daftar, kal_t in sub:
+        if not daftar:
+            continue
         noun = KEL_NOUN[kel]
         n = len(daftar)
-        log(f"kelompok {kel}: {n} item")
+        log(f"kelompok {kel}{varian}: {n} item")
         X = np.stack([E[idx_of[i]] for i in daftar])
         # potongan pakaian (tanpa manekin) untuk 2D: jenis/bentuk/pola lebih tepat; tema/subjek dari rata-rata keduanya
         Xk = X.copy()
@@ -442,16 +460,16 @@ def bangun(teks, ids, E, e2, meta, hanya=None):
         if kel in JENIS:
             facets.append(("jenis", JENIS[kel], Xk, noun))
         for nm, labels, XX, nn in facets:
-            T = vektor_label(teks, labels, nn)
+            T = vektor_label(teks, labels, nn, kal_t)
             # evaluasi jujur: gambar saja vs label nama (hanya nama yang menunjuk tepat satu label), sekaligus kalibrasi
             alfa, skor = pilih_alfa(XX, T, labels, nama_l, toks)
             if skor:
-                evals[f"{kel}/{nm}"] = {"alfa": alfa, "skor": skor}
+                evals[f"{kel}{varian}/{nm}"] = {"alfa": alfa, "skor": skor}
             Pimg = softmax_terkoreksi(XX, T, alfa)
             Pf = fusi_nama(Pimg, labels, nama_l, toks)
             hasil[nm] = (top2(Pf), None, Pimg)
-        for nm, sub in (BENTUK.get(kel) or {}).items():
-            T = vektor_label(teks, [(a, b, []) for a, b in sub], noun)
+        for nm, sb in (BENTUK.get(kel) or {}).items():
+            T = vektor_label(teks, [(a, b, []) for a, b in sb], noun, kal_t)
             hasil["b_" + nm] = (top2(softmax_terkoreksi(Xk, T, 0.5)), None, None)
         for r, i in enumerate(daftar):
             def tp(nm, k=2):

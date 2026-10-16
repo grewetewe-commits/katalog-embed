@@ -271,8 +271,31 @@ def panen(menit, batas, jenis, pekerja=4):
     print(f"selesai: {json.dumps(STAT)} | total diukur {len(hasil)} | {time.time() - t0:.0f} dtk", flush=True)
 
 
+def uji_aset(ids):
+    """apakah file aset (rbxm: Accessory/Handle/Attachment/WrapLayer) bisa diambil lewat Open Cloud Asset Delivery dengan
+    kunci yang sama? Dokumen: create.roblox.com/docs/cloud/reference/domains/assetdelivery (endpoint /v1/openCloud/...
+    "dipanggil dengan API key lewat apis.roblox.com/asset-delivery-api/"). Hanya mencetak status, tidak menyimpan file."""
+    for aid in ids:
+        for url in (f"https://apis.roblox.com/asset-delivery-api/v1/assetId/{aid}",
+                    f"https://apis.roblox.com/asset-delivery-api/v1/openCloud/assetId/{aid}"):
+            try:
+                r = ambil(url, kunci=True)
+                print("aset", aid, url.split("/v1/")[1].split("/")[0], "HTTP", r.status_code, r.text[:220].replace("\n", " "),
+                      flush=True)
+                if r.status_code == 200:
+                    loc = (r.json() or {}).get("location")
+                    if loc:
+                        r2 = requests.get(loc, headers=H, timeout=30)
+                        print("   unduh", r2.status_code, len(r2.content), "byte, awal", r2.content[:14], flush=True)
+            except Exception as ex:
+                print("aset", aid, "galat", ex, flush=True)
+
+
 def main():
     print("kunci API terpasang:", bool(KEY), flush=True)
+    if "--uji-aset" in sys.argv:
+        uji_aset([int(x) for x in sys.argv[1:] if x.isdigit()] or [7192553841, 9438759973])
+        return
     if "--panen" in sys.argv:
         jenis = {int(x) for x in (os.environ.get("JENIS_3D") or "64,65,66,67,68,69,70,71,72").split(",") if x.strip()}
         panen(float(os.environ.get("MENIT_3D") or 40), int(os.environ.get("BATAS_3D") or 4000), jenis,

@@ -28,7 +28,9 @@ jobs:
       - name: Ambil & ukur file 3D
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
-        run: python mata3d.py 2>&1 | tee uji3d_log.txt
+        run: |
+          python mata3d.py --uji-aset 2>&1 | tee uji3d_log.txt
+          python mata3d.py 2>&1 | tee -a uji3d_log.txt
       - name: Simpan hasil ke branch
         if: always()
         run: |

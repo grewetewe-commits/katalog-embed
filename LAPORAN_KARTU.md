@@ -1,4 +1,4 @@
-# Laporan Kartu Item (MATA v2) — versi 1792126296
+# Laporan Kartu Item (MATA v2) — versi 1792126476
 
 Kartu dibaca dari GAMBAR item (CLIP zero-shot, model sama dengan otak.py); nama hanya bukti tambahan.
 

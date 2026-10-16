@@ -57,6 +57,15 @@ jobs:
         shell: bash
         run: python otak.py 2>&1 | tee otak_log.txt
 
+      # Kartu item (MATA v2): baca jenis/bentuk/tema/subjek/pola dari GAMBAR item (embedding yang baru dibuat otak.py).
+      # Gagal di sini tidak menggagalkan putaran otak; server tetap memakai kartu versi sebelumnya.
+      - name: Kartu item (baca gambar item)
+        if: success()
+        continue-on-error: true
+        env:
+          HF_HUB_DISABLE_TELEMETRY: "1"
+        run: python kartu_item.py 2>&1 | tail -n 40
+
       - name: Simpan sidik jari ke cache
         if: always()
         uses: actions/cache/save@v4
@@ -70,7 +79,7 @@ jobs:
           tail -n 120 otak_log.txt > LOG_TERAKHIR.txt 2>/dev/null || echo "log tidak ada" > LOG_TERAKHIR.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for p in model bank meta data LAPORAN_OTAK.md LOG_TERAKHIR.txt; do
+          for p in model bank meta data kartu/info.json kartu/kartu_0.json kartu/kartu_1.json kartu/kartu_2.json kartu/kartu_3.json kartu/kartu_4.json kartu/kartu_5.json kartu/kartu_6.json kartu/kartu_7.json LAPORAN_KARTU.md LAPORAN_OTAK.md LOG_TERAKHIR.txt; do
             if [ -e "$p" ]; then git add "$p"; fi
           done
           if git diff --staged --quiet; then
@@ -87,6 +96,6 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          for f in model/info.json model/item_{0..7}.json meta/harga_{0..7}.json bank/outfit_{0..3}.json meta/badan.json meta/sepatu.json; do
+          for f in model/info.json model/item_{0..7}.json meta/harga_{0..7}.json bank/outfit_{0..3}.json meta/badan.json meta/sepatu.json kartu/info.json kartu/kartu_{0..7}.json; do
             curl -s -m 20 -o /dev/null -w "%{http_code} $f\n" "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/$f" || true
           done

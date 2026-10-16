@@ -4,7 +4,7 @@ name: Kartu Item (uji)
 on:
   push:
     branches: [claude/kartu-item]
-    paths: [kartu_item.py, probe_3d.py, lembar_kartu.py, .github/workflows/kartu-uji.yml]
+    paths: [kartu_item.py, lembar_kartu.py, .github/workflows/kartu-uji.yml]
   workflow_dispatch:
 
 permissions:
@@ -43,13 +43,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install "numpy<2" "transformers>=4.40,<4.50" pillow
-      - name: Probe format 3D resmi (verifikasi, tidak menulis apa pun)
-        continue-on-error: true
-        env:
-          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
-        run: |
-          pip install requests >/dev/null
-          python probe_3d.py 126884250250747 72558563872966 8565346973 192557913 2>&1 | tee probe_log.txt
       - name: Baca kartu item
         env:
           HF_HUB_DISABLE_TELEMETRY: "1"

@@ -111,12 +111,15 @@ def _konteks(nilai, outs):
     return {i: acc[i] / n[i] for i in acc}, n
 
 
-def gender_bukti(kartu, meta, outs, label, sembunyi=None, iters=2):
-    """-> {id: (skor -1 cowo .. +1 cewe, jumlah outfit)} ; sembunyi = set id yang benih namanya disembunyikan (uji)"""
+def gender_bukti(kartu, meta, outs, label, sembunyi=None, iters=2, benih_bentuk=None):
+    """-> {id: (skor -1 cowo .. +1 cewe, jumlah outfit)} ; sembunyi = set id yang benih namanya disembunyikan (uji);
+    benih_bentuk = {id: nilai} dari BENTUK 2D DIUKUR (leher rendah / bahu terbuka / crop: 98-99% dipakai cewek, data 16 Okt)"""
     benih = {}
     for i, b in kartu.items():
         m = meta.get(str(i)) or {}
         g = 0.0 if (sembunyi and i in sembunyi) else gender_nama(m.get("n"))
+        if g == 0.0 and benih_bentuk and i in benih_bentuk:
+            g = benih_bentuk[i]
         if g == 0.0 and b[K_JENIS] >= 0 and b[K_JENISP] >= 50:
             kel = label["kelompok"][b[K_KEL]]
             jn = label["jenis"].get(kel, [])
@@ -143,13 +146,13 @@ def gender_bukti(kartu, meta, outs, label, sembunyi=None, iters=2):
     return hasil
 
 
-def uji_gender(kartu, meta, outs, label, seed=0):
+def uji_gender(kartu, meta, outs, label, seed=0, benih_bentuk=None):
     """uji jujur: benih nama 20% item berlabel disembunyikan, lalu ditebak dari pemakaian saja"""
     lab = [i for i in kartu if gender_nama((meta.get(str(i)) or {}).get("n")) != 0.0]
     rng = np.random.default_rng(seed)
     rng.shuffle(lab)
     uji = set(lab[:len(lab) // 5])
-    h = gender_bukti(kartu, meta, outs, label, sembunyi=uji)
+    h = gender_bukti(kartu, meta, outs, label, sembunyi=uji, benih_bentuk=benih_bentuk)
     out = []
     for amb in (0.10, 0.15, 0.25):
         ok = nn = 0

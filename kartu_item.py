@@ -715,11 +715,11 @@ def bentuk_2d(kartu, meta):
     ia = {nm: {lab[0]: k for k, lab in enumerate(BA[nm])} for nm in BA}
     ib = {nm: {lab[0]: k for k, lab in enumerate(BB[nm])} for nm in BB}
     n = 0
+    per = {}
     for i, b in kartu.items():
         f = cache.get(str(i))
         t = int((meta.get(str(i)) or {}).get("t") or 0)
         if not f or t not in (11, 12):
-            b += [-1, -1]
             continue
         r = B2.baca(f, t)
         bits = 16
@@ -731,7 +731,7 @@ def bentuk_2d(kartu, meta):
             if r.get("bahu") == "terbuka":
                 bits |= 1
             b[18] = 1 if r.get("fungsi") == "badan" else 0
-            b += [int(f.get("leher", 0)), bits]
+            per[i] = (int(f.get("leher", 0)), bits)
         else:
             b[14] = ib["panjang"].get(r.get("panjang"), b[14])
             if r.get("badan") == "tertutup":
@@ -739,19 +739,25 @@ def bentuk_2d(kartu, meta):
             if r.get("kakiBawah"):
                 bits |= 8
             b[18] = 1 if r.get("fungsi") == "badan" else 0
-            b += [-1, bits]
+            per[i] = (-1, bits)
         n += 1
     log(f"bentuk 2D: {baru} diukur putaran ini, {len(cache)} di cache, {n} kartu diberi bentuk diukur, sisa antre "
         f"{max(0, len(calon) - baru)}, {time.time() - t0:.0f} dtk")
-    return {"baru": baru, "cache": len(cache), "terpakai": n, "sisa": max(0, len(calon) - baru)}
+    return {"baru": baru, "cache": len(cache), "terpakai": n, "sisa": max(0, len(calon) - baru), "per": per}
 
 
-def perkaya_bukti(kartu, meta, st):
+def perkaya_bukti(kartu, meta, st, per_bentuk=None):
     """kolom 20-25: gender & tema dari BUKTI (bukti_item.py). Tanpa data outfit -> kolom kosong (-1), kartu tetap jalan."""
     t0 = time.time()
     lab = label_semua()
     outs = BUKTI.daftar_outfit(st)
-    gb = BUKTI.gender_bukti(kartu, meta, outs, lab) if outs else {}
+    # benih gender dari BENTUK DIUKUR: baju 2D leher rendah (>22% tinggi badan) / bahu terbuka / crop. Di 331 baju yang
+    # gendernya jelas dari pemakaian (16 Okt): leher rendah 98% cewek, bahu terbuka 99%, crop 99% (dasar 79%).
+    bb = {}
+    for i, (leher, bits) in (per_bentuk or {}).items():
+        if (leher is not None and leher > 22) or (bits & 1) or (bits & 2):
+            bb[i] = 0.6
+    gb = BUKTI.gender_bukti(kartu, meta, outs, lab, benih_bentuk=bb) if outs else {}
     tb = BUKTI.tema_bukti(kartu, meta, outs, lab, TEMA, ada_kata, token)
     for i, b in kartu.items():
         g = gb.get(i)
@@ -760,7 +766,7 @@ def perkaya_bukti(kartu, meta, st):
         b += [t[0], t[1], t[2], t[3]]
     nama_t = [t[0] for t in TEMA]
     graf = BUKTI.graf_tema(tb, outs, nama_t) if outs else None
-    ug = BUKTI.uji_gender(kartu, meta, outs, lab) if outs else []
+    ug = BUKTI.uji_gender(kartu, meta, outs, lab, benih_bentuk=bb) if outs else []
     log(f"bukti: {len(outs)} outfit manusia, gender {len(gb)} item, tema berbukti "
         f"{sum(1 for v in tb.values() if v[0] >= 0)} item, {time.time() - t0:.0f} dtk")
     return {"outs": len(outs), "graf": graf, "uji_gender": ug, "tb": tb}
@@ -874,15 +880,16 @@ def main():
     ids, E, e2, meta = muat()
     teks = Teks(stub=stub)
     kartu, evals, contoh = bangun(teks, ids, E, e2, meta)
-    bukti = perkaya_bukti(kartu, meta, getattr(muat, "st", {}) or {})
     try:
         bentuk = bentuk_2d(kartu, meta) if BATAS_BENTUK > 0 and not stub else None
     except Exception as ex:
         log("bentuk 2D gagal (kartu tetap ditulis):", ex)
         bentuk = None
-    if bentuk is None:
-        for b in kartu.values():
-            b += [-1, -1]
+    per_b = (bentuk or {}).get("per") or {}
+    bukti = perkaya_bukti(kartu, meta, getattr(muat, "st", {}) or {}, per_b)
+    for i, b in kartu.items():               # kolom 26-27 SETELAH kolom bukti 20-25
+        lh, bits = per_b.get(i, (-1, -1))
+        b += [lh, bits]
     versi = int(time.time())
     tulis(kartu, versi, evals)
     if bukti.get("graf"):

@@ -74,6 +74,36 @@ def ukur(im):
             out.append(float(kain[ya:yb, x0:x1].sum() / n) if n > 0 else 0.0)
         return out
 
+    def hist(k, j, nb):
+        """histogram warna kasar (4x4x4) piksel pakaian pada pita j dari nb pita"""
+        x0, y0, x1, y1 = W[k]
+        ya = y0 + (y1 - y0) * j // nb
+        yb = y0 + (y1 - y0) * (j + 1) // nb
+        m = kain[ya:yb, x0:x1]
+        px = rgb[ya:yb, x0:x1][m]
+        if len(px) < 20:
+            return None
+        q = (np.clip(px, 0, 255) // 64).astype(np.int64)
+        h = np.bincount(q[:, 0] * 16 + q[:, 1] * 4 + q[:, 2], minlength=64).astype(np.float64)
+        return h / h.sum()
+
+    def lanjut_warna(k, nb, cs, amb=0.5):
+        """sampai pita ke berapa pakaian BERWARNA SAMA dengan pita teratas yang tertutup (kaus kaki/stoking/kulit dilukis
+        di bawah celana pendek/rok tidak dihitung sebagai celana panjang)"""
+        mulai = next((j for j, c in enumerate(cs) if c >= amb), None)
+        if mulai is None:
+            return 0.0
+        h0 = hist(k, mulai, nb)
+        akhir = mulai
+        for j in range(mulai + 1, nb):
+            if cs[j] < amb:
+                break
+            hj = hist(k, j, nb)
+            if h0 is None or hj is None or np.minimum(h0, hj).sum() < 0.35:
+                break
+            akhir = j
+        return (akhir + 1) / nb
+
     def bawah(cs, amb=0.5):
         """pita terbawah yang masih tertutup (celana/rok: sampai mana ke bawah)"""
         j = -1
@@ -116,6 +146,8 @@ def ukur(im):
         "lengan": int(round(100 * (panjang(lL) + panjang(lR)) / 2)),
         "lenganCak": int(round(100 * (sum(lL) + sum(lR)) / 10)),
         "kaki": int(round(100 * bawah(kk))),
+        "kakiWarna": int(round(100 * lanjut_warna("kaki", 5, kk))),
+        "lenganWarna": int(round(100 * (lanjut_warna("lenganL", 5, lL) + lanjut_warna("lenganR", 5, lR)) / 2)),
         "kakiCak": int(round(100 * sum(kk) / 5)),
     }
     tot = al[128:338, 104:336].sum()
@@ -129,7 +161,8 @@ def baca(f, t):
     if t == 11:
         if f["cakupan"] < 12 or (f["badan"] < 15 and f["lenganCak"] < 15):
             out["fungsi"] = "badan"            # hampir tak menutup: shading/riasan/tekstur kulit
-        out["lengan"] = "tanpa" if f["lenganCak"] < 20 else ("pendek" if f["lengan"] < 80 else "panjang")
+        pl = min(f["lengan"], f.get("lenganWarna", f["lengan"]))
+        out["lengan"] = "tanpa" if f["lenganCak"] < 20 else ("pendek" if pl < 80 else "panjang")
         out["leher"] = "tinggi" if f["leher"] <= 6 else ("sedang" if f["leher"] <= 22 else "rendah")
         if f["bahu"] >= 60 and f["badan"] >= 30:
             out["bahu"] = "terbuka"
@@ -138,7 +171,10 @@ def baca(f, t):
     elif t == 12:
         if f["kakiCak"] < 10 and f["badan"] < 15:
             out["fungsi"] = "badan"
-        out["panjang"] = "pendek" if f["kaki"] <= 40 else ("selutut" if f["kaki"] <= 60 else "panjang")
+        pk = min(f["kaki"], f.get("kakiWarna", f["kaki"]))
+        out["panjang"] = "pendek" if pk <= 40 else ("selutut" if pk <= 60 else "panjang")
+        if pk <= 60 and f["kaki"] >= 80:
+            out["kakiBawah"] = "kaus kaki/stoking/kulit dilukis"
         if f["badan"] >= 60:
             out["badan"] = "tertutup"           # overall / kostum / setelan badan
     return out

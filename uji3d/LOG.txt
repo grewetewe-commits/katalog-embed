@@ -1,4 +1,9 @@
 kunci API terpasang: True
+aset 7192553841 assetId HTTP 403 {"errors":[{"code":0,"message":"Scope not authorized."}]} 
+aset 7192553841 openCloud HTTP 404 {"errors":[{"code":0,"message":""}]} 
+aset 9438759973 assetId HTTP 403 {"errors":[{"code":0,"message":"Scope not authorized."}]} 
+aset 9438759973 openCloud HTTP 404 {"errors":[{"code":0,"message":""}]} 
+kunci API terpasang: True
 7192553841 OBJ: 1121 verteks, 1492 segitiga, grup: ['Handle1']
     {"v": 1, "W": 282, "H": 194, "D": 85, "prof": [[101, 75, 42, 33, 0], [269, 74, 41, 33, 0], [281, 73, 42, 32, 0], [265, 72, 41, 30, 0], [248, 71, 42, 29, 0], [232, 70, 42, 29, 0], [210, 69, 42, 28, 0], [190, 70, 42, 29, 0], [170, 77, 39, 38, 0], [148, 77, 35, 42, 0], [127, 71, 30, 42, 0], [89, 56, 18, 39, 0]], "luar": [[12, 15, 61], [6, 15, 46], [2, 15, 30]], "leher": [39, 0, 10], "depanTerbuka": 14, "nv": 1121, "nf": 1492}
 9438759973 OBJ: 3554 verteks, 3019 segitiga, grup: ['Handle1']

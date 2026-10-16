@@ -4,7 +4,7 @@ name: Kartu Item (uji)
 on:
   push:
     branches: [claude/kartu-item]
-    paths: [kartu_item.py, probe_3d.py, .github/workflows/kartu-uji.yml]
+    paths: [kartu_item.py, probe_3d.py, lembar_kartu.py, .github/workflows/kartu-uji.yml]
   workflow_dispatch:
 
 permissions:
@@ -56,6 +56,11 @@ jobs:
         run: |
           ls -la cache || true
           python kartu_item.py --uji 126884250250747 72558563872966 1028859 14328141014 8565346973 6554200369 192557913 78504769792948 126582482792163 93519364113971 382538059 7192553841 14027730224 15901064855 98089688160090 116973312880668 98757749181872 5731050224 301820310 18832937926 122234019472336 132200141502925 83668736552435 2>&1 | tee kartu_log.txt
+      - name: Lembar kontak (thumbnail + kartu) untuk diperiksa mata
+        continue-on-error: true
+        run: |
+          pip install --upgrade pillow requests >/dev/null
+          python lembar_kartu.py 126884250250747 72558563872966 1028859 14328141014 8565346973 6554200369 192557913 78504769792948 126582482792163 93519364113971 382538059 7192553841 14027730224 15901064855 98089688160090 116973312880668 98757749181872 5731050224 301820310 18832937926 122234019472336 132200141502925 83668736552435 2>&1 | tail -5
       - name: Simpan hasil uji ke branch
         if: success()
         run: |

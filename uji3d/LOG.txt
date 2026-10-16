@@ -1,0 +1,11 @@
+kunci API terpasang: True
+7192553841 GAGAL: HTTP 403: {"errors":[{"code":0,"message":"Scope not authorized."}]}
+
+9438759973 GAGAL: HTTP 403: {"errors":[{"code":0,"message":"Scope not authorized."}]}
+
+126884250250747 GAGAL: HTTP 403: {"errors":[{"code":0,"message":"Scope not authorized."}]}
+
+72558563872966 GAGAL: HTTP 403: {"errors":[{"code":0,"message":"Scope not authorized."}]}
+
+192557913 GAGAL: HTTP 403: {"errors":[{"code":0,"message":"Scope not authorized."}]}
+

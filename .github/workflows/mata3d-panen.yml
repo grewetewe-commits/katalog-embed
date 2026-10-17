@@ -1,0 +1,61 @@
+name: Mata 3D (panen bentuk)
+
+# Mengukur bentuk ASLI pakaian 3D dari file 3D resmi Roblox (mata3d.py --panen), bertahap, paling difavoritkan dulu.
+# Butuh secret ROBLOX_API_KEY dengan izin Open Cloud "thumbnail:read". Hasil: fisik3d/bentuk3d_{0..15}.json + rangka.json (angka turunan saja,
+# mesh tidak disimpan). Jadwal hanya aktif di cabang utama (aturan GitHub); di cabang lain jalankan manual.
+on:
+  push:
+    branches: [claude/kartu-item]
+    paths: [.github/workflows/mata3d-panen.yml]
+  schedule:
+    - cron: "41 1,7,13,19 * * *"
+  workflow_dispatch:
+    inputs:
+      menit:
+        description: "Menit maksimum pengukuran (default 40)"
+        default: "40"
+      jenis:
+        description: "Tipe aset dipisah koma (default pakaian layered 64-72)"
+        default: "64,65,66,67,68,69,70,71,72"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mata3d-panen
+  cancel-in-progress: false
+
+jobs:
+  panen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ambil data panen & hasil 3D terakhir (cabang data / main selama masa pindah)
+        run: |
+          bash data_cabang.sh ambil otak data/panen.json.gz
+          bash data_cabang.sh ambil mata3d fisik3d
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Pasang dependensi
+        run: pip install "numpy<2" requests
+      - name: Ambil kerangka badan dari map (DataStore fakta fisik lewat Open Cloud)
+        continue-on-error: true
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+          UNIVERSE_ID: "10753176264"
+        run: python mata3d.py --rangka 2>&1 | tail -3
+      - name: Ukur bentuk 3D
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+          MENIT_3D: ${{ github.event.inputs.menit || '40' }}
+          JENIS_3D: ${{ github.event.inputs.jenis || '64,65,66,67,68,69,70,71,72' }}
+          BATAS_3D: "6000"
+          PEKERJA_3D: "4"
+        run: python mata3d.py --panen 2>&1 | tee mata3d_log.txt
+      - name: Simpan hasil ke cabang data (satu commit, tidak menumpuk)
+        if: always()
+        run: |
+          mkdir -p fisik3d && tail -n 60 mata3d_log.txt > fisik3d/LOG.txt || true
+          bash data_cabang.sh simpan mata3d "Mata 3D: panen bentuk (otomatis)" fisik3d

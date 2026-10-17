@@ -15,21 +15,19 @@ jobs:
     timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
+      - name: Ambil koleksi & kursor terakhir dari cabang data
+        run: bash data_cabang.sh ambil ready bank/ready_outfits.json data/ready_outfit_cursor.json data/ready_outfit_report.json
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - run: node --test test_ready_outfits.mjs
       - run: node ready_outfits.mjs
-      - name: Commit collection and resumable cursors
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add bank/ready_outfits.json data/ready_outfit_cursor.json data/ready_outfit_report.json
-          if ! git diff --staged --quiet; then
-            git commit -m 'Refresh public ready outfit references'
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
+      - name: Simpan koleksi & kursor ke cabang data (satu commit, tidak menumpuk)
+        run: bash data_cabang.sh simpan ready "Refresh public ready outfit references" bank/ready_outfits.json data/ready_outfit_cursor.json data/ready_outfit_report.json
+      - name: Bersihkan salinan lama di main (sekali setelah pindah ke cabang data)
+        if: success() && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        run: bash data_cabang.sh bersihkan-main
       - name: Refresh public manifest CDN
         continue-on-error: true
-        run: curl -s -m 20 "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/bank/ready_outfits.json"
+        run: bash data_cabang.sh segarkan bank/ready_outfits.json

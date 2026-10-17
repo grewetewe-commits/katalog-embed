@@ -1,0 +1,87 @@
+name: Kartu Item (uji)
+
+# Uji MATA v2 di branch kerja. Tidak menyentuh main, model/, meta/, bank/.
+on:
+  push:
+    branches: [claude/kartu-item]
+    paths: [kartu_item.py, bukti_item.py, motif.py, bentuk2d.py, bentuk3d.py, uji_bentuk3d.py, badan_bentuk.py, uji3d/badan_label.json, lembar_kartu.py, .github/workflows/kartu-uji.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kartu-uji
+  cancel-in-progress: true
+
+jobs:
+  kartu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Pulihkan model CLIP (cache main)
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-clip-vit-b32-v1
+      - name: Pulihkan sidik jari gambar (cache main, hanya baca)
+        uses: actions/cache/restore@v4
+        with:
+          path: cache
+          key: emb-v2-kartu-${{ github.run_id }}
+          restore-keys: emb-v2-
+      - name: Pulihkan cache bentuk 2D (diukur bertahap)
+        uses: actions/cache/restore@v4
+        with:
+          path: cache_bentuk
+          key: bentuk2d-v1-${{ github.run_id }}
+          restore-keys: bentuk2d-v1-
+      - name: Ambil data panen & bahan terbaru (cabang data / main selama masa pindah)
+        run: |
+          bash data_cabang.sh ambil otak data/panen.json.gz model
+          bash data_cabang.sh ambil mata3d fisik3d
+          bash data_cabang.sh ambil kartu kartu
+      - name: Pasang dependensi
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install "numpy<2" "transformers>=4.40,<4.50" pillow scipy scikit-learn
+      - name: Baca kartu item
+        env:
+          HF_HUB_DISABLE_TELEMETRY: "1"
+          BATAS_BENTUK: "20000"
+          MENIT_BENTUK: "35"
+          BATAS_MOTIF3D: "8000"
+          MENIT_MOTIF3D: "10"
+        run: |
+          ls -la cache || true
+          python kartu_item.py --uji 126884250250747 72558563872966 1028859 14328141014 8565346973 6554200369 192557913 78504769792948 126582482792163 93519364113971 382538059 7192553841 14027730224 15901064855 98089688160090 116973312880668 98757749181872 5731050224 301820310 18832937926 122234019472336 132200141502925 83668736552435 2>&1 | tee kartu_log.txt
+      - name: Uji bentuk 3D (mesh resmi vs kata nama & gender pemakaian)
+        continue-on-error: true
+        run: python uji_bentuk3d.py 2>&1 | tail -3
+      - name: Badan avatar (manusia atau bukan dari thumbnail resmi + cara dipakai manusia)
+        continue-on-error: true
+        env:
+          HF_HUB_DISABLE_TELEMETRY: "1"
+        run: python badan_bentuk.py 2>&1 | tail -8
+      - name: Simpan cache bentuk 2D
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: cache_bentuk
+          key: bentuk2d-v1-${{ github.run_id }}
+      - name: Lembar kontak (thumbnail + kartu) untuk diperiksa mata
+        continue-on-error: true
+        run: |
+          pip install --upgrade pillow requests >/dev/null
+          python lembar_kartu.py 126884250250747 72558563872966 1028859 14328141014 8565346973 6554200369 192557913 78504769792948 126582482792163 93519364113971 382538059 7192553841 14027730224 15901064855 98089688160090 116973312880668 98757749181872 5731050224 301820310 18832937926 122234019472336 132200141502925 83668736552435 2>&1 | tail -5
+      - name: Simpan hasil ke cabang data (satu commit, tidak menumpuk)
+        if: success()
+        run: |
+          tail -n 60 kartu_log.txt > LOG_KARTU.txt
+          bash data_cabang.sh simpan kartu "Kartu item: hasil uji (otomatis)" kartu LAPORAN_KARTU.md LOG_KARTU.txt LAPORAN_3D.md LAPORAN_BADAN.md
+          bash data_cabang.sh segarkan kartu/info.json kartu/kartu_{0..7}.json kartu/tema_graf.json kartu/badan_bukti.json kartu/badan_bentuk.json

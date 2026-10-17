@@ -1,0 +1,47 @@
+name: Motif (uji)
+
+# Uji motif diukur dari piksel (motif.py) di branch kerja. Tidak menyentuh main, model/, meta/, bank/.
+on:
+  push:
+    branches: [claude/kartu-item]
+    paths: [motif.py, .github/workflows/motif-uji.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: motif-uji
+  cancel-in-progress: true
+
+jobs:
+  motif:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Pulihkan thumbnail motif (cache)
+        uses: actions/cache/restore@v4
+        with:
+          path: cache_motif
+          key: motif-v1-${{ github.run_id }}
+          restore-keys: motif-v1-
+      - name: Ambil data panen terbaru (cabang data / main selama masa pindah)
+        run: bash data_cabang.sh ambil otak data/panen.json.gz
+      - name: Pasang dependensi
+        run: pip install "numpy<2" scipy scikit-learn pillow requests
+      - name: Ukur motif
+        run: python motif.py 2>&1 | tail -60
+      - name: Simpan cache thumbnail
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: cache_motif
+          key: motif-v1-${{ github.run_id }}
+      - name: Simpan hasil ke cabang data (satu commit, tidak menumpuk)
+        if: success()
+        run: |
+          bash data_cabang.sh simpan motif "Motif: hasil uji (otomatis)" LAPORAN_MOTIF.md uji2d/motif_fitur.json kartu/lembar/motif_baju.jpg kartu/lembar/motif_celana.jpg kartu/lembar/motif_3d.jpg

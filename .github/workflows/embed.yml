@@ -24,6 +24,13 @@ jobs:
       - name: Ambil kode
         uses: actions/checkout@v4
 
+      # rev 33: hasil buatan (model/meta/bank/data/kartu/fisik3d) tinggal di cabang `data` (satu commit, ditimpa tiap putaran)
+      - name: Ambil hasil terakhir dari cabang data
+        run: |
+          bash data_cabang.sh ambil otak model meta bank/outfit_0.json bank/outfit_1.json bank/outfit_2.json bank/outfit_3.json data/panen.json.gz out
+          bash data_cabang.sh ambil ready bank/ready_outfits.json
+          bash data_cabang.sh ambil mata3d fisik3d
+
       - name: Pasang Python
         uses: actions/setup-python@v5
         with:
@@ -42,11 +49,18 @@ jobs:
           key: emb-v2-${{ github.run_id }}
           restore-keys: emb-v2-
 
+      - name: Pulihkan cache bentuk 2D
+        uses: actions/cache/restore@v4
+        with:
+          path: cache_bentuk
+          key: bentuk2d-v1-${{ github.run_id }}
+          restore-keys: bentuk2d-v1-
+
       - name: Pasang dependensi
         run: |
           python -m pip install --upgrade pip
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install "numpy<2" "transformers>=4.40,<4.50" pillow requests
+          pip install "numpy<2" "transformers>=4.40,<4.50" pillow requests scipy scikit-learn
 
       - name: Jalankan otak (panen, mata, belajar, ekspor)
         env:
@@ -57,6 +71,26 @@ jobs:
         shell: bash
         run: python otak.py 2>&1 | tee otak_log.txt
 
+      # Kartu item (MATA v2): baca jenis/bentuk/tema/subjek/pola dari GAMBAR item (embedding yang baru dibuat otak.py).
+      # Gagal di sini tidak menggagalkan putaran otak; server tetap memakai kartu versi sebelumnya.
+      - name: Kartu item (baca gambar item)
+        id: kartu
+        if: success()
+        continue-on-error: true
+        shell: bash
+        env:
+          HF_HUB_DISABLE_TELEMETRY: "1"
+          BATAS_BENTUK: "12000"
+          MENIT_BENTUK: "18"
+        run: python kartu_item.py 2>&1 | tail -n 40
+
+      - name: Simpan cache bentuk 2D
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: cache_bentuk
+          key: bentuk2d-v1-${{ github.run_id }}
+
       - name: Simpan sidik jari ke cache
         if: always()
         uses: actions/cache/save@v4
@@ -64,29 +98,56 @@ jobs:
           path: cache
           key: emb-v2-${{ github.run_id }}
 
-      - name: Simpan hasil ke repo
+      - name: Simpan hasil ke cabang data (satu commit, tidak menumpuk)
         if: success()
+        shell: bash
+        env:
+          KARTU_OUTCOME: ${{ steps.kartu.outcome }}
         run: |
           tail -n 120 otak_log.txt > LOG_TERAKHIR.txt 2>/dev/null || echo "log tidak ada" > LOG_TERAKHIR.txt
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for p in model bank meta data LAPORAN_OTAK.md LOG_TERAKHIR.txt; do
-            if [ -e "$p" ]; then git add "$p"; fi
-          done
-          if git diff --staged --quiet; then
-            echo "Tidak ada perubahan hasil."
+          shopt -s nullglob
+          paths=(model meta bank/outfit_*.json data/panen.json.gz out LAPORAN_OTAK.md LOG_TERAKHIR.txt)
+          # Paket kartu diterbitkan utuh atau tidak sama sekali. Path hilang berarti hapus pada simpan,
+          # sehingga jangan menyertakan satu pun path kartu setelah gagal / keluaran parsial.
+          if [ "$KARTU_OUTCOME" = success ] && python - <<'PY'
+          import json
+          from pathlib import Path
+          def read(name):
+              return json.loads((Path('kartu') / name).read_text(encoding='utf-8'))
+          info = read('info.json')
+          assert type(info['versi']) is int and info['versi'] > 0, 'versi kartu invalid'
+          assert info['skema'] == 7 and info['shard'] == 8, 'format kartu invalid'
+          count = 0
+          for shard in range(info['shard']):
+              card = read(f'kartu_{shard}.json')
+              assert card['versi'] == info['versi'] and card['skema'] == info['skema'], 'versi shard berbeda'
+              assert isinstance(card['d'], dict), 'isi shard invalid'
+              for asset, row in card['d'].items():
+                  assert asset.isdecimal() and 0 < int(asset) < 2**53 and int(asset) % 8 == shard, 'ID/shard invalid'
+                  assert isinstance(row, list) and len(row) >= 37, 'baris kartu terpotong'
+              count += len(card['d'])
+          assert type(info['n']) is int and count == info['n'] and count > 0, 'jumlah kartu tidak cocok / kosong'
+          for name in ('tema_graf.json', 'badan_bukti.json'):
+              assert read(name)['versi'] == info['versi'], 'versi bukti berbeda'
+          print(f'Paket kartu valid: {count} item, versi {info["versi"]}')
+          PY
+          then
+            paths+=(kartu/info.json kartu/kartu_{0..7}.json kartu/tema_graf.json kartu/badan_bukti.json LAPORAN_KARTU.md)
           else
-            git commit -m "Otak: panen + model kecocokan (putaran otomatis)"
-            git pull --rebase origin main
-            git push
+            echo '::warning::Paket kartu gagal/tidak lengkap; seluruh paket kartu sebelumnya dipertahankan.'
           fi
+          bash data_cabang.sh simpan otak "Otak: panen + model kecocokan (putaran otomatis)" "${paths[@]}"
 
-      # Server Roblox mengunduh shard besar lewat CDN jsDelivr (gratis, tahan ribuan server). Cache cabang @main di CDN
+      - name: Bersihkan salinan lama di main (sekali setelah pindah ke cabang data)
+        if: success() && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        run: bash data_cabang.sh bersihkan-main
+
+      # Server Roblox mengunduh shard besar lewat CDN jsDelivr (gratis, tahan ribuan server). Cache cabang @data di CDN
       # dibersihkan supaya versi baru langsung terlihat (server tetap mengecek versi tiap shard & jatuh ke raw GitHub).
       - name: Segarkan cache CDN jsDelivr
         if: always()
         continue-on-error: true
         run: |
-          for f in model/info.json model/item_{0..7}.json meta/harga_{0..7}.json bank/outfit_{0..3}.json meta/badan.json meta/sepatu.json; do
-            curl -s -m 20 -o /dev/null -w "%{http_code} $f\n" "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/$f" || true
-          done
+          bash data_cabang.sh segarkan model/info.json model/item_{0..7}.json meta/harga_{0..7}.json bank/outfit_{0..3}.json \
+            meta/badan.json meta/sepatu.json kartu/info.json kartu/kartu_{0..7}.json kartu/tema_graf.json kartu/badan_bukti.json

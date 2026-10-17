@@ -1,0 +1,39 @@
+name: Uji bentuk 2D (piksel)
+
+# Mengukur potongan baju/celana 2D dari thumbnail resmi pada sampel beku berlabel emas. Tidak menyentuh main.
+on:
+  push:
+    branches: [claude/kartu-item]
+    paths: [bentuk2d.py, uji_bentuk2d.py, .github/workflows/uji-bentuk2d.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: uji-bentuk2d
+  cancel-in-progress: true
+
+jobs:
+  uji:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Pasang dependensi
+        run: pip install "numpy<2" pillow requests
+      - name: Ukur sampel
+        run: python uji_bentuk2d.py 2>&1 | tee uji2d_bentuk_log.txt
+      - name: Simpan hasil ke branch
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp uji2d_bentuk_log.txt uji2d/LOG_BENTUK.txt
+          git add uji2d/bentuk.json uji2d/bentuk_nilai.json uji2d/bentuk_baju.png uji2d/bentuk_celana.png uji2d/LOG_BENTUK.txt
+          git commit -m "Uji bentuk 2D: hasil (otomatis)" || echo "tidak ada perubahan"
+          git pull --rebase -q origin claude/kartu-item || true
+          git push origin HEAD:claude/kartu-item

@@ -1,0 +1,65 @@
+09:07:13 embedding 147415 | potongan 2D 43960 | meta 145197
+thumbnail gagal: cannot identify image file <_io.BytesIO object at 0x7f725d6b80e0>
+thumbnail gagal: cannot identify image file <_io.BytesIO object at 0x7f725d6cd6c0>
+thumbnail gagal: cannot identify image file <_io.BytesIO object at 0x7f725d693ec0>
+unduh 175 thumbnail: 27 dtk
+thumbnail 420: 152 dari 175
+model b32 dimuat 4 dtk
+varian selesai: b32_150
+varian selesai: b32_k150
+  b32_kain t11: 60 gambar 3.2 dtk
+  b32_kain t12: 60 gambar 3.1 dtk
+  b32_kain t2: 32 gambar 1.7 dtk
+varian selesai: b32_kain
+model fc dimuat 4 dtk
+  fc_kain t11: 60 gambar 3.2 dtk
+  fc_kain t12: 60 gambar 3.2 dtk
+  fc_kain t2: 32 gambar 1.7 dtk
+varian selesai: fc_kain
+model l14 dimuat 7 dtk
+  l14_kain t11: 60 gambar 56.3 dtk
+  l14_kain t12: 60 gambar 56.3 dtk
+  l14_kain t2: 32 gambar 30.0 dtk
+varian selesai: l14_kain
+varian selesai: l14_utuh
+probe probe_150 11/jenis: latih 4144, label aktif 17/17
+probe probe_150 11/pola: latih 1233, label aktif 15/16
+probe probe_150 11/tema: latih 4599, label aktif 36/39
+probe probe_150 11/fungsi: latih 873, label aktif 3/4
+probe probe_150 12/jenis: latih 4154, label aktif 11/12
+probe probe_150 12/pola: latih 2523, label aktif 15/16
+probe probe_150 12/tema: latih 4283, label aktif 37/39
+probe probe_150 12/fungsi: latih 237, label aktif 3/4
+probe probe_150 2/jenis: latih 4144, label aktif 17/17
+probe probe_150 2/pola: latih 1233, label aktif 15/16
+probe probe_150 2/tema: latih 4599, label aktif 36/39
+probe probe_150 2/fungsi: latih 873, label aktif 3/4
+probe probe_k150 11/jenis: latih 4144, label aktif 17/17
+probe probe_k150 11/pola: latih 1233, label aktif 15/16
+probe probe_k150 11/tema: latih 4599, label aktif 36/39
+probe probe_k150 11/fungsi: latih 873, label aktif 3/4
+probe probe_k150 12/jenis: latih 4154, label aktif 11/12
+probe probe_k150 12/pola: latih 2523, label aktif 15/16
+probe probe_k150 12/tema: latih 4283, label aktif 37/39
+probe probe_k150 12/fungsi: latih 237, label aktif 3/4
+probe probe_k150 2/jenis: latih 4144, label aktif 17/17
+probe probe_k150 2/pola: latih 1233, label aktif 15/16
+probe probe_k150 2/tema: latih 4599, label aktif 36/39
+probe probe_k150 2/fungsi: latih 873, label aktif 3/4
+thumbnail gagal: cannot identify image file <_io.BytesIO object at 0x7f72267b2480>
+thumbnail gagal: cannot identify image file <_io.BytesIO object at 0x7f7225e45580>
+thumbnail gagal: cannot identify image file <_io.BytesIO object at 0x7f72267b3510>
+thumbnail gagal: cannot identify image file <_io.BytesIO object at 0x7f71da08b790>
+thumbnail gagal: cannot identify image file <_io.BytesIO object at 0x7f72267b18f0>
+thumbnail gagal: cannot identify image file <_io.BytesIO object at 0x7f722659ecf0>
+probe_l14 (11, 2): unduh 661/700 111 dtk, L14 661 gambar 623 dtk
+probe_l14 (11, 2)/jenis: latih 311, label aktif 15/17
+probe_l14 (11, 2)/pola: latih 91, label aktif 9/16
+probe_l14 (11, 2)/tema: latih 356, label aktif 23/39
+probe_l14 (11, 2)/fungsi: latih 63, label aktif 3/4
+probe_l14 (12,): unduh 700/700 80 dtk, L14 700 gambar 658 dtk
+probe_l14 (12,)/jenis: latih 363, label aktif 9/12
+probe_l14 (12,)/pola: latih 207, label aktif 12/16
+probe_l14 (12,)/tema: latih 361, label aktif 22/39
+probe_l14 (12,)/fungsi: data latih kurang (16)
+selesai

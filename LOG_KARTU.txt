@@ -1,21 +1,23 @@
-23:28:24 embedding 145591 | potongan 2D 43410 | meta 143143
-23:28:27 kelompok atas2D: 21156 item
-23:28:30   probe atas2D/tema: latih 4554
-23:28:34   probe atas2D/pola: latih 1209
-23:28:35   probe atas2D/jenis: latih 4084
-23:28:36 kelompok atas3D: 9931 item
-23:28:41 kelompok kepala: 20778 item
-23:28:46 kelompok aksen: 27835 item
-23:28:50 kelompok bawah2D: 18022 item
-23:28:53   probe bawah2D/tema: latih 4244
-23:28:57   probe bawah2D/pola: latih 2518
-23:28:58   probe bawah2D/jenis: latih 4121
-23:28:58 kelompok bawah3D: 5892 item
-23:29:03 kelompok wajah: 8435 item
-23:29:07 kelompok rambut: 17724 item
-23:29:09 kelompok sepatu: 7801 item
-23:49:13 bentuk 2D: 3936 diukur putaran ini, 27460 di cache, 27457 kartu diberi bentuk diukur, sisa antre 9241, 1201 dtk
-23:49:14 bentuk 3D: 13842 mesh diukur, 49844 berkerangka badan, 13842 kartu diberi bentuk 3D, 450 atasan dengan bagian badan terbuka diukur
-23:49:21 bukti: 76759 outfit manusia, gender 104468 item, tema berbukti 16297 item, 7 dtk
-23:49:21 bukti badan: 1297 bagian badan berbukti pemakaian (>= 3 outfit, pusat +0.06), 383 jelas cowok/cewek
-23:49:22 selesai: 137574 kartu, 1259 dtk
+07:20:16 embedding 147415 | potongan 2D 43960 | meta 145197
+07:20:20 kelompok atas2D: 21457 item
+07:20:26   probe atas2D/tema: latih 4624
+07:20:31   probe atas2D/pola: latih 1235
+07:20:33   probe atas2D/jenis: latih 4157
+07:20:35 kelompok atas3D: 10115 item
+07:20:42 kelompok kepala: 20998 item
+07:20:49 kelompok aksen: 28419 item
+07:20:57 kelompok bawah2D: 18276 item
+07:21:02   probe bawah2D/tema: latih 4303
+07:21:08   probe bawah2D/pola: latih 2536
+07:21:09   probe bawah2D/jenis: latih 4171
+07:21:10 kelompok bawah3D: 5952 item
+07:21:17 kelompok wajah: 8534 item
+07:21:23 kelompok rambut: 17946 item
+07:21:26 kelompok sepatu: 7852 item
+07:56:33 bentuk 2D: 15193 diukur putaran ini, 27624 di cache, 27619 kartu diberi bentuk diukur, sisa antre 22041, 2104 dtk
+07:56:35 bentuk 3D: 13842 mesh diukur, 49844 berkerangka badan, 13842 kartu diberi bentuk 3D, 450 atasan dengan bagian badan terbuka diukur
+07:56:46 bukti: 78035 outfit manusia, gender 105618 item, tema berbukti 16540 item, 12 dtk
+07:56:47 bukti badan: 1327 bagian badan berbukti pemakaian (>= 3 outfit, pusat +0.06), 384 jelas cowok/cewek
+08:06:52 motif 3D: 4144 diukur putaran ini, 4144 di cache, sisa antre 11923, 606 dtk
+08:07:05 motif: tidak pasti 10784, polos 6451, ramai 1061, garis 455, grafis 392, kotak 169, taburan 25
+08:07:07 selesai: 139549 kartu, 2813 dtk

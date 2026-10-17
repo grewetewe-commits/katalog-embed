@@ -177,7 +177,7 @@
 | yb | -2.58 | -2.44 | 0.33 |
 | yt | -1.12 | 0.66 | 0.13 |
 
-### dipakai cewek (n=151) vs dipakai cowok (n=1) — gender dari pemakaian, bukan nama
+### dipakai cewek (n=150) vs dipakai cowok (n=1) — gender dari pemakaian, bukan nama
 | fitur | median cewek | median cowok | AUC |
 |---|---|---|---|
 
@@ -520,10 +520,10 @@
 | yb | -0.34 | 0.05 | 0.32 |
 | yt | 0.29 | 1.97 | 0.05 |
 
-### dipakai cewek (n=233) vs dipakai cowok (n=10) — gender dari pemakaian, bukan nama
+### dipakai cewek (n=235) vs dipakai cowok (n=10) — gender dari pemakaian, bukan nama
 | fitur | median cewek | median cowok | AUC |
 |---|---|---|---|
-| D | 0.70 | 0.88 | 0.31 |
+| D | 0.72 | 0.88 | 0.31 |
 | H | 0.88 | 0.45 | 0.57 |
 | W | 3.38 | 0.64 | 0.72 |
 | dadaRasio | 0.90 | 0.97 | 0.38 |
@@ -535,20 +535,20 @@
 | lebarBawah | 2.90 | 0.40 | 0.84 |
 | leherDepan | 0.11 | 0.05 | 0.62 |
 | luar09 | 83.00 | 0.00 | 0.82 |
-| luar09Bawah | 0.00 | 100.00 | 0.19 |
+| luar09Bawah | 0.00 | 100.00 | 0.20 |
 | luar11 | 58.00 | 0.00 | 0.80 |
 | luar11Bawah | 1.00 | 100.00 | 0.19 |
 | luar13 | 33.00 | 0.00 | 0.77 |
 | luar13Bawah | 1.00 | 100.00 | 0.21 |
 | ntex | 3.00 | 3.50 | 0.47 |
 | nv | 2280.00 | 2559.50 | 0.32 |
-| pinggulTertutup | 0.00 | 0.00 | 0.38 |
+| pinggulTertutup | 0.00 | 0.00 | 0.39 |
 | pusatTertutup | 0.00 | 1.00 | 0.23 |
 | rx | 0.00 | 1.38 | 0.18 |
 | tebalRata | 0.48 | 0.70 | 0.26 |
 | tudung | 0.01 | -0.05 | 0.73 |
 | wPinggul | 3.15 | 0.61 | 0.63 |
-| yb | -0.35 | -0.21 | 0.48 |
+| yb | -0.34 | -0.21 | 0.48 |
 | yt | 0.55 | 0.23 | 0.48 |
 
 ### Hasil baca (bentuk3d.baca) per kata nama

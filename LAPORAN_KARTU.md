@@ -1,4 +1,4 @@
-# Laporan Kartu Item (MATA v2) — versi 1792224425
+# Laporan Kartu Item (MATA v2) — versi 1792227671
 
 Kartu dibaca dari GAMBAR item (CLIP zero-shot, model sama dengan otak.py); nama hanya bukti tambahan.
 
@@ -49,9 +49,9 @@ Outfit buatan manusia dipakai sebagai bukti pemakaian: **78035**.
 
 | ambang | benar | diputuskan | item uji |
 |---|---|---|---|
-| 0.1 | 1727 (95.8%) | 1803 | 2797 |
-| 0.15 | 1620 (96.3%) | 1682 | 2797 |
-| 0.25 | 1350 (98.0%) | 1378 | 2797 |
+| 0.1 | 1728 (95.7%) | 1805 | 2797 |
+| 0.15 | 1620 (96.3%) | 1683 | 2797 |
+| 0.25 | 1350 (97.9%) | 1379 | 2797 |
 
 ### Tema berbukti vs label emas (baju/celana 2D)
 
@@ -108,7 +108,7 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 - `1028859` Pirate Captain's Hat (kepala): jenis=topi_lain(41) | tema=bajak_laut(100)/halloween(0) | subjek=tengkorak(86)/hantu(3) | [gambar:bajak_laut] | gender=cowok(2, 2 bukti) | temaBukti=bajak_laut(4 poin)
 - `14328141014` Gojo (wajah): jenis=kacamata_hitam(74) | tema=anime(37)/steampunk(9) | subjek=bulan(45)/mata(17) | [gambar:steampunk] | gender=cowok(6, 10 bukti)
 - `8565346973` 🤍 Maid Dress (atas): jenis=gaun(54) | tema=maid(66)/punk(4) | subjek=salib(6)/rantai(6) | pola=bulu(23) | lengan=pendek panjang=normal fit=pas depan=tertutup | [gambar:maid] | fungsi=pakaian | gender=cewek(76, 41 bukti) | temaBukti=maid(3 poin) | DIUKUR: leher 21%
-- `6554200369` Grey Suit w/ Black Vest [+] (atas): jenis=rompi(35) | tema=formal(70)/gothic(4) | subjek=kelelawar(10)/salib(8) | pola=polos(29) | lengan=panjang panjang=normal fit=pas depan=terbuka | [gambar:formal] | MOTIF DIUKUR: polos(58) | fungsi=pakaian | gender=cowok(6, 106 bukti) | temaBukti=formal(3 poin) | DIUKUR: leher 5%
+- `6554200369` Grey Suit w/ Black Vest [+] (atas): jenis=rompi(35) | tema=formal(70)/gothic(4) | subjek=kelelawar(10)/salib(8) | pola=polos(29) | lengan=panjang panjang=normal fit=pas depan=terbuka | [gambar:formal] | MOTIF DIUKUR: polos(57) | fungsi=pakaian | gender=cowok(6, 106 bukti) | temaBukti=formal(3 poin) | DIUKUR: leher 5%
 - `192557913` Sparkling Angel Wings (aksen): jenis=sayap(98) | tema=malaikat(88)/peri(10) | subjek=bulan(23)/kupu_kupu(21) | [gambar:malaikat] | gender=cewek(4, 62 bukti) | temaBukti=malaikat(4 poin)
 - `78504769792948` Bloody Silver Dermal Piercing Under Eye Right (wajah): jenis=tindik(78) | tema=horor(45)/steampunk(26) | subjek=mata(51)/bulan(35) | [gambar:steampunk] | gender=cowok(4, 4 bukti)
 - `126582482792163` Pastel Goth (atas): jenis=kostum_penuh(66) | tema=kawaii(68)/gothic(18) | subjek=pita(23)/hantu(9) | pola=polkadot(96) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:kawaii] | fungsi=pakaian | gender=cewek(44, 42 bukti) | temaBukti=kawaii(3 poin) | DIUKUR: leher 24%, bahu terbuka
@@ -116,7 +116,7 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 - `382538059` Green Jersey (atas): jenis=jersey(92) | tema=sporty(96)/y2k(1) | subjek=katak(24)/bintang(9) | pola=bunga(27) | lengan=pendek panjang=normal fit=longgar depan=tertutup | [gambar:sporty] | fungsi=pakaian | gender=cewek(1, 254 bukti) | temaBukti=sporty(5 poin) | DIUKUR: leher 9%
 - `7192553841` Zip Hoodie - Black (atas): jenis=jaket(49) | tema=gothic(45)/formal(19) | subjek=salib(23)/kelelawar(12) | pola=kulit(54) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:gothic] | gender=cowok(1, 254 bukti) | DIUKUR: - | MESH 3D: 2.8x1.9x0.8 stud, lengan panjang
 - `14027730224` ♡ kawaii baby pink pastel bow headband (kepala): jenis=pita_bando(93) | tema=coquette(79)/kawaii(19) | subjek=pita(79)/kelinci(4) | [gambar:coquette] | gender=cewek(31, 51 bukti) | temaBukti=coquette(4 poin)
-- `15901064855` black grunge dark y2k dh emo boy punk evade (bawah): jenis=jeans(77) | tema=y2k(31)/punk(28) | subjek=bulan(6)/rantai(6) | pola=denim(86) | panjang=panjang fit=lebar | [gambar:gothic] | MOTIF DIUKUR: polos(83) | fungsi=pakaian | gender=cowok(68, 146 bukti) | DIUKUR: -
+- `15901064855` black grunge dark y2k dh emo boy punk evade (bawah): jenis=jeans(77) | tema=y2k(31)/punk(28) | subjek=bulan(6)/rantai(6) | pola=denim(86) | panjang=panjang fit=lebar | [gambar:gothic] | MOTIF DIUKUR: polos(88) | fungsi=pakaian | gender=cowok(68, 146 bukti) | DIUKUR: -
 - `98089688160090` 🖤 Black leather jacket with spikes and skull  (atas): jenis=jaket(50) | tema=gothic(44)/punk(31) | subjek=tengkorak(44)/laba_laba(11) | pola=kulit(89) | lengan=tanpa panjang=crop fit=longgar depan=tertutup | [gambar:gothic]
 - `116973312880668` Arisu's Sword of Light: Supernova MK.II (aksen): jenis=senjata(74) | tema=cyber(64)/polisi(9) | subjek=petir(50)/hiu(6) | [gambar:cyber] | gender=netral(0, 1 bukti)
 - `98757749181872` ♡ coquette curls with pink bow blonde (rambut): tema=coquette(62)/kawaii(37) | [gambar:kawaii] | gender=cewek(32, 3 bukti)
@@ -131,7 +131,7 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 
 - `1064059` space c.bmp — nama: antariksa | jenis=jaket(62) | tema=antariksa(67)/cyber(22) | subjek=wajah_anime(13)/tulisan(9) | pola=denim(41) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:cyber] | fungsi=grafis | gender=cewek(6, 4 bukti)
 - `1239904` Akatsuki — nama: anime | jenis=kaos(74) | tema=anime(75)/horor(4) | subjek=api(18)/buah(14) | pola=bulu(47) | lengan=panjang panjang=crop fit=longgar depan=tertutup | [gambar:horor] | fungsi=grafis | gender=cowok(1, 4 bukti)
-- `1260428` Guitar Hero 2 Logo — nama: superhero | jenis=kaos(93) | tema=superhero(75)/punk(7) | subjek=logo(28)/musik(26) | pola=kotak(29) | lengan=panjang panjang=normal fit=pas depan=tertutup | [gambar:ninja] | fungsi=grafis | gender=cowok(1, 254 bukti)
+- `1260428` Guitar Hero 2 Logo — nama: superhero | jenis=kaos(93) | tema=superhero(75)/punk(7) | subjek=logo(28)/musik(26) | pola=kotak(29) | lengan=panjang panjang=normal fit=pas depan=tertutup | [gambar:ninja] | fungsi=grafis | gender=netral(0, 254 bukti)
 - `1397335` Me with snow wolf shirt. — nama: musim_dingin | jenis=hoodie(52) | tema=musim_dingin(75)/streetwear(7) | subjek=kartun(9)/hiu(7) | pola=polos(28) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:polisi] | fungsi=grafis | gender=cewek(17, 1 bukti)
 - `1431511` ninja shirt — nama: ninja | jenis=kaos(71) | tema=ninja(70)/biasa(6) | subjek=logo(25)/tulisan(9) | pola=garis(27) | lengan=pendek panjang=normal fit=pas depan=tertutup | [gambar:gothic] | fungsi=aksesori | gender=cewek(1, 76 bukti)
 - `1475939` Noob shirt — nama: novelty | jenis=kaos(51) | tema=novelty(85)/cyber(3) | subjek=logo(8)/hati(7) | pola=pelangi(52) | lengan=tanpa panjang=normal fit=pas depan=terbuka | [gambar:kawaii] | fungsi=badan | gender=cewek(1, 43 bukti)
@@ -202,55 +202,55 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 ### atas
 - `4835561357` CHAIN AND HEART LOCKET — jenis=kemeja(35) | tema=y2k(38)/punk(13) | subjek=rantai(72)/hati(18) | pola=kilau(77) | lengan=tanpa panjang=crop fit=pas depan=terbuka | [gambar:punk] | fungsi=aksesori | gender=cewek(5, 1 bukti)
 - `70796842182753` adidas Washed Out Anime Pyjama Top — jenis=hoodie(98) | tema=anime(36)/streetwear(13) | subjek=logo(26)/wajah_anime(18) | pola=polos(67) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:streetwear] | gender=cewek(90, 1 bukti) | DIUKUR: - | MESH 3D: 3.0x2.3x1.1 stud, lengan panjang
-- `9185734724` Soft White Turtleneck — jenis=kaos(62) | tema=kawaii(23)/sporty(22) | subjek=tanpa(31)/logo(15) | pola=polos(45) | lengan=pendek panjang=normal fit=pas depan=terbuka | [gambar:kawaii] | MOTIF DIUKUR: polos(59) | gender=cewek(56, 1 bukti) | DIUKUR: - | MESH 3D: 1.9x1.6x0.8 stud, lengan pendek
+- `9185734724` Soft White Turtleneck — jenis=kaos(62) | tema=kawaii(23)/sporty(22) | subjek=tanpa(31)/logo(15) | pola=polos(45) | lengan=pendek panjang=normal fit=pas depan=terbuka | [gambar:kawaii] | gender=cewek(56, 1 bukti) | DIUKUR: - | MESH 3D: 1.9x1.6x0.8 stud, lengan pendek
 - `13905962208` 1.0 Ghillie Suit - Green Jungle — jenis=zirah(57) | tema=militer(52)/formal(35) | subjek=katak(16)/dinosaurus(12) | pola=loreng(92) | lengan=panjang panjang=panjang fit=longgar depan=tertutup | [gambar:militer] | gender=cowok(9, 1 bukti) | temaBukti=militer(3 poin) | DIUKUR: - | MESH 3D: 4.3x5.5x2.0 stud, lengan panjang
 - `13919157081` 💅 Pink Cat Glitter Nails — jenis=jubah(18) | tema=kawaii(43)/coquette(17) | subjek=kucing(37)/pita(9) | pola=kilau(38) | lengan=tanpa panjang=normal fit=longgar depan=tertutup | [gambar:kawaii] | gender=cewek(42, 6 bukti) | MESH 3D: 3.6x0.7x0.6 stud
 - `3289030357` ‘Vsco’ Star Necklace~ 💫  — jenis=kaos(39) | tema=kawaii(54)/y2k(11) | subjek=bintang(44)/bulan(17) | pola=bunga(41) | lengan=tanpa panjang=crop fit=longgar depan=terbuka | [gambar:kawaii] | fungsi=aksesori | gender=cewek(32, 1 bukti)
 - `5318969100` jean jacket — jenis=jaket(46) | tema=kawaii(20)/y2k(10) | subjek=hantu(8)/tanpa(7) | pola=denim(96) | lengan=panjang panjang=crop fit=pas depan=terbuka | [gambar:kawaii] | fungsi=pakaian | gender=cewek(40, 1 bukti) | DIUKUR: leher 58%, crop
-- `13241944711` Oversized Striped Y2K Sweater — jenis=sweater(52) | tema=y2k(36)/sporty(26) | subjek=ular(19)/katak(16) | pola=garis(88) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:sporty] | DIUKUR: - | MESH 3D: 3.2x2.4x0.8 stud, lengan panjang
+- `13241944711` Oversized Striped Y2K Sweater — jenis=sweater(52) | tema=y2k(36)/sporty(26) | subjek=ular(19)/katak(16) | pola=garis(88) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:sporty] | MOTIF DIUKUR: garis(98) | DIUKUR: - | MESH 3D: 3.2x2.4x0.8 stud, lengan panjang
 - `1635921` Teakettle Drone Version 2 — jenis=jas(51) | tema=halloween(27)/ninja(11) | subjek=laba_laba(69)/labu(17) | pola=grafis(22) | lengan=panjang panjang=crop fit=pas depan=tertutup | [gambar:halloween] | fungsi=badan | gender=netral(0, 1 bukti) | temaBukti=halloween(3 poin)
 - `70633006259247` Pink Graphic Print Tee — jenis=kaos(91) | tema=badut(14)/bajak_laut(12) | subjek=logo(14)/tanpa(12) | pola=grafis(68) | lengan=pendek panjang=normal fit=longgar depan=terbuka | [gambar:badut] | DIUKUR: - | MESH 3D: 1.8x1.8x0.8 stud, lengan pendek
 - `12731768568` Cottage Picnic Basket White Light Brown — jenis=gaun(22) | tema=maid(58)/peri(31) | subjek=makanan(27)/bunga(24) | pola=bunga(89) | lengan=tanpa panjang=normal fit=longgar depan=tertutup | [gambar:maid]
 - `3895326233` Galaxy Suit — jenis=jas(75) | tema=antariksa(81)/formal(18) | subjek=bulan(47)/bintang(19) | pola=kilau(98) | lengan=panjang panjang=normal fit=longgar depan=tertutup | [gambar:antariksa] | fungsi=pakaian | gender=netral(0, 1 bukti) | temaBukti=formal(3 poin) | DIUKUR: leher 4%
-- `12079062364` Cultist's Black Robe (1.0) — jenis=jubah(41) | tema=gothic(74)/gaun_elegan(9) | subjek=bunga(29)/salib(13) | pola=renda(60) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:gothic] | MOTIF DIUKUR: polos(65) | gender=netral(0, 1 bukti) | DIUKUR: - | MESH 3D: 4.7x5.2x2.2 stud, lengan panjang
+- `12079062364` Cultist's Black Robe (1.0) — jenis=jubah(41) | tema=gothic(74)/gaun_elegan(9) | subjek=bunga(29)/salib(13) | pola=renda(60) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:gothic] | MOTIF DIUKUR: polos(63) | gender=netral(0, 1 bukti) | DIUKUR: - | MESH 3D: 4.7x5.2x2.2 stud, lengan panjang
 - `4937511721` Green Formal robes [+] — jenis=rompi(20) | tema=formal(36)/militer(31) | subjek=katak(15)/bendera(10) | pola=kotak(26) | lengan=pendek panjang=panjang fit=longgar depan=tertutup | [gambar:militer] | gender=cowok(15, 1 bukti)
 - `18460518578` soft arm warmers black — jenis=tanktop(21) | tema=steampunk(32)/militer(10) | subjek=musik(52)/bulan(7) | pola=loreng(25) | lengan=tanpa panjang=panjang fit=longgar depan=tertutup | [gambar:steampunk] | gender=cewek(3, 1 bukti) | MESH 3D: 3.0x1.2x0.5 stud
-- `14915170144` Knitted Arm Warmers Pastel Light Purple — jenis=tanktop(32) | tema=kawaii(85)/maid(2) | subjek=ular(13)/bulan(10) | pola=pelangi(24) | lengan=tanpa panjang=panjang fit=longgar depan=tertutup | [gambar:kawaii] | MOTIF DIUKUR: polos(52) | gender=cewek(21, 3 bukti) | temaBukti=kawaii(3 poin) | MESH 3D: 3.2x1.3x0.7 stud
+- `14915170144` Knitted Arm Warmers Pastel Light Purple — jenis=tanktop(32) | tema=kawaii(85)/maid(2) | subjek=ular(13)/bulan(10) | pola=pelangi(24) | lengan=tanpa panjang=panjang fit=longgar depan=tertutup | [gambar:kawaii] | gender=cewek(21, 3 bukti) | temaBukti=kawaii(3 poin) | MESH 3D: 3.2x1.3x0.7 stud
 - `4880136035` shine — jenis=crop(35) | tema=kawaii(17)/peri(14) | subjek=mahkota(14)/pita(7) | pola=polos(74) | lengan=pendek panjang=crop fit=pas depan=terbuka | [gambar:kawaii] | fungsi=pakaian | gender=cewek(41, 1 bukti) | DIUKUR: leher 24%, crop
 - `314839559` Sparkle Time Pumpkin Torso Match — jenis=rompi(86) | tema=halloween(77)/sporty(3) | subjek=labu(77)/api(2) | pola=kilau(70) | lengan=panjang panjang=normal fit=pas depan=tertutup | [gambar:halloween] | fungsi=pakaian | gender=cewek(1, 1 bukti) | temaBukti=halloween(5 poin) | DIUKUR: leher 0%
 - `6394193061` silver initial necklace: R — jenis=kemeja(59) | tema=y2k(31)/biasa(14) | subjek=logo(34)/tanpa(10) | pola=polkadot(14) | lengan=panjang panjang=normal fit=pas depan=terbuka | [gambar:sekolah] | fungsi=aksesori | gender=cewek(35, 1 bukti)
 - `6380030062` white chanel tennis shirt — jenis=kaos(43) | tema=sporty(16)/kerajaan(13) | subjek=logo(8)/salib(7) | pola=polos(42) | lengan=pendek panjang=crop fit=pas depan=tertutup | [gambar:malaikat] | fungsi=pakaian | gender=cewek(40, 1 bukti) | DIUKUR: leher 5%, crop
-- `4932712826` navy — jenis=kemeja(52) | tema=sporty(44)/sekolah(14) | subjek=bendera(33)/logo(7) | pola=garis(99) | lengan=pendek panjang=normal fit=longgar depan=tertutup | [gambar:sporty] | fungsi=pakaian | gender=cewek(44, 1 bukti) | DIUKUR: leher 0%
-- `12731447979` Lace Flower Cape - Black — jenis=hoodie(24) | tema=gothic(72)/pantai(4) | subjek=bunga(35)/bulan(16) | pola=loreng(42) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:gothic] | MOTIF DIUKUR: polos(75) | gender=cewek(27, 1 bukti) | DIUKUR: - | MESH 3D: 4.9x4.7x2.5 stud, lengan panjang
+- `4932712826` navy — jenis=kemeja(52) | tema=sporty(44)/sekolah(14) | subjek=bendera(33)/logo(7) | pola=garis(99) | lengan=pendek panjang=normal fit=longgar depan=tertutup | [gambar:sporty] | MOTIF DIUKUR: garis(97) | fungsi=pakaian | gender=cewek(44, 1 bukti) | DIUKUR: leher 0%
+- `12731447979` Lace Flower Cape - Black — jenis=hoodie(24) | tema=gothic(72)/pantai(4) | subjek=bunga(35)/bulan(16) | pola=loreng(42) | lengan=panjang panjang=normal fit=longgar depan=terbuka | [gambar:gothic] | MOTIF DIUKUR: polos(76) | gender=cewek(27, 1 bukti) | DIUKUR: - | MESH 3D: 4.9x4.7x2.5 stud, lengan panjang
 - `16089902603` Cross Hoodie — jenis=hoodie(83) | tema=punk(29)/gothic(13) | subjek=salib(45)/bintang(26) | pola=polkadot(37) | lengan=panjang panjang=crop fit=longgar depan=terbuka | [gambar:punk] | gender=cowok(2, 1 bukti) | DIUKUR: - | MESH 3D: 3.0x1.9x1.1 stud, lengan panjang
 - `9239518791` Rainbow T-Shirt — jenis=kaos(63) | tema=kawaii(89)/pantai(3) | subjek=logo(31)/hati(14) | pola=pelangi(100) | lengan=pendek panjang=normal fit=pas depan=terbuka | [gambar:kawaii] | gender=netral(0, 1 bukti) | MESH 3D: 7.5x6.3x3.1 stud
 - `5891866853` Black Rose Shirt — jenis=kaos(37) | tema=iblis(13)/formal(13) | subjek=bunga(36)/kelelawar(5) | pola=loreng(26) | lengan=pendek panjang=normal fit=longgar depan=tertutup | [gambar:iblis] | gender=cewek(1, 1 bukti)
 
 ### bawah
-- `6469871908` PINK PANTS — jenis=legging(25) | tema=kawaii(51)/biasa(16) | subjek=bunga(6)/kelinci(5) | pola=polos(47) | panjang=panjang fit=lebar | [gambar:kawaii] | fungsi=pakaian | gender=cowok(20, 1 bukti) | DIUKUR: -
+- `6469871908` PINK PANTS — jenis=legging(25) | tema=kawaii(51)/biasa(16) | subjek=bunga(6)/kelinci(5) | pola=polos(47) | panjang=panjang fit=lebar | [gambar:kawaii] | MOTIF DIUKUR: polos(92) | fungsi=pakaian | gender=cowok(20, 1 bukti) | DIUKUR: -
 - `16536197442` ♡ siamese cat slippers — jenis=zirah_bawah(25) | tema=kawaii(73)/kostum_hewan(10) | subjek=kucing(94)/anjing(1) | pola=motif_hewan(66) | panjang=selutut fit=lebar | [gambar:kawaii] | gender=cewek(20, 1 bukti) | MESH 3D: 1.8x1.0x1.4 stud
-- `5923212440` Kestrel | Black Snap Pants with White AF1s — jenis=jogger(62) | tema=formal(12)/biasa(8) | subjek=tanpa(6)/salib(4) | pola=denim(52) | panjang=panjang fit=lebar | [gambar:formal] | fungsi=pakaian | gender=cowok(1, 1 bukti) | DIUKUR: -
+- `5923212440` Kestrel | Black Snap Pants with White AF1s — jenis=jogger(62) | tema=formal(12)/biasa(8) | subjek=tanpa(6)/salib(4) | pola=denim(52) | panjang=panjang fit=lebar | [gambar:formal] | MOTIF DIUKUR: polos(54) | fungsi=pakaian | gender=cowok(1, 1 bukti) | DIUKUR: -
 - `9353911507` Cute Blue Checkered Goth Pleated Skirt — jenis=rok_pendek(71) | tema=gothic(21)/kawaii(18) | subjek=musik(35)/bendera(8) | pola=kotak(64) | panjang=pendek fit=lebar | [gambar:punk] | gender=cewek(60, 2 bukti) | MESH 3D: 1.4x1.0x0.9 stud, rok/gaun, panjang pendek
-- `5374208354` Extra High-waisted White Skirt + Heels — jenis=rok_pendek(63) | tema=gaun_elegan(15)/malaikat(9) | subjek=hantu(6)/tanpa(6) | pola=denim(24) | panjang=pendek fit=lebar | [gambar:biasa] | MOTIF DIUKUR: polos(63) | fungsi=pakaian | gender=cewek(87, 3 bukti) | DIUKUR: -
+- `5374208354` Extra High-waisted White Skirt + Heels — jenis=rok_pendek(63) | tema=gaun_elegan(15)/malaikat(9) | subjek=hantu(6)/tanpa(6) | pola=denim(24) | panjang=pendek fit=lebar | [gambar:biasa] | fungsi=pakaian | gender=cewek(87, 3 bukti) | DIUKUR: -
 - `6494648978` Preppy Set! — jenis=bawahan_gaun(39) | tema=kawaii(65)/coquette(9) | subjek=pita(10)/hati(9) | pola=bulu(37) | panjang=pendek fit=lebar | [gambar:kawaii] | MOTIF DIUKUR: polos(73) | fungsi=pakaian | gender=cewek(48, 1 bukti) | DIUKUR: menutup badan, kaus kaki/stoking
 - `12787796216` (1.0) Fire and Ice Aura - Legs — jenis=jeans(28) | tema=peri(14)/malaikat(13) | subjek=api(56)/petir(14) | pola=pelangi(92) | panjang=pendek fit=lebar | [gambar:peri] | gender=cowok(1, 1 bukti) | MESH 3D: 2.2x2.2x1.2 stud, celana
-- `5242175930` beige — jenis=kargo(68) | tema=biasa(19)/formal(12) | subjek=mahkota(7)/tanpa(6) | pola=polos(35) | panjang=pendek fit=lebar | [gambar:biasa] | gender=cowok(20, 1 bukti)
+- `5242175930` beige — jenis=kargo(68) | tema=biasa(19)/formal(12) | subjek=mahkota(7)/tanpa(6) | pola=polos(35) | panjang=panjang fit=lebar | [gambar:biasa] | MOTIF DIUKUR: polos(88) | fungsi=pakaian | gender=cowok(20, 1 bukti) | DIUKUR: -
 - `4666031720` Snow Pants — jenis=celana_kain(45) | tema=musim_dingin(38)/formal(31) | subjek=kelelawar(12)/salib(9) | pola=denim(26) | panjang=panjang fit=lebar | [gambar:formal]
-- `6010099006` Black Trench Pants — jenis=zirah_bawah(32) | tema=gothic(11)/ksatria(9) | subjek=kelelawar(6)/salib(4) | pola=loreng(49) | panjang=panjang fit=lebar | [gambar:gothic] | fungsi=pakaian | gender=cewek(5, 2 bukti) | DIUKUR: -
+- `6010099006` Black Trench Pants — jenis=zirah_bawah(32) | tema=gothic(11)/ksatria(9) | subjek=kelelawar(6)/salib(4) | pola=loreng(49) | panjang=panjang fit=lebar | [gambar:gothic] | MOTIF DIUKUR: polos(67) | fungsi=pakaian | gender=cewek(5, 2 bukti) | DIUKUR: -
 - `87677968961124` Blue Accordion Pleated Skirt [PBR] — jenis=rok_pendek(43) | tema=sekolah(30)/formal(15) | subjek=bendera(14)/tanpa(11) | pola=garis(50) | panjang=pendek fit=lebar | [gambar:sekolah] | gender=cewek(60, 2 bukti) | MESH 3D: 1.5x1.4x0.9 stud, rok/gaun, melebar ke bawah, panjang pendek
 - `15638002297` 🛍️Puff Sleeve Dress — jenis=bawahan_gaun(76) | tema=tradisional(55)/sekolah(12) | subjek=salib(26)/pita(14) | pola=kotak(22) | panjang=pendek fit=lebar | [gambar:tradisional] | gender=cewek(60, 2 bukti)
 - `85102288379004` L$ - Baggy Sport Sweatpants (White) — jenis=jogger(41) | tema=sporty(37)/maid(18) | subjek=rantai(14)/petir(13) | pola=garis(89) | panjang=panjang fit=lebar | [gambar:maid] | MESH 3D: 3.4x3.5x1.5 stud, celana, panjang panjang
 - `15223988363` Christmas Santa Long Sleeve Dress — jenis=bawahan_gaun(48) | tema=natal(100)/musim_dingin(0) | subjek=pita(40)/buah(7) | pola=bulu(38) | panjang=pendek fit=lebar | [gambar:natal] | gender=cewek(60, 2 bukti) | temaBukti=natal(3 poin)
-- `4703301264` Celana SMA — jenis=jeans(46) | tema=anime(22)/sekolah(17) | subjek=hantu(6)/hiu(6) | pola=denim(76) | panjang=panjang fit=lebar | [gambar:biasa] | MOTIF DIUKUR: polos(57) | fungsi=pakaian | gender=cowok(28, 2 bukti) | DIUKUR: -
-- `5095150875` ramen — jenis=kostum_bawah(45) | tema=novelty(61)/kerajaan(18) | subjek=mahkota(50)/labu(7) | pola=motif_hewan(63) | panjang=panjang fit=lebar | [gambar:kerajaan] | fungsi=pakaian | gender=netral(0, 1 bukti) | DIUKUR: menutup badan
+- `4703301264` Celana SMA — jenis=jeans(46) | tema=anime(22)/sekolah(17) | subjek=hantu(6)/hiu(6) | pola=denim(76) | panjang=panjang fit=lebar | [gambar:biasa] | MOTIF DIUKUR: polos(62) | fungsi=pakaian | gender=cowok(28, 2 bukti) | DIUKUR: -
+- `5095150875` ramen — jenis=kostum_bawah(45) | tema=novelty(61)/kerajaan(18) | subjek=mahkota(50)/labu(7) | pola=motif_hewan(63) | panjang=panjang fit=lebar | [gambar:kerajaan] | MOTIF DIUKUR: ramai(67) | fungsi=pakaian | gender=netral(0, 1 bukti) | DIUKUR: menutup badan
 - `6979254581` mary janes — jenis=rok_pendek(40) | tema=sekolah(20)/kawaii(7) | subjek=logo(11)/pita(5) | pola=garis(43) | panjang=panjang fit=lebar | [gambar:formal] | fungsi=pakaian | gender=cewek(3, 1 bukti) | DIUKUR: -
-- `74837538182808` Gray Sweatpants & Sneakers — jenis=jogger(44) | tema=penyihir(15)/y2k(13) | subjek=rantai(24)/hantu(16) | pola=denim(33) | panjang=panjang fit=lebar | [gambar:penyihir] | MOTIF DIUKUR: polos(53) | gender=cewek(27, 1 bukti) | MESH 3D: 2.4x3.2x1.2 stud, celana, panjang panjang
-- `94261287950141` Leggings White Baddie Skinny Sport Gym 2000s Y2K — jenis=legging(87) | tema=sporty(28)/y2k(18) | subjek=hati(8)/logo(8) | pola=polos(28) | panjang=panjang fit=ketat | [gambar:biasa] | MOTIF DIUKUR: polos(93) | gender=cewek(74, 11 bukti) | MESH 3D: 1.1x3.0x0.7 stud, celana, panjang panjang
+- `74837538182808` Gray Sweatpants & Sneakers — jenis=jogger(44) | tema=penyihir(15)/y2k(13) | subjek=rantai(24)/hantu(16) | pola=denim(33) | panjang=panjang fit=lebar | [gambar:penyihir] | gender=cewek(27, 1 bukti) | MESH 3D: 2.4x3.2x1.2 stud, celana, panjang panjang
+- `94261287950141` Leggings White Baddie Skinny Sport Gym 2000s Y2K — jenis=legging(87) | tema=sporty(28)/y2k(18) | subjek=hati(8)/logo(8) | pola=polos(28) | panjang=panjang fit=ketat | [gambar:biasa] | MOTIF DIUKUR: polos(84) | gender=cewek(74, 11 bukti) | MESH 3D: 1.1x3.0x0.7 stud, celana, panjang panjang
 - `1004054816` Secret Service — jenis=celana_kain(35) | tema=biasa(22)/formal(18) | subjek=salib(5)/bintang(5) | pola=polos(74) | panjang=pendek fit=lebar | [gambar:formal] | gender=cewek(14, 1 bukti)
 - `82547670475077` Y2K Plaid Pajamas Pink — jenis=rok_pendek(43) | tema=y2k(36)/coquette(32) | subjek=beruang(28)/bunga(8) | pola=kotak(92) | panjang=panjang fit=lebar | [gambar:coquette] | gender=cewek(12, 5 bukti) | MESH 3D: 1.6x2.7x1.1 stud, celana, panjang panjang
 - `17586694803` All-White Skin-Tight Suit — jenis=zirah_bawah(46) | tema=formal(35)/superhero(14) | subjek=hantu(17)/ular(13) | pola=polos(28) | panjang=panjang fit=ketat | [gambar:superhero] | MESH 3D: 3.4x5.6x1.1 stud, rok/gaun, panjang panjang
 - `6501642465` pink cow — jenis=celana_pendek(34) | tema=kawaii(53)/pantai(19) | subjek=bunga(6)/kupu_kupu(6) | pola=denim(56) | panjang=pendek fit=lebar | [gambar:kawaii] | fungsi=pakaian | gender=cewek(43, 1 bukti) | DIUKUR: menutup badan, kaus kaki/stoking
-- `6443309665` green — jenis=kargo(38) | tema=punk(51)/y2k(12) | subjek=katak(11)/musik(7) | pola=grafis(43) | panjang=panjang fit=lebar | [gambar:formal] | MOTIF DIUKUR: polos(63) | fungsi=pakaian | gender=cowok(2, 1 bukti) | DIUKUR: -
+- `6443309665` green — jenis=kargo(38) | tema=punk(51)/y2k(12) | subjek=katak(11)/musik(7) | pola=grafis(43) | panjang=panjang fit=lebar | [gambar:formal] | MOTIF DIUKUR: polos(69) | fungsi=pakaian | gender=cowok(2, 1 bukti) | DIUKUR: -
 - `4318467995` Baby — jenis=kostum_bawah(75) | tema=kawaii(47)/kostum_hewan(13) | subjek=pita(11)/makanan(10) | pola=pelangi(61) | panjang=pendek fit=lebar | [gambar:kawaii] | fungsi=pakaian | gender=cewek(7, 1 bukti) | DIUKUR: menutup badan
 
 ### kepala
@@ -373,13 +373,13 @@ celana tema 35%, pola 39-40%, kaos fungsi belum ada.
 
 ## Motif diukur dari piksel (rev 33, motif.py)
 
-Klaim bila peluang >= 0.5. Presisi = uji silang 5 lipat terhadap kata motif di nama (batas bawah: nama bisa salah).
+Klaim bila peluang >= ambang per grup/kelas (motif.KLAIM; 3D kotak/grafis tidak diklaim). Presisi = uji silang 5 lipat terhadap kata motif di nama (batas bawah: nama bisa salah).
 
 | grup | item berfitur | dilatih | kelas: benar/diklaim (recall) |
 |---|---|---|---|
-| baju | 7783 | 583 | garis 39/45 (44%), grafis 14/21 (25%), kotak 13/15 (21%), polos 205/230 (82%), ramai 37/42 (38%), taburan 6/7 (21%) |
-| celana | 7410 | 625 | garis 10/12 (21%), grafis 0/0 (0%), kotak 19/23 (22%), polos 296/378 (84%), ramai 26/36 (26%), taburan 1/1 (5%) |
-| 3D | 4144 | 354 | garis 52/61 (54%), grafis 0/0 (0%), kotak 4/4 (7%), polos 56/69 (63%), ramai 39/55 (50%), taburan 1/5 (7%) |
+| baju | 12727 | 975 | garis 78/89 (54%), grafis 21/32 (22%), kotak 22/26 (22%), polos 307/352 (76%), ramai 47/54 (31%), taburan 12/12 (16%) |
+| celana | 12498 | 1045 | garis 17/19 (17%), grafis 1/1 (3%), kotak 43/48 (28%), polos 455/573 (82%), ramai 50/60 (34%), taburan 1/1 (2%) |
+| 3D | 5986 | 529 | garis 65/69 (47%), grafis 0/0 (0%), kotak 0/0 (0%), polos 66/90 (61%), ramai 54/69 (41%), taburan 0/0 (0%) |
 
-Sebaran: tidak pasti 10784, polos 6451, ramai 1061, garis 455, grafis 392, kotak 169, taburan 25
+Sebaran: tidak pasti 17815, polos 10441, ramai 1292, grafis 764, garis 610, kotak 267, taburan 22
 

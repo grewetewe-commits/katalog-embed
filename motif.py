@@ -26,7 +26,7 @@ from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bentuk2d as B2
 
-VERSI_MOTIF = 1
+VERSI_MOTIF = 2
 WIL2D = {   # (x0, y0, x1, y1) gambar 420 -- muka depan saja (bidang datar, cahaya rata)
     11: {"badan": (154, 130, 254, 236), "lenganL": (120, 128, 150, 226), "lenganR": (262, 132, 322, 232)},
     12: {"kaki": (160, 242, 262, 334)},
@@ -108,6 +108,57 @@ def _ulang(p, dmin, dmax):
     return best
 
 
+def _ulang_mentah(p, dmin, dmax):
+    """tanpa ambang: (puncak, jarak, kedalaman lembah sebelum puncak) terbaik menurut puncak - 0,5*(1 - kedalaman)"""
+    best = (0.0, 0, 0.0)
+    skor_b = -9.0
+    for L in range(dmin, min(dmax, len(p) - 2) + 1):
+        if p[L] < p[L - 1] or p[L] < p[L + 1]:
+            continue
+        cel = float(p[L]) - float(p[1:L].min())
+        sk = float(p[L]) + 0.5 * cel
+        if cel > 0.02 and sk > skor_b:
+            best, skor_b = (float(p[L]), L, cel), sk
+    return best
+
+
+def _kisi2d(A, ok, h, w):
+    """puncak autokorelasi 2D di luar sumbu (kisi: polkadot, kotak diagonal, argyle) -> (puncak, kedalaman, dy, dx)"""
+    H2, W2 = A.shape
+    Ry, Rx = int(h / 2.2), int(w / 2.2)
+    best = (0.0, 0.0, 0, 0)
+    sb = -9.0
+    for dy in range(0, Ry + 1):
+        for dx in range(-Rx, Rx + 1):
+            r2 = dy * dy + dx * dx
+            if r2 < 9 or (dy == 0 and dx <= 0) or dy == 0 or dx == 0:
+                continue
+            x = dx % W2
+            if not ok[dy, x]:
+                continue
+            v = A[dy, x]
+            if v < 0.15:
+                continue
+            # puncak lokal 3x3
+            lok = True
+            for ey in (-1, 0, 1):
+                for ex in (-1, 0, 1):
+                    if (ey or ex) and A[(dy + ey) % H2, (dx + ex) % W2] > v:
+                        lok = False
+            if not lok:
+                continue
+            # lembah: nilai minimum di sepanjang garis dari pusat ke titik itu
+            m = 1.0
+            for t in np.linspace(0.15, 0.85, 8):
+                yy, xx = int(round(dy * t)), int(round(dx * t))
+                m = min(m, A[yy % H2, xx % W2])
+            cel = v - m
+            sk = v + 0.5 * cel
+            if cel > 0.1 and sk > sb:
+                best, sb = (float(v), float(cel), dy, dx), sk
+    return best
+
+
 def analisa(L3, M, highpass=False):
     """L3: Lab (h,w,3) ; M: topeng kain (h,w) bool -> dict fitur wilayah (None bila kain terlalu sedikit)"""
     n = int(M.sum())
@@ -179,6 +230,22 @@ def analisa(L3, M, highpass=False):
     pky, Ly, cy = _ulang(Ay, 3, int(h / 2.2))
     ux = float(np.mean(Ax[1:max(3, w_ // 3)]))   # seragam searah x (garis mendatar -> tinggi)
     uy = float(np.mean(Ay[1:max(3, h // 3)]))
+    # v2 (rev 33b): versi TANPA ambang + kisi 2D + energi gradien (corak kontras rendah: flanel, pinstripe, loreng pudar)
+    pkxR, LxR, cxR = _ulang_mentah(Ax, 2, int(w_ / 2.2))
+    pkyR, LyR, cyR = _ulang_mentah(Ay, 2, int(h / 2.2))
+    k2p, k2c, k2y, k2x = _kisi2d(A, ok, h, w_)
+    g1x = dE(X[:, 1:], X[:, :-1])[M[:, 1:] & M[:, :-1]]
+    g1y = dE(X[1:, :], X[:-1, :])[M[1:, :] & M[:-1, :]]
+    grad = float(np.concatenate([g1x, g1y]).mean()) if (len(g1x) + len(g1y)) else 0.0
+    t8 = float(((g1x > 8).sum() + (g1y > 8).sum()) / max(1, len(g1x) + len(g1y)))
+    # frekuensi tinggi: sisa setelah rata-rata lokal 5x5 (bertopeng) / varian total
+    from scipy.ndimage import uniform_filter
+    mm5 = uniform_filter(M.astype(float), 5)
+    hfv = 0.0
+    for c in range(3):
+        lok = uniform_filter(X[..., c] * M, 5) / np.maximum(mm5, 1e-3)
+        hfv += float((((X[..., c] - lok) ** 2)[M & (mm5 > 0.99)]).mean()) if (M & (mm5 > 0.99)).any() else 0.0
+    hf = hfv / max(s * s, 1e-6)
     # taburan: piksel jauh dari warna dominan -> komponen terhubung
     d0 = np.sqrt(((X - C[0]) ** 2).sum(-1))
     minor = M & (d0 > 20)
@@ -214,7 +281,10 @@ def analisa(L3, M, highpass=False):
             "cakBlok": round(cakBlok, 3), "eT": round(eT, 4), "eP": round(eP, 4),
             "pkx": round(pkx, 3), "Lx": Lx, "cx": round(cx, 3), "pky": round(pky, 3), "Ly": Ly, "cy": round(cy, 3),
             "ux": round(ux, 3), "uy": round(uy, 3), "minor": round(pm, 3), "bercak": bercak,
-            "luasBercak": round(luas_med, 4), "padat": round(padat, 3), "besar": round(besar, 3)}
+            "luasBercak": round(luas_med, 4), "padat": round(padat, 3), "besar": round(besar, 3),
+            "pkxR": round(pkxR, 3), "LxR": LxR, "cxR": round(cxR, 3), "pkyR": round(pkyR, 3), "LyR": LyR, "cyR": round(cyR, 3),
+            "k2p": round(k2p, 3), "k2c": round(k2c, 3), "k2y": k2y, "k2x": k2x, "grad": round(grad, 2), "t8": round(t8, 4),
+            "hf": round(hf, 3), "h": h, "w": w_}
 
 
 def label_wilayah(f):

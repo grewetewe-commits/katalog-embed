@@ -1,0 +1,23 @@
+08:14:02 embedding 147415 | potongan 2D 43960 | meta 145197
+08:14:07 kelompok atas2D: 21457 item
+08:14:13   probe atas2D/tema: latih 4624
+08:14:19   probe atas2D/pola: latih 1235
+08:14:21   probe atas2D/jenis: latih 4157
+08:14:23 kelompok atas3D: 10115 item
+08:14:30 kelompok kepala: 20998 item
+08:14:38 kelompok aksen: 28419 item
+08:14:45 kelompok bawah2D: 18276 item
+08:14:51   probe bawah2D/tema: latih 4303
+08:14:57   probe bawah2D/pola: latih 2536
+08:14:59   probe bawah2D/jenis: latih 4171
+08:15:00 kelompok bawah3D: 5952 item
+08:15:07 kelompok wajah: 8534 item
+08:15:12 kelompok rambut: 17946 item
+08:15:16 kelompok sepatu: 7852 item
+08:50:32 bentuk 2D: 10032 diukur putaran ini, 27769 di cache, 27764 kartu diberi bentuk diukur, sisa antre 12009, 2113 dtk
+08:50:34 bentuk 3D: 13842 mesh diukur, 49844 berkerangka badan, 13842 kartu diberi bentuk 3D, 450 atasan dengan bagian badan terbuka diukur
+08:50:48 bukti: 78035 outfit manusia, gender 105618 item, tema berbukti 16540 item, 14 dtk
+08:50:48 bukti badan: 1327 bagian badan berbukti pemakaian (>= 3 outfit, pusat +0.06), 385 jelas cowok/cewek
+09:00:57 motif 3D: 1842 diukur putaran ini, 5986 di cache, sisa antre 10081, 609 dtk
+09:01:11 motif: tidak pasti 17815, polos 10441, ramai 1292, grafis 764, garis 610, kotak 267, taburan 22
+09:01:13 selesai: 139549 kartu, 2834 dtk

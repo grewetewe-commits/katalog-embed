@@ -45,8 +45,8 @@ def lab(rgb):
 def _kmeans(P, k=5, it=10, seed=0):
     """k-means kecil (Lab) -> pusat, pangsa; gugus berjarak dE < 12 digabung"""
     rng = np.random.default_rng(seed)
-    if len(P) > 4000:
-        P = P[rng.choice(len(P), 4000, replace=False)]
+    if len(P) > 2000:
+        P = P[rng.choice(len(P), 2000, replace=False)]
     # inisialisasi: kuantil kecerahan (stabil, tanpa acak)
     o = np.argsort(P[:, 0])
     C = P[o[np.linspace(0, len(P) - 1, k).astype(int)]].copy()
@@ -326,13 +326,12 @@ def ukur(im, t):
         im = im.resize((420, 420), Image.BILINEAR)
     a = np.asarray(im.convert("RGBA")).astype(np.float32)
     rgb, al = a[..., :3], a[..., 3] > 200
-    L3 = lab(rgb)
     out = {"v": VERSI_MOTIF, "wil": {}}
     if t in WIL2D:
         man = B2.manekin(rgb) & al
         kain = al & ~man
         for nm, (x0, y0, x1, y1) in WIL2D[t].items():
-            f = analisa(L3[y0:y1, x0:x1], kain[y0:y1, x0:x1])
+            f = analisa(lab(rgb[y0:y1, x0:x1]), kain[y0:y1, x0:x1])
             if f:
                 out["wil"][nm] = f
     else:
@@ -345,7 +344,7 @@ def ukur(im, t):
             hy, hx = (y1 - y0), (x1 - x0)
             yy0, yy1 = y0 + int(0.15 * hy), y1 - int(0.15 * hy)
             xx0, xx1 = x0 + int(0.2 * hx), x1 - int(0.2 * hx)
-            f = analisa(L3[yy0:yy1, xx0:xx1], m[yy0:yy1, xx0:xx1], highpass=True)
+            f = analisa(lab(rgb[yy0:yy1, xx0:xx1]), m[yy0:yy1, xx0:xx1], highpass=True)
             if f:
                 out["wil"]["item"] = f
     lab_w = {k: label_wilayah(f) for k, f in out["wil"].items()}
@@ -405,6 +404,73 @@ def kelas_nama(n):
     return None
 
 
+# --------------------------------------------------------------------------- kelas dari fitur (rev 33b)
+# Ambang tangan (label_wilayah) cocok dengan nama hanya 2-65% di kelas sulit (flanel pudar, gingham, pinstripe terbaca
+# polos). Rev 33b: hutan keputusan (RandomForest) dilatih dari item yang NAMAnya menunjuk tepat satu motif, memakai fitur
+# PIKSEL saja (nama tidak masuk fitur). Klaim hanya bila peluang >= AMBANG; di bawahnya "tidak pasti".
+FITUR = ["s", "warna", "dom", "tepi", "tepiX", "tepiY", "tepiDet", "blok", "cakBlok", "eT", "eP", "pkx", "cx", "pky", "cy",
+         "ux", "uy", "minor", "bercak", "luasBercak", "padat", "besar", "pkxR", "cxR", "pkyR", "cyR", "k2p", "k2c", "grad",
+         "t8", "hf", "LxR", "LyR"]
+KELAS = ["polos", "garis", "kotak", "taburan", "ramai", "grafis"]   # indeks kolom kartu
+GRUP_T = {11: "baju", 12: "celana", 64: "3D", 65: "3D", 66: "3D", 67: "3D", 68: "3D", 69: "3D", 72: "3D"}
+AMBANG = 0.5
+
+
+def _vek(f):
+    return [float(f.get(k, 0) or 0) for k in FITUR] if f else [-1.0] * len(FITUR)
+
+
+def baris(wil, t):
+    """fitur wilayah -> satu baris angka per item (baju: badan + rata-rata kedua lengan)"""
+    if t == 11:
+        b = _vek(wil.get("badan"))
+        lg = [_vek(wil[k]) for k in ("lenganL", "lenganR") if k in wil]
+        a = list(np.mean(np.array(lg), 0)) if lg else [-1.0] * len(FITUR)
+        return b + a
+    return _vek(wil.get("kaki" if t == 12 else "item"))
+
+
+def grafis_dada(wil):
+    """baju: badan berdetail di TENGAH, kedua lengan polos -> gambar/tulisan di dada (bukan corak penuh)"""
+    b = wil.get("badan")
+    lg = [wil[k] for k in ("lenganL", "lenganR") if k in wil]
+    if not b or len(lg) < 2:
+        return False
+    lengan_polos = all(x["tepiDet"] < 0.02 and x["t8"] < 0.12 for x in lg)
+    return lengan_polos and b["tepiDet"] >= 0.03 and b["eT"] >= 1.5 * max(b["eP"], 0.01)
+
+
+def latih(X, y, seed=0):
+    from sklearn.ensemble import RandomForestClassifier
+    m = RandomForestClassifier(n_estimators=300, min_samples_leaf=2, random_state=seed, n_jobs=-1)
+    m.fit(X, y)
+    return m
+
+
+def nilai_cv(X, y, ambang=(0.5, 0.6)):
+    """validasi silang 5 lipat -> {ambang: {kelas: (benar, diklaim, recall)}}"""
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.model_selection import cross_val_predict, StratifiedKFold
+    m = RandomForestClassifier(n_estimators=300, min_samples_leaf=2, random_state=0, n_jobs=-1)
+    P = cross_val_predict(m, X, y, cv=StratifiedKFold(5, shuffle=True, random_state=0), method="predict_proba")
+    cls = sorted(set(y))
+    top, pm = P.argmax(1), P.max(1)
+    out = {}
+    for a in ambang:
+        r = {}
+        for j, c in enumerate(cls):
+            sel = (top == j) & (pm >= a)
+            r[c] = (int((np.array(y)[sel] == c).sum()), int(sel.sum()), float(((np.array(y) == c) & sel).sum() / max(1, (np.array(y) == c).sum())))
+        out[a] = r
+    return out
+
+
+def tebak(model, X):
+    P = model.predict_proba(X)
+    cls = list(model.classes_)
+    return [cls[j] for j in P.argmax(1)], P.max(1)
+
+
 def ambil(ids, folder, ukuran="420x420"):
     """thumbnail resmi (publik) -> cache PNG per id (actions/cache), dipakai ulang antar uji"""
     os.makedirs(folder, exist_ok=True)
@@ -457,8 +523,8 @@ def main():
     from PIL import ImageFont
     rng = random.Random(20261017)
     meta = json.load(gzip.open("data/panen.json.gz", "rt", encoding="utf-8"))["meta"]
-    BATAS_KELAS = int(os.environ.get("MOTIF_PER_KELAS", "120"))
-    ACAK = int(os.environ.get("MOTIF_ACAK", "150"))
+    BATAS_KELAS = int(os.environ.get("MOTIF_PER_KELAS", "200"))
+    ACAK = int(os.environ.get("MOTIF_ACAK", "300"))
     kelompok = {"2D baju": (11,), "2D celana": (12,), "3D atas": (64, 65, 66, 67, 68), "3D bawah": (69, 72)}
     sampel = {}
     for g, ts in kelompok.items():
@@ -498,93 +564,96 @@ def main():
                 hasil[i] = ukur(im, t)
             except Exception as ex:
                 print("gagal ukur", i, ex, flush=True)
-    # evaluasi: label terukur vs kelas nama (hanya nama yang menunjuk tepat satu kelas)
-    kelas = ["polos", "blok", "garis", "kotak", "taburan", "ramai", "grafis", "lemah"]
-    lap = ["# Laporan motif diukur (rev 33)", "",
-           "Label dari PIKSEL thumbnail (motif.py), dibandingkan dengan kata di NAMA item (bukan kebenaran mutlak: nama bisa",
-           "menyebut motif yang hanya kecil, atau bohong). Baris = kelas menurut nama, kolom = hasil ukur.", ""]
-    ringkas = {}
-    for g, daftar in sampel.items():
-        tab = {}
-        for i in daftar:
-            if i not in hasil:
-                continue
-            c = kelas_nama(meta[str(i)].get("n"))
-            tab.setdefault(c or "-", {}).setdefault(hasil[i]["label"] or "-", 0)
-            tab[c or "-"][hasil[i]["label"] or "-"] += 1
-        lap += [f"## {g}", "", "| nama \\ ukur | " + " | ".join(kelas + ["-"]) + " | n | cocok |",
-                "|---" * (len(kelas) + 4) + "|"]
-        for c in ["polos", "garis", "kotak", "taburan", "ramai", "-"]:
-            row = tab.get(c, {})
-            n = sum(row.values())
-            if not n:
-                continue
-            cocok = row.get(c, 0)
-            if c == "ramai":
-                cocok = row.get("ramai", 0) + row.get("taburan", 0)
-            pct = f"{round(100 * cocok / max(1, n - row.get('lemah', 0)))}%" if c != "-" else ""
-            lap.append(f"| {c} | " + " | ".join(str(row.get(k, 0)) for k in kelas + ["-"]) + f" | {n} | {pct} |")
-            ringkas[f"{g}/{c}"] = pct
-        # presisi per label ukur (dari item yang namanya berkelas)
-        lap.append("")
-        for k in ["polos", "garis", "kotak", "taburan"]:
-            tot = sum(tab.get(c, {}).get(k, 0) for c in tab if c != "-")
-            ben = tab.get(k, {}).get(k, 0)
-            if tot:
-                lap.append(f"- presisi `{k}` (vs nama): {ben}/{tot} = {round(100 * ben / tot)}%")
-        lap.append("")
+    # rev 33b: model per grup (baju / celana / 3D) dilatih dari item yang NAMAnya menunjuk satu motif (fitur piksel saja),
+    # dinilai dengan uji silang 5 lipat + label emas (mata) + lembar item ACAK (tanpa kata motif di nama) untuk dinilai mata.
+    lap = ["# Laporan motif diukur (rev 33b)", "",
+           "Motif dibaca dari PIKSEL thumbnail resmi (motif.py: periodisitas/autokorelasi 2D, kisi, tepi, warna, sebaran).",
+           "Model: hutan keputusan per grup, dilatih dari item yang namanya menunjuk tepat satu motif; NAMA TIDAK masuk fitur.",
+           f"Klaim hanya bila peluang >= {AMBANG}; di bawahnya = tidak pasti (tidak dipakai generator).",
+           "Catatan: label nama sendiri bisa salah (\"striped\" padahal kotak), jadi presisi di bawah = batas bawah.", ""]
+    grupI = {"baju": [], "celana": [], "3D": []}
+    for i in hasil:
+        grupI[GRUP_T.get(int(meta[str(i)].get("t") or 0), "3D")].append(i)
+    prediksi = {}
+    for g, daftar in grupI.items():
+        daftar.sort()
+        if not daftar:
+            continue
+        T = {i: int(meta[str(i)].get("t") or 0) for i in daftar}
+        lab_ = [i for i in daftar if kelas_nama(meta[str(i)].get("n"))]
+        X = np.array([baris(hasil[i]["wil"], T[i]) for i in lab_], float)
+        y = [kelas_nama(meta[str(i)].get("n")) for i in lab_]
+        cv = nilai_cv(X, y)
+        lap += [f"## {g} (uji silang, {len(lab_)} item bernama-motif)", "", "| ambang | " + " | ".join(sorted(set(y))) + " |",
+                "|---" * (len(set(y)) + 1) + "|"]
+        for a_, r in cv.items():
+            lap.append(f"| {a_} | " + " | ".join(f"{r[c][0]}/{r[c][1]} = {round(100 * r[c][0] / max(1, r[c][1]))}% (recall {round(100 * r[c][2])}%)" for c in sorted(r)) + " |")
+        model = latih(X, y)
+        Xa = np.array([baris(hasil[i]["wil"], T[i]) for i in daftar], float)
+        lb, pp = tebak(model, Xa)
+        for i, l, p in zip(daftar, lb, pp):
+            if l == "ramai" and T[i] == 11 and grafis_dada(hasil[i]["wil"]):
+                l = "grafis"
+            prediksi[i] = (l if p >= AMBANG else "?", round(float(p), 2))
+        acak = [i for i in daftar if not kelas_nama(meta[str(i)].get("n"))]
+        sb = {}
+        for i in acak:
+            sb[prediksi[i][0]] = sb.get(prediksi[i][0], 0) + 1
+        lap += ["", f"Sebaran pada {len(acak)} item ACAK (nama tanpa kata motif): " + ", ".join(f"{k} {v}" for k, v in sorted(sb.items(), key=lambda x: -x[1])), ""]
     try:
         font = ImageFont.load_default(size=10)
     except TypeError:
         font = ImageFont.load_default()
     os.makedirs("kartu/lembar", exist_ok=True)
     PER_LABEL = int(os.environ.get("MOTIF_LEMBAR", "8"))
-    UK = {"2D baju": (6, 218, 120), "2D celana": (8, 160, 136), "3D atas": (8, 150, 150), "3D bawah": (8, 150, 150)}
-    for g, daftar in sampel.items():
-        ada = [i for i in daftar if i in hasil]
+    UK = {"baju": (6, 218, 120), "celana": (8, 160, 136), "3D": (8, 150, 150)}
+    for g, daftar in grupI.items():
+        acak = sorted(i for i in daftar if not kelas_nama(meta[str(i)].get("n")))
         sel = []
-        for k in ["polos", "blok", "garis", "kotak", "taburan", "ramai", "grafis", "lemah"]:
-            pil = sorted(i for i in ada if hasil[i]["label"] == k)
+        for k in KELAS + ["?"]:
+            pil = [i for i in acak if prediksi[i][0] == k]
             for i in rng.sample(pil, min(PER_LABEL, len(pil))):
                 t = int(meta[str(i)].get("t") or 0)
-                lw = hasil[i].get("labelWil", {})
-                sel.append((potong_2d(gambar[i], t), [f"{k.upper()} {hasil[i]['p']} nm:{kelas_nama(meta[str(i)].get('n')) or '-'}",
-                                                     (meta[str(i)].get("n") or "?"),
-                                                     " ".join(f"{a[:2]}:{(b or '-')[:4]}" for a, b in lw.items())]))
+                sel.append((potong_2d(gambar[i], t), [f"{k.upper()} {prediksi[i][1]}", (meta[str(i)].get("n") or "?"), str(i)]))
         kol, sw, sh = UK[g]
-        lembar(f"Motif terukur {g}: {PER_LABEL} contoh acak per label (baris biru = hasil ukur, nm = kata di nama)", sel,
-               f"kartu/lembar/motif_{g.replace(' ', '_').lower()}.jpg", font, kol, sw, sh)
-    # label emas manual (uji2d/emas.json, dinilai mata 16 Okt) -> kelas ukur
+        lembar(f"Motif {g}: item ACAK (nama tanpa kata motif), {PER_LABEL} per label -- dinilai mata", sel,
+               f"kartu/lembar/motif_{g.lower()}.jpg", font, kol, sw, sh)
+    # label emas manual (uji2d/emas.json, dinilai mata 16 Okt)
     try:
         emas = json.load(open("uji2d/emas.json"))
         smp = json.load(open("uji2d/sampel.json"))["sampel"]
-        PETA = {"polos": "polos", "garis": "garis", "kotak": "kotak", "polkadot": "taburan", "bunga": "ramai", "loreng": "ramai",
-                "motif_hewan": "ramai", "grafis": "grafis", "tulisan": "grafis", "denim": "polos", "kulit": "polos"}
+        PETA = {"polos": {"polos"}, "denim": {"polos"}, "kulit": {"polos"}, "garis": {"garis"}, "kotak": {"kotak"},
+                "polkadot": {"taburan"}, "bunga": {"ramai", "taburan"}, "loreng": {"ramai", "taburan"},
+                "motif_hewan": {"ramai", "taburan"}, "grafis": {"grafis", "ramai"}, "tulisan": {"grafis", "ramai"}}
         pos = {}
         for i, t in smp:
             pos.setdefault(str(t), []).append(i)
-        lap += ["## Label emas (dinilai mata)", "", "| t | id | emas | ukur | wilayah |", "|---|---|---|---|---|"]
-        benar = tot = 0
+        lap += ["## Label emas (dinilai mata)", "", "| t | id | emas | ukur |", "|---|---|---|---|"]
+        benar = tot = tdk = 0
         for t in ("11", "12"):
             for k, i in enumerate(pos.get(t, [])):
                 e = emas[t]["pola"][k] if k < len(emas[t]["pola"]) else None
-                if e is None or e not in PETA or i not in hasil:
+                if e is None or e not in PETA or i not in prediksi:
                     continue
-                u = hasil[i]["label"]
-                ok_ = u == PETA[e] or (PETA[e] == "polos" and u == "blok") or (PETA[e] == "ramai" and u == "taburan")
+                u = prediksi[i][0]
+                if u == "?":
+                    tdk += 1
+                    lap.append(f"| {t} | {i} | {e} | tidak pasti ({prediksi[i][1]}) |")
+                    continue
+                ok_ = u in PETA[e]
                 tot += 1
                 benar += ok_
-                lap.append(f"| {t} | {i} | {e} | {u}{'' if ok_ else ' X'} | {hasil[i].get('labelWil')} |")
-        lap += ["", f"**Emas: {benar}/{tot} cocok**", ""]
+                lap.append(f"| {t} | {i} | {e} | {u} {prediksi[i][1]}{'' if ok_ else ' X'} |")
+        lap += ["", f"**Emas: {benar}/{tot} cocok saat diklaim ({tdk} tidak pasti)**", ""]
     except Exception as ex:
         lap.append(f"(emas gagal: {ex})")
     with open("LAPORAN_MOTIF.md", "w", encoding="utf-8") as f:
         f.write("\n".join(lap) + "\n")
-    simpan = {str(i): {"t": int(meta[str(i)].get("t") or 0), "nm": kelas_nama(meta[str(i)].get("n")), "l": h["label"],
-                       "p": h["p"], "w": h["wil"]} for i, h in hasil.items()}
+    simpan = {str(i): {"t": int(meta[str(i)].get("t") or 0), "nm": kelas_nama(meta[str(i)].get("n")), "l": prediksi.get(i, ("?", 0))[0],
+                       "p": prediksi.get(i, ("?", 0))[1], "w": h["wil"]} for i, h in hasil.items()}
     with open("uji2d/motif_fitur.json", "w") as f:
         json.dump(simpan, f, separators=(",", ":"))
-    print("\n".join(lap[:80]), flush=True)
+    print("\n".join(lap[:60]), flush=True)
 
 
 if __name__ == "__main__":

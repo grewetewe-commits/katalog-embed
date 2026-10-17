@@ -34,7 +34,7 @@ jobs:
           git fetch --depth 1 origin main
           git checkout origin/main -- data/panen.json.gz
       - name: Pasang dependensi
-        run: pip install "numpy<2" scipy pillow requests
+        run: pip install "numpy<2" scipy scikit-learn pillow requests
       - name: Ukur motif
         run: python motif.py 2>&1 | tail -60
       - name: Simpan cache thumbnail

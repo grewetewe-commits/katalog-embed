@@ -7,48 +7,48 @@ menyebut motif yang hanya kecil, atau bohong). Baris = kelas menurut nama, kolom
 
 | nama \ ukur | polos | blok | garis | kotak | taburan | ramai | grafis | lemah | - | n | cocok |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| polos | 85 | 4 | 2 | 0 | 0 | 10 | 11 | 9 | 1 | 122 | 75% |
-| garis | 25 | 4 | 43 | 4 | 2 | 24 | 11 | 8 | 0 | 121 | 38% |
-| kotak | 41 | 13 | 4 | 2 | 8 | 35 | 7 | 10 | 0 | 120 | 2% |
+| polos | 79 | 6 | 3 | 0 | 1 | 10 | 13 | 13 | 1 | 126 | 70% |
+| garis | 29 | 4 | 47 | 5 | 1 | 20 | 10 | 5 | 0 | 121 | 41% |
+| kotak | 37 | 11 | 4 | 5 | 7 | 41 | 10 | 8 | 0 | 123 | 4% |
 | taburan | 16 | 2 | 0 | 0 | 21 | 56 | 14 | 6 | 0 | 115 | 19% |
-| ramai | 24 | 3 | 0 | 0 | 12 | 64 | 14 | 5 | 0 | 122 | 65% |
-| - | 38 | 5 | 4 | 2 | 5 | 55 | 69 | 20 | 0 | 198 |  |
+| ramai | 20 | 2 | 1 | 0 | 12 | 72 | 9 | 5 | 0 | 121 | 72% |
+| - | 42 | 5 | 4 | 0 | 7 | 70 | 50 | 14 | 1 | 193 |  |
 
-- presisi `polos` (vs nama): 85/191 = 45%
-- presisi `garis` (vs nama): 43/49 = 88%
-- presisi `kotak` (vs nama): 2/6 = 33%
-- presisi `taburan` (vs nama): 21/43 = 49%
+- presisi `polos` (vs nama): 79/181 = 44%
+- presisi `garis` (vs nama): 47/55 = 85%
+- presisi `kotak` (vs nama): 5/10 = 50%
+- presisi `taburan` (vs nama): 21/42 = 50%
 
 ## 2D celana
 
 | nama \ ukur | polos | blok | garis | kotak | taburan | ramai | grafis | lemah | - | n | cocok |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| polos | 58 | 19 | 0 | 2 | 2 | 29 | 0 | 13 | 1 | 124 | 52% |
-| garis | 21 | 10 | 3 | 25 | 3 | 52 | 0 | 6 | 0 | 120 | 3% |
-| kotak | 21 | 14 | 0 | 1 | 11 | 70 | 0 | 5 | 0 | 122 | 1% |
+| polos | 52 | 17 | 0 | 2 | 5 | 30 | 0 | 21 | 0 | 127 | 49% |
+| garis | 23 | 10 | 2 | 22 | 4 | 54 | 0 | 5 | 0 | 120 | 2% |
+| kotak | 19 | 16 | 0 | 3 | 14 | 63 | 0 | 6 | 0 | 121 | 3% |
 | taburan | 4 | 7 | 0 | 3 | 21 | 55 | 0 | 3 | 0 | 93 | 23% |
-| ramai | 13 | 10 | 0 | 0 | 10 | 79 | 1 | 7 | 0 | 120 | 79% |
-| - | 42 | 16 | 0 | 3 | 11 | 95 | 1 | 29 | 2 | 199 |  |
+| ramai | 14 | 9 | 0 | 0 | 9 | 79 | 1 | 9 | 0 | 121 | 79% |
+| - | 39 | 21 | 1 | 4 | 12 | 96 | 0 | 19 | 2 | 194 |  |
 
-- presisi `polos` (vs nama): 58/117 = 50%
-- presisi `garis` (vs nama): 3/3 = 100%
-- presisi `kotak` (vs nama): 1/31 = 3%
-- presisi `taburan` (vs nama): 21/47 = 45%
+- presisi `polos` (vs nama): 52/112 = 46%
+- presisi `garis` (vs nama): 2/2 = 100%
+- presisi `kotak` (vs nama): 3/30 = 10%
+- presisi `taburan` (vs nama): 21/53 = 40%
 
 ## 3D atas
 
 | nama \ ukur | polos | blok | garis | kotak | taburan | ramai | grafis | lemah | - | n | cocok |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| polos | 53 | 1 | 0 | 0 | 0 | 4 | 0 | 5 | 0 | 63 | 91% |
-| garis | 32 | 4 | 0 | 0 | 2 | 19 | 1 | 3 | 0 | 61 | 0% |
-| kotak | 27 | 1 | 0 | 1 | 10 | 19 | 0 | 2 | 0 | 60 | 2% |
-| taburan | 6 | 0 | 0 | 0 | 15 | 11 | 0 | 0 | 20 | 52 | 29% |
-| ramai | 24 | 2 | 0 | 0 | 12 | 22 | 2 | 0 | 1 | 63 | 54% |
-| - | 36 | 2 | 0 | 0 | 2 | 18 | 3 | 4 | 1 | 66 |  |
+| polos | 54 | 2 | 0 | 0 | 1 | 4 | 0 | 2 | 0 | 63 | 89% |
+| garis | 32 | 3 | 0 | 3 | 2 | 14 | 3 | 5 | 0 | 62 | 0% |
+| kotak | 35 | 1 | 0 | 0 | 5 | 14 | 1 | 4 | 0 | 60 | 0% |
+| taburan | 6 | 0 | 0 | 0 | 15 | 11 | 0 | 0 | 21 | 53 | 28% |
+| ramai | 31 | 1 | 0 | 0 | 7 | 22 | 1 | 0 | 1 | 63 | 46% |
+| - | 29 | 2 | 0 | 0 | 4 | 22 | 1 | 6 | 1 | 65 |  |
 
-- presisi `polos` (vs nama): 53/142 = 37%
-- presisi `kotak` (vs nama): 1/1 = 100%
-- presisi `taburan` (vs nama): 15/39 = 38%
+- presisi `polos` (vs nama): 54/158 = 34%
+- presisi `kotak` (vs nama): 0/3 = 0%
+- presisi `taburan` (vs nama): 15/30 = 50%
 
 ## 3D bawah
 
@@ -56,15 +56,14 @@ menyebut motif yang hanya kecil, atau bohong). Baris = kelas menurut nama, kolom
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | polos | 18 | 0 | 0 | 0 | 5 | 2 | 0 | 0 | 0 | 25 | 72% |
 | garis | 10 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 16 | 0% |
-| kotak | 27 | 2 | 1 | 1 | 9 | 19 | 0 | 4 | 0 | 63 | 2% |
+| kotak | 23 | 2 | 1 | 0 | 11 | 24 | 1 | 4 | 0 | 66 | 0% |
 | taburan | 1 | 1 | 0 | 0 | 18 | 5 | 0 | 0 | 0 | 25 | 72% |
 | ramai | 18 | 1 | 0 | 0 | 9 | 16 | 2 | 5 | 0 | 51 | 54% |
-| - | 29 | 4 | 0 | 0 | 9 | 13 | 1 | 9 | 0 | 65 |  |
+| - | 37 | 0 | 0 | 0 | 1 | 15 | 3 | 8 | 0 | 64 |  |
 
-- presisi `polos` (vs nama): 18/74 = 24%
+- presisi `polos` (vs nama): 18/70 = 26%
 - presisi `garis` (vs nama): 0/1 = 0%
-- presisi `kotak` (vs nama): 1/1 = 100%
-- presisi `taburan` (vs nama): 18/41 = 44%
+- presisi `taburan` (vs nama): 18/43 = 42%
 
 ## Label emas (dinilai mata)
 

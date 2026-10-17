@@ -415,6 +415,17 @@ FITUR = ["s", "warna", "dom", "tepi", "tepiX", "tepiY", "tepiDet", "blok", "cakB
 KELAS = ["polos", "garis", "kotak", "taburan", "ramai", "grafis"]   # indeks kolom kartu
 GRUP_T = {11: "baju", 12: "celana", 64: "3D", 65: "3D", 66: "3D", 67: "3D", 68: "3D", 69: "3D", 72: "3D"}
 AMBANG = 0.5
+# rev 33b: ambang klaim per grup & kelas dari penilaian MATA pada item ACAK (kartu/lembar/motif_*.jpg, 17 Okt):
+# baju 2D 31/35 benar, celana 2D 23/26 (garis salah di peluang 0,51-0,55), 3D: polos 7/7, ramai >= 0,6 4/4,
+# kotak 3/7 & grafis 2-3/8 (lipatan/renda/rumbai terbaca kotak/gambar) -> 3D kotak & grafis TIDAK diklaim.
+KLAIM = {"baju": {"taburan": 0.6}, "celana": {"garis": 0.6, "taburan": 0.6},
+         "3D": {"polos": 0.5, "garis": 0.6, "taburan": 0.6, "ramai": 0.6, "kotak": None, "grafis": None}}
+
+
+def ambang_klaim(grup, kelas):
+    """peluang minimum untuk mengklaim kelas di grup itu; None = tidak pernah diklaim"""
+    g = KLAIM.get(grup, {})
+    return g[kelas] if kelas in g else (0.6 if grup == "3D" else AMBANG)
 
 
 def _vek(f):
@@ -583,7 +594,7 @@ def main():
     lap = ["# Laporan motif diukur (rev 33b)", "",
            "Motif dibaca dari PIKSEL thumbnail resmi (motif.py: periodisitas/autokorelasi 2D, kisi, tepi, warna, sebaran).",
            "Model: hutan keputusan per grup, dilatih dari item yang namanya menunjuk tepat satu motif; NAMA TIDAK masuk fitur.",
-           f"Klaim hanya bila peluang >= {AMBANG}; di bawahnya = tidak pasti (tidak dipakai generator).",
+           f"Klaim hanya bila peluang >= ambang per grup/kelas (motif.KLAIM, dasar {AMBANG}); di bawahnya = tidak pasti.",
            "Catatan: label nama sendiri bisa salah (\"striped\" padahal kotak), jadi presisi di bawah = batas bawah.", ""]
     grupI = {"baju": [], "celana": [], "3D": []}
     for i in hasil:
@@ -608,7 +619,8 @@ def main():
         for i, l, p in zip(daftar, lb, pp):
             if l == "ramai" and T[i] == 11 and grafis_dada(hasil[i]["wil"]):
                 l = "grafis"
-            prediksi[i] = (l if p >= AMBANG else "?", round(float(p), 2))
+            amb = ambang_klaim(g, l)
+            prediksi[i] = (l if amb is not None and p >= amb else "?", round(float(p), 2))
         acak = [i for i in daftar if not kelas_nama(meta[str(i)].get("n"))]
         sb = {}
         for i in acak:

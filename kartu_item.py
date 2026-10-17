@@ -835,7 +835,7 @@ def motif_kartu(meta, baris2d, baris3d):
     bila peluang >= MO.AMBANG; presisi uji silang ditulis ke laporan."""
     from sklearn.model_selection import cross_val_predict, StratifiedKFold
     out, lap = {}, ["## Motif diukur dari piksel (rev 33, motif.py)", "",
-                    f"Klaim bila peluang >= {MO.AMBANG}. Presisi = uji silang 5 lipat terhadap kata motif di nama (batas bawah: "
+                    f"Klaim bila peluang >= ambang per grup/kelas (motif.KLAIM; 3D kotak/grafis tidak diklaim). Presisi = uji silang 5 lipat terhadap kata motif di nama (batas bawah: "
                     "nama bisa salah).", "", "| grup | item berfitur | dilatih | kelas: benar/diklaim (recall) |", "|---|---|---|---|"]
     semua = dict(baris2d)
     semua.update(baris3d)
@@ -859,7 +859,8 @@ def motif_kartu(meta, baris2d, baris3d):
         top, pm = P.argmax(1), P.max(1)
         ringkas = []
         for j, c in enumerate(cls):
-            sel = m & (top == j) & (pm >= MO.AMBANG)
+            amb = MO.ambang_klaim(g, c)
+            sel = m & (top == j) & (pm >= (amb if amb is not None else 9))
             ringkas.append(f"{c} {int((y[sel] == c).sum())}/{int(sel.sum())} ({round(100 * ((y == c) & sel).sum() / max(1, (y == c).sum()))}%)")
         lap.append(f"| {g} | {len(ids)} | {int(m.sum())} | " + ", ".join(ringkas) + " |")
         for r, i in enumerate(ids):
@@ -867,7 +868,8 @@ def motif_kartu(meta, baris2d, baris3d):
             t = int((meta.get(str(i)) or {}).get("t") or 0)
             if c == "ramai" and t == 11 and MO.grafis_baris(semua[i]):
                 c = "grafis"
-            out[i] = (MO.KELAS.index(c) if pm[r] >= MO.AMBANG else -1, int(round(100 * pm[r])))
+            amb = MO.ambang_klaim(g, c)
+            out[i] = (MO.KELAS.index(c) if amb is not None and pm[r] >= amb else -1, int(round(100 * pm[r])))
     sb = collections.Counter(MO.KELAS[k] if k >= 0 else "tidak pasti" for k, _ in out.values())
     lap += ["", "Sebaran: " + ", ".join(f"{k} {v}" for k, v in sb.most_common()), ""]
     log("motif: " + ", ".join(f"{k} {v}" for k, v in sb.most_common()))

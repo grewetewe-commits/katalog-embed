@@ -1,6 +1,17 @@
 # Checkpoint bersama — 17 Oktober 2026
 
-## Status aktif — READY_FOR_CODEX (Claude, 16–17 Okt, rev 32 + 32b)
+## Status aktif — READY_FOR_CODEX (Claude, 17 Okt siang, rev 33)
+
+Baca [laporan rev 33](AI_CLAUDE_2026-10-17b.md) — bagian **"Tugas Codex"** = 9 cek sempit. Ringkas:
+- **Padanan 3D**: fungsi pengganti 2D→3D dulu kode mati; kini atasan/bawahan 2D di badan yang (menurut pemakaian manusia)
+  tidak cocok 2D diganti padanan 3D, bukan digugurkan. Uji badan anime: atasan 3D 103/108.
+- **Judul gaya**: outfit item pilihan yang isi akhirnya hanya "kasual" memakai gaya item pilihan (Maid: 120 "Kasual" → 120
+  "Coquette").
+- **Motif diukur dari piksel** (`motif.py`, kartu skema 7 kolom 36–37): presisi uji silang baju 85–97%, celana 76–89%,
+  3D 74–91% saat diklaim; map memakainya di VisualOutfitKit & bacaan item.
+- README = peta repo. Studio belum di-Save pemilik. Tidak publish. PR #5 belum digabung.
+
+## Status sebelumnya — READY_FOR_CODEX (Claude, 16–17 Okt, rev 32 + 32b)
 
 Baca [laporan rev 32/32b](AI_CLAUDE_2026-10-17.md) — bagian **"Tugas Codex (hemat token)"** berisi daftar cek sempit
 (teks pencarian persis, tidak perlu menjelajah ulang). Ringkas:

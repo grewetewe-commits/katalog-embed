@@ -385,6 +385,7 @@ KELAS_NAMA = {
     "taburan": r"\b(polka|polkadot|polkadots|dots|dotted)\b",
     "ramai": r"\b(camo|camouflage|leopard|cheetah|zebra|floral|hawaiian|paisley|tie dye|tiedye)\b",
     "polos": r"\b(plain|solid|basic|blank)\b",
+    "grafis": r"\b(graphic|logo|merch|band tee)\b",          # rev 33b: gambar/logo/tulisan cetak (kaos band, merch)
 }
 WARNA_KATA = set("black white red blue green pink purple yellow orange brown grey gray beige cream navy dark light baby "
                  "pastel maroon olive tan khaki lilac lavender mint teal cyan nude charcoal".split())
@@ -440,19 +441,32 @@ def grafis_dada(wil):
     return lengan_polos and b["tepiDet"] >= 0.03 and b["eT"] >= 1.5 * max(b["eP"], 0.01)
 
 
-def latih(X, y, seed=0):
+def model_baru(seed=0):
     from sklearn.ensemble import RandomForestClassifier
-    m = RandomForestClassifier(n_estimators=300, min_samples_leaf=2, random_state=seed, n_jobs=-1)
+    return RandomForestClassifier(n_estimators=300, min_samples_leaf=2, random_state=seed, n_jobs=-1)
+
+
+def latih(X, y, seed=0):
+    m = model_baru(seed)
     m.fit(X, y)
     return m
 
 
+def grafis_baris(r):
+    """versi grafis_dada dari baris fitur baju (badan + rata-rata lengan)"""
+    n = len(FITUR)
+    if len(r) < 2 * n or r[n] < 0:
+        return False
+    ix = {k: j for j, k in enumerate(FITUR)}
+    b, a = r[:n], r[n:]
+    return (a[ix["tepiDet"]] < 0.02 and a[ix["t8"]] < 0.12 and b[ix["tepiDet"]] >= 0.03
+            and b[ix["eT"]] >= 1.5 * max(b[ix["eP"]], 0.01))
+
+
 def nilai_cv(X, y, ambang=(0.5, 0.6)):
     """validasi silang 5 lipat -> {ambang: {kelas: (benar, diklaim, recall)}}"""
-    from sklearn.ensemble import RandomForestClassifier
     from sklearn.model_selection import cross_val_predict, StratifiedKFold
-    m = RandomForestClassifier(n_estimators=300, min_samples_leaf=2, random_state=0, n_jobs=-1)
-    P = cross_val_predict(m, X, y, cv=StratifiedKFold(5, shuffle=True, random_state=0), method="predict_proba")
+    P = cross_val_predict(model_baru(), X, y, cv=StratifiedKFold(5, shuffle=True, random_state=0), method="predict_proba")
     cls = sorted(set(y))
     top, pm = P.argmax(1), P.max(1)
     out = {}

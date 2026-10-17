@@ -29,6 +29,7 @@ import os, sys, json, gzip, re, time, math, collections
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bukti_item as BUKTI
+import motif as MO
 
 MODEL_ID = "openai/clip-vit-base-patch32"
 CACHE_DIR = os.environ.get("CACHE_DIR", "cache")
@@ -36,11 +37,14 @@ P_EMB = os.path.join(CACHE_DIR, "emb.npz")
 P_E2D = os.path.join(CACHE_DIR, "emb2d.npz")
 P_STATE = "data/panen.json.gz"
 SHARD = 8
-SKEMA = 6             # 6: kolom 35 "genderSumber" (1 nama, 2 bentuk diukur 2D/3D, 4 jenis/kategori resmi, 8 pemakaian); 5: kolom 28-34 BENTUK 3D diukur dari mesh resmi (bentuk3d.py / mata3d.py); 2: kolom 19 "fungsi" kaos klasik; 3: kolom 20-25 BUKTI (gender, tema berbukti, tema cocok) -- bukti_item.py
+SKEMA = 7             # 7: kolom 36-37 MOTIF DIUKUR dari piksel (motif.py: polos/garis/kotak/taburan/ramai/grafis + peluang); 6: kolom 35 "genderSumber" (1 nama, 2 bentuk diukur 2D/3D, 4 jenis/kategori resmi, 8 pemakaian); 5: kolom 28-34 BENTUK 3D diukur dari mesh resmi (bentuk3d.py / mata3d.py); 2: kolom 19 "fungsi" kaos klasik; 3: kolom 20-25 BUKTI (gender, tema berbukti, tema cocok) -- bukti_item.py
                       # 4: kolom 26-27 BENTUK 2D DIUKUR (leher, bit bahu/crop/badan/kaus kaki) -- bentuk2d.py
 P_BENTUK = os.path.join(os.environ.get("CACHE_BENTUK", "cache_bentuk"), "bentuk2d.json")
 BATAS_BENTUK = int(os.environ.get("BATAS_BENTUK", "3000"))      # item 2D baru yang diukur per putaran (thumbnail 420)
 MENIT_BENTUK = float(os.environ.get("MENIT_BENTUK", "12"))      # batas waktu pengukuran per putaran
+P_MOTIF3D = os.path.join(os.environ.get("CACHE_BENTUK", "cache_bentuk"), "motif3d.json")
+BATAS_MOTIF3D = int(os.environ.get("BATAS_MOTIF3D", "3000"))    # atasan/bawahan 3D baru yang diukur motifnya per putaran
+MENIT_MOTIF3D = float(os.environ.get("MENIT_MOTIF3D", "8"))
 SUHU = 100.0          # suhu softmax CLIP (sama dengan otak.py)
 BOBOT_NAMA = 0.35     # fusi lunak: bukti nama menambah massa peluang, gambar tetap dominan
 
@@ -606,6 +610,8 @@ def label_baca(kel, b):
                 bb.append(f"{nmb}={bt[nmb][b[13 + k]][0]}")
         s.append(" ".join(bb))
     s.append(f"[gambar:{nm(TEMA, b[17])}]")
+    if len(b) > 36 and b[35] >= 0:
+        s.append(f"MOTIF DIUKUR: {MO.KELAS[b[35]]}({b[36]})")
     if len(b) > 18 and b[18] >= 0:
         s.append(f"fungsi={nm(FUNGSI, b[18])}")
     if len(b) > 20 and b[19] >= 0 and b[20] > 0:
@@ -673,7 +679,9 @@ def label_semua():
             "kolom": ["kelompok", "jenis", "jenisP", "tema1", "tema1P", "tema2", "tema2P", "subjek1", "subjek1P", "subjek2",
                       "subjek2P", "pola", "polaP", "lengan", "panjang", "fit", "depan", "temaGambar", "fungsi",
                       "gender", "genderN", "temaB", "temaBPoin", "temaBSumber", "temaCocok", "leher", "bentukBit",
-                      "lebar3D", "tinggi3D", "tebal3D", "bit3D", "lengan3D", "panjang3D", "tebalKain3D", "genderSumber"],
+                      "lebar3D", "tinggi3D", "tebal3D", "bit3D", "lengan3D", "panjang3D", "tebalKain3D", "genderSumber",
+                      "motif", "motifP"],
+            "motif": MO.KELAS,
             "bentuk3d": {"ukuran": "lebar3D/tinggi3D/tebal3D = stud x20 (kotak batas mesh resmi); tebalKain3D = cm",
                          "bit": {"diukur": 1, "celana": 2, "rokGaun": 4, "melebarKeBawah": 8, "bot": 16, "gaun": 32,
                                  "diukurTerhadapBadan": 64, "bukanPenutupBadan": 128},
@@ -717,7 +725,8 @@ def bentuk_2d(kartu, meta):
     except Exception:
         cache = {}
     calon = [i for i, b in kartu.items() if int((meta.get(str(i)) or {}).get("t") or 0) in (11, 12)
-             and (str(i) not in cache or (cache[str(i)] or {}).get("v") != B2.VERSI_BENTUK)]
+             and (str(i) not in cache or (cache[str(i)] or {}).get("v") != B2.VERSI_BENTUK
+                  or (cache[str(i)] or {}).get("mv") != MO.VERSI_MOTIF)]
     calon.sort(key=lambda i: -int((meta.get(str(i)) or {}).get("f") or 0))   # yang paling difavoritkan dulu
     t0, baru = time.time(), 0
     for a in range(0, min(len(calon), BATAS_BENTUK), 50):
@@ -728,7 +737,16 @@ def bentuk_2d(kartu, meta):
         for i in p:
             if i in gb:
                 try:
-                    cache[str(i)] = B2.ukur(gb[i])
+                    lama = cache.get(str(i)) or {}
+                    f = lama if lama.get("v") == B2.VERSI_BENTUK else B2.ukur(gb[i])
+                    # rev 33: MOTIF dari gambar yang sama (motif.py) -> baris fitur ringkas, dikelaskan di motif_kartu
+                    try:
+                        t = int((meta.get(str(i)) or {}).get("t") or 0)
+                        f["m"] = [round(float(x), 4) for x in MO.baris(MO.ukur(gb[i], t)["wil"], t)]
+                        f["mv"] = MO.VERSI_MOTIF
+                    except Exception:
+                        pass
+                    cache[str(i)] = f
                     baru += 1
                 except Exception:
                     pass
@@ -770,7 +788,90 @@ def bentuk_2d(kartu, meta):
         n += 1
     log(f"bentuk 2D: {baru} diukur putaran ini, {len(cache)} di cache, {n} kartu diberi bentuk diukur, sisa antre "
         f"{max(0, len(calon) - baru)}, {time.time() - t0:.0f} dtk")
-    return {"baru": baru, "cache": len(cache), "terpakai": n, "sisa": max(0, len(calon) - baru), "per": per}
+    motif = {i: f["m"] for i, f in ((int(k), v) for k, v in cache.items()) if isinstance(f, dict) and f.get("mv") == MO.VERSI_MOTIF and f.get("m")}
+    return {"baru": baru, "cache": len(cache), "terpakai": n, "sisa": max(0, len(calon) - baru), "per": per, "motif": motif}
+
+
+def motif_3d(kartu, meta):
+    """MOTIF atasan/bawahan 3D (64-69, 72) dari thumbnail resmi 420 (item sendiri di latar transparan), bertahap dengan
+    cache -> {id: baris fitur}"""
+    import bentuk2d as B2
+    try:
+        cache = json.load(open(P_MOTIF3D, encoding="utf-8"))
+    except Exception:
+        cache = {}
+    T3 = (64, 65, 66, 67, 68, 69, 72)
+    calon = [i for i in kartu if int((meta.get(str(i)) or {}).get("t") or 0) in T3
+             and (cache.get(str(i)) or {}).get("mv") != MO.VERSI_MOTIF]
+    calon.sort(key=lambda i: -int((meta.get(str(i)) or {}).get("f") or 0))
+    t0, baru = time.time(), 0
+    for a in range(0, min(len(calon), BATAS_MOTIF3D), 50):
+        if time.time() - t0 > MENIT_MOTIF3D * 60:
+            break
+        p = calon[a:a + 50]
+        gb = B2.thumb(p, jeda=0.2)
+        for i in p:
+            if i in gb:
+                try:
+                    t = int((meta.get(str(i)) or {}).get("t") or 0)
+                    cache[str(i)] = {"mv": MO.VERSI_MOTIF, "m": [round(float(x), 4) for x in MO.baris(MO.ukur(gb[i], t)["wil"], t)]}
+                    baru += 1
+                except Exception:
+                    pass
+    if baru:
+        os.makedirs(os.path.dirname(P_MOTIF3D), exist_ok=True)
+        with open(P_MOTIF3D + ".tmp", "w", encoding="utf-8") as f:
+            json.dump(cache, f, separators=(",", ":"))
+        os.replace(P_MOTIF3D + ".tmp", P_MOTIF3D)
+    log(f"motif 3D: {baru} diukur putaran ini, {len(cache)} di cache, sisa antre {max(0, len(calon) - baru)}, "
+        f"{time.time() - t0:.0f} dtk")
+    return {int(k): v["m"] for k, v in cache.items() if isinstance(v, dict) and v.get("mv") == MO.VERSI_MOTIF and v.get("m")}
+
+
+def motif_kartu(meta, baris2d, baris3d):
+    """rev 33: MOTIF DIUKUR -> {id: (indeks MO.KELAS | -1, peluang 0..100)} + baris laporan.
+    Per grup (baju 2D / celana 2D / 3D) hutan keputusan dilatih dari item yang NAMAnya menunjuk tepat satu motif (fitur PIKSEL
+    saja; nama tidak masuk fitur). Item bernama-motif sendiri diberi prediksi UJI SILANG (bukan hafalan namanya). Klaim hanya
+    bila peluang >= MO.AMBANG; presisi uji silang ditulis ke laporan."""
+    from sklearn.model_selection import cross_val_predict, StratifiedKFold
+    out, lap = {}, ["## Motif diukur dari piksel (rev 33, motif.py)", "",
+                    f"Klaim bila peluang >= {MO.AMBANG}. Presisi = uji silang 5 lipat terhadap kata motif di nama (batas bawah: "
+                    "nama bisa salah).", "", "| grup | item berfitur | dilatih | kelas: benar/diklaim (recall) |", "|---|---|---|---|"]
+    semua = dict(baris2d)
+    semua.update(baris3d)
+    for g in ("baju", "celana", "3D"):
+        ids = sorted(i for i in semua if MO.GRUP_T.get(int((meta.get(str(i)) or {}).get("t") or 0)) == g)
+        if not ids:
+            continue
+        X = np.array([semua[i] for i in ids], float)
+        y = np.array([MO.kelas_nama((meta.get(str(i)) or {}).get("n")) or "" for i in ids])
+        m = y != ""
+        kelas = sorted(set(y[m]))
+        if m.sum() < 150 or len(kelas) < 3:
+            lap.append(f"| {g} | {len(ids)} | {int(m.sum())} | (data latih kurang, motif tidak diklaim) |")
+            continue
+        model = MO.latih(X[m], y[m])
+        P = model.predict_proba(X)
+        cls = list(model.classes_)
+        Pcv = cross_val_predict(MO.model_baru(), X[m], y[m], cv=StratifiedKFold(5, shuffle=True, random_state=0),
+                                method="predict_proba")
+        P[np.nonzero(m)[0]] = Pcv
+        top, pm = P.argmax(1), P.max(1)
+        ringkas = []
+        for j, c in enumerate(cls):
+            sel = m & (top == j) & (pm >= MO.AMBANG)
+            ringkas.append(f"{c} {int((y[sel] == c).sum())}/{int(sel.sum())} ({round(100 * ((y == c) & sel).sum() / max(1, (y == c).sum()))}%)")
+        lap.append(f"| {g} | {len(ids)} | {int(m.sum())} | " + ", ".join(ringkas) + " |")
+        for r, i in enumerate(ids):
+            c = cls[top[r]]
+            t = int((meta.get(str(i)) or {}).get("t") or 0)
+            if c == "ramai" and t == 11 and MO.grafis_baris(semua[i]):
+                c = "grafis"
+            out[i] = (MO.KELAS.index(c) if pm[r] >= MO.AMBANG else -1, int(round(100 * pm[r])))
+    sb = collections.Counter(MO.KELAS[k] if k >= 0 else "tidak pasti" for k, _ in out.values())
+    lap += ["", "Sebaran: " + ", ".join(f"{k} {v}" for k, v in sb.most_common()), ""]
+    log("motif: " + ", ".join(f"{k} {v}" for k, v in sb.most_common()))
+    return out, lap
 
 
 def bentuk_3d(kartu, meta):
@@ -1039,6 +1140,16 @@ def main():
     for i, b in kartu.items():               # kolom 28-34, lalu 35 sumber gender
         b += per3.get(i, kosong3)
         b.append(sumberG.get(i, -1))
+    # rev 33: kolom 36-37 motif diukur dari piksel
+    lapM = []
+    try:
+        b3m = motif_3d(kartu, meta) if not stub and BATAS_MOTIF3D > 0 else {}
+        motif, lapM = motif_kartu(meta, (bentuk or {}).get("motif") or {}, b3m)
+    except Exception as ex:
+        log("motif gagal (kartu tetap ditulis):", ex)
+        motif = {}
+    for i, b in kartu.items():
+        b += list(motif.get(i, (-1, -1)))
     versi = int(time.time())
     tulis(kartu, versi, evals)
     if bukti.get("graf"):
@@ -1048,6 +1159,9 @@ def main():
         with open("kartu/badan_bukti.json", "w", encoding="utf-8") as f:
             json.dump({"versi": versi, "d": bukti["badan"]}, f, separators=(",", ":"))
     laporan(kartu, evals, contoh, meta, uji, versi, bukti)
+    if lapM:
+        with open("LAPORAN_KARTU.md", "a", encoding="utf-8") as f:
+            f.write("\n" + "\n".join(lapM) + "\n")
     log(f"selesai: {len(kartu)} kartu, {time.time() - t0:.0f} dtk")
 
 

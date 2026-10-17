@@ -4,7 +4,7 @@ name: Kartu Item (uji)
 on:
   push:
     branches: [claude/kartu-item]
-    paths: [kartu_item.py, bukti_item.py, bentuk2d.py, bentuk3d.py, uji_bentuk3d.py, badan_bentuk.py, uji3d/badan_label.json, lembar_kartu.py, .github/workflows/kartu-uji.yml]
+    paths: [kartu_item.py, bukti_item.py, motif.py, bentuk2d.py, bentuk3d.py, uji_bentuk3d.py, badan_bentuk.py, uji3d/badan_label.json, lembar_kartu.py, .github/workflows/kartu-uji.yml]
   workflow_dispatch:
 
 permissions:
@@ -17,7 +17,7 @@ concurrency:
 jobs:
   kartu:
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -48,12 +48,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install "numpy<2" "transformers>=4.40,<4.50" pillow
+          pip install "numpy<2" "transformers>=4.40,<4.50" pillow scipy scikit-learn
       - name: Baca kartu item
         env:
           HF_HUB_DISABLE_TELEMETRY: "1"
           BATAS_BENTUK: "20000"
-          MENIT_BENTUK: "20"
+          MENIT_BENTUK: "35"
+          BATAS_MOTIF3D: "8000"
+          MENIT_MOTIF3D: "10"
         run: |
           ls -la cache || true
           python kartu_item.py --uji 126884250250747 72558563872966 1028859 14328141014 8565346973 6554200369 192557913 78504769792948 126582482792163 93519364113971 382538059 7192553841 14027730224 15901064855 98089688160090 116973312880668 98757749181872 5731050224 301820310 18832937926 122234019472336 132200141502925 83668736552435 2>&1 | tee kartu_log.txt

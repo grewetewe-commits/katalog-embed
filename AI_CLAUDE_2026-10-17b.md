@@ -73,7 +73,7 @@ Claude (403) → pemilik menghapus 5 branch lewat UI GitHub.
 6. VisualOutfitKit `rev 33: MOTIF DIUKUR`: cache fitur ikut versi kartu (`kv`).
 7. `kartu_item.py` `motif_kartu`: prediksi uji-silang untuk item bernama-motif (tidak bocor dari nama).
 8. Setelah merge PR #5: kartu-uji hanya jalan dari push `claude/kartu-item` → perlu jadwal di `main`; `KartuItemKit.CABANG = "main"`.
-9. Uji Play: panggilan generate kedua berjarak 1 dtk sekali kembali kosong (dt 0,0) — cek apakah ada batas laju yang
-   disengaja (bukan regresi rev 33; panggilan berjarak 1,5 dtk normal).
+9. (Selesai, bukan bug) Uji Play: generate kedua berjarak 1 dtk kembali kosong = jeda sengaja `JEDA_MIN_GENERATE`
+   ("Mohon tunggu sebentar") di KatalogServerEngine.
 
 Studio belum di-Save oleh pemilik setelah rev 33 (Ctrl+S). Tidak publish.

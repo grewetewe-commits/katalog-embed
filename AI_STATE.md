@@ -1,6 +1,12 @@
 # Checkpoint bersama — 17 Oktober 2026
 
-## Status aktif — READY_FOR_CODEX (Claude, 17 Okt siang, rev 33)
+## Status aktif — READY_FOR_CODEX (Claude, 17 Okt sore, rev 33c)
+
+Lanjutan rev 33 di [laporan yang sama](AI_CLAUDE_2026-10-17b.md) bagian "Rev 33c": scan rahasia (0 temuan di git; 1 rahasia
+Vercel di arsip Studio dihapus), **cabang `data`** (hasil workflow = 1 commit tanpa riwayat → repo tidak menumpuk; main = kode),
+**seleksi ketat** tema antar item pilihan & pelengkap, sinkron bank item lama langsung dari DataStore. Cek Codex 10–13.
+
+## Status sebelumnya — READY_FOR_CODEX (Claude, 17 Okt siang, rev 33)
 
 Baca [laporan rev 33](AI_CLAUDE_2026-10-17b.md) — bagian **"Tugas Codex"** = 9 cek sempit. Ringkas:
 - **Padanan 3D**: fungsi pengganti 2D→3D dulu kode mati; kini atasan/bawahan 2D di badan yang (menurut pemakaian manusia)

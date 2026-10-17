@@ -51,7 +51,7 @@ MENIT_CARI = float(os.environ.get("MENIT_CARI", "8") or 8)  # dihitung dari AWAL
 MENIT_META = float(os.environ.get("MENIT_META", "45") or 45)
 TTL_META_JUAL = 5 * 86400     # item yang bisa dibeli: dicek ulang tiap 5 hari (server Roblox tetap cek live item yang tampil)
 TTL_META_TIDAK = 14 * 86400   # item tidak dijual/dihapus jarang kembali dijual: cukup tiap 14 hari
-MAKS_DIMINTA = 6000           # item tak dikenal yang diminta pemain di map (kunci "itembaru" di DataStore)
+MAKS_DIMINTA = 25000          # item tak dikenal yang diminta pemain di map (kunci "itembaru") + bank item lama v3 (rev 33)
 # PETA BADAN: bagian badan avatar pemain (kunci "badanbaru") -> bundle yang berisi bagian itu, lewat
 # catalog.roblox.com/v1/assets/{id}/bundles (API ini tidak bisa dipanggil dari server Roblox). Server memakai peta ini
 # untuk baris "Badan" di Detail: beli bundle badan bila dijual & salin avatar orang lain utuh.
@@ -2661,6 +2661,7 @@ def ambil_dari_roblox(st):
       - KatalogOutfitDasar_v1 shard_0..15 : outfit dasar yang dipanen server Roblox (cepat, tanpa limit IP)
       - KatalogSinyalOtak_v1  pos_{0..7}_{0..3} (+ pos_0..7 lama) : outfit yang DIFAVORITKAN/DIBELI pemain (anonim)
       - KatalogSinyalOtak_v1  itembaru_{0..7} (+ itembaru lama)    : item pilihan pemain yang belum dikenal otak
+      - KatalogItemMetaCache_v3 shard_0..19 (rev 33)                : bank item lama map -> antrean diminta (sinkron cepat)
     Tanpa secret: dilewati diam-diam (otak tetap belajar dari panen GitHub)."""
     kunci = os.environ.get("ROBLOX_API_KEY", "").strip()
     uni = os.environ.get("UNIVERSE_ID", "").strip()
@@ -2762,6 +2763,10 @@ def ambil_dari_roblox(st):
     daftar_kunci += [("KatalogSinyalOtak_v1", f"pos_{i}_{b}") for i in range(8) for b in range(4)]
     daftar_kunci += [("KatalogSinyalOtak_v1", "itembaru")] + [("KatalogSinyalOtak_v1", f"itembaru_{b}") for b in range(8)]
     daftar_kunci += [("KatalogSinyalOtak_v1", f"badanbaru_{b}") for b in range(8)]
+    # rev 33: BANK ITEM LAMA (map, sistem lama v3) dibaca LANGSUNG. Dulu item lama hanya sampai ke GitHub lewat server map
+    # yang sedang hidup (600 item per server, 200 per 4 menit) -> lambat bila pemain sepi. Sekarang semua masuk antrean
+    # "diminta" sekaligus; META/MATA/kartu memprosesnya bertahap, lalu map memindahkannya ke bank v4 lewat gerbang kartu.
+    daftar_kunci += [("KatalogItemMetaCache_v3", f"shard_{i}") for i in range(20)]
     with ThreadPoolExecutor(max_workers=8) as ex:
         nilai = dict(zip(daftar_kunci, ex.map(lambda sk: ambil(sk[0], sk[1]), daftar_kunci)))
     n_lokal = n_sinyal = 0
@@ -2780,6 +2785,13 @@ def ambil_dari_roblox(st):
             if isinstance(x, int) and x > 0 and str(x) not in dim:
                 dim[str(x)] = int(time.time())
                 n_diminta += 1
+    n_lama = 0
+    for (store, entri), d in nilai.items():
+        if store == "KatalogItemMetaCache_v3" and isinstance(d, dict):
+            for k in d:
+                if str(k).isdigit() and 0 < int(k) < 2 ** 53 and str(k) not in dim:
+                    dim[str(k)] = int(time.time()) - 1   # sedikit lebih tua dari permintaan pemain putaran ini
+                    n_lama += 1
     if len(dim) > MAKS_DIMINTA:
         for k, _ in sorted(dim.items(), key=lambda kv: kv[1])[:len(dim) - MAKS_DIMINTA]:
             dim.pop(k, None)
@@ -2793,7 +2805,8 @@ def ambil_dari_roblox(st):
     if len(bdim) > 5000:
         for k, _ in sorted(bdim.items(), key=lambda kv: kv[1])[:len(bdim) - 5000]:
             bdim.pop(k, None)
-    log(f"sumber Roblox: +{n_lokal} outfit dasar server, {n_sinyal} outfit sinyal pemain, {n_diminta} item baru diminta pemain")
+    log(f"sumber Roblox: +{n_lokal} outfit dasar server, {n_sinyal} outfit sinyal pemain, {n_diminta} item baru diminta pemain, "
+        f"{n_lama} item bank lama v3 masuk antrean")
 
 
 def peta_badan(http, st, batas, hasil):

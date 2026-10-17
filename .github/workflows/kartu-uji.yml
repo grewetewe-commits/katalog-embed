@@ -40,10 +40,11 @@ jobs:
           path: cache_bentuk
           key: bentuk2d-v1-${{ github.run_id }}
           restore-keys: bentuk2d-v1-
-      - name: Ambil data panen terbaru dari main
+      - name: Ambil data panen & bahan terbaru (cabang data / main selama masa pindah)
         run: |
-          git fetch --depth 1 origin main
-          git checkout origin/main -- data/panen.json.gz model
+          bash data_cabang.sh ambil otak data/panen.json.gz model
+          bash data_cabang.sh ambil mata3d fisik3d
+          bash data_cabang.sh ambil kartu kartu
       - name: Pasang dependensi
         run: |
           python -m pip install --upgrade pip
@@ -78,17 +79,9 @@ jobs:
         run: |
           pip install --upgrade pillow requests >/dev/null
           python lembar_kartu.py 126884250250747 72558563872966 1028859 14328141014 8565346973 6554200369 192557913 78504769792948 126582482792163 93519364113971 382538059 7192553841 14027730224 15901064855 98089688160090 116973312880668 98757749181872 5731050224 301820310 18832937926 122234019472336 132200141502925 83668736552435 2>&1 | tail -5
-      - name: Simpan hasil uji ke branch
+      - name: Simpan hasil ke cabang data (satu commit, tidak menumpuk)
         if: success()
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git reset -q -- data model
-          git checkout -- data model 2>/dev/null || true
           tail -n 60 kartu_log.txt > LOG_KARTU.txt
-          git add kartu LAPORAN_KARTU.md LOG_KARTU.txt
-          git add LAPORAN_3D.md 2>/dev/null || true
-          git add LAPORAN_BADAN.md 2>/dev/null || true
-          git commit -m "Kartu item: hasil uji (otomatis)" || echo "tidak ada perubahan"
-          git pull --rebase -q origin claude/kartu-item || true
-          git push origin HEAD:claude/kartu-item
+          bash data_cabang.sh simpan kartu "Kartu item: hasil uji (otomatis)" kartu LAPORAN_KARTU.md LOG_KARTU.txt LAPORAN_3D.md LAPORAN_BADAN.md
+          bash data_cabang.sh segarkan kartu/info.json kartu/kartu_{0..7}.json kartu/tema_graf.json kartu/badan_bukti.json kartu/badan_bentuk.json

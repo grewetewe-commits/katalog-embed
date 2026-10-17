@@ -24,6 +24,13 @@ jobs:
       - name: Ambil kode
         uses: actions/checkout@v4
 
+      # rev 33: hasil buatan (model/meta/bank/data/kartu/fisik3d) tinggal di cabang `data` (satu commit, ditimpa tiap putaran)
+      - name: Ambil hasil terakhir dari cabang data
+        run: |
+          bash data_cabang.sh ambil otak model meta bank/outfit_0.json bank/outfit_1.json bank/outfit_2.json bank/outfit_3.json data/panen.json.gz out
+          bash data_cabang.sh ambil ready bank/ready_outfits.json
+          bash data_cabang.sh ambil mata3d fisik3d
+
       - name: Pasang Python
         uses: actions/setup-python@v5
         with:
@@ -53,7 +60,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install "numpy<2" "transformers>=4.40,<4.50" pillow requests
+          pip install "numpy<2" "transformers>=4.40,<4.50" pillow requests scipy scikit-learn
 
       - name: Jalankan otak (panen, mata, belajar, ekspor)
         env:
@@ -89,29 +96,25 @@ jobs:
           path: cache
           key: emb-v2-${{ github.run_id }}
 
-      - name: Simpan hasil ke repo
+      - name: Simpan hasil ke cabang data (satu commit, tidak menumpuk)
         if: success()
         run: |
           tail -n 120 otak_log.txt > LOG_TERAKHIR.txt 2>/dev/null || echo "log tidak ada" > LOG_TERAKHIR.txt
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for p in model bank meta data kartu/info.json kartu/kartu_0.json kartu/kartu_1.json kartu/kartu_2.json kartu/kartu_3.json kartu/kartu_4.json kartu/kartu_5.json kartu/kartu_6.json kartu/kartu_7.json kartu/tema_graf.json kartu/badan_bukti.json LAPORAN_KARTU.md LAPORAN_OTAK.md LOG_TERAKHIR.txt; do
-            if [ -e "$p" ]; then git add "$p"; fi
-          done
-          if git diff --staged --quiet; then
-            echo "Tidak ada perubahan hasil."
-          else
-            git commit -m "Otak: panen + model kecocokan (putaran otomatis)"
-            git pull --rebase origin main
-            git push
-          fi
+          shopt -s nullglob
+          bash data_cabang.sh simpan otak "Otak: panen + model kecocokan (putaran otomatis)" model meta bank/outfit_*.json \
+            data/panen.json.gz out kartu/info.json kartu/kartu_*.json kartu/tema_graf.json kartu/badan_bukti.json \
+            LAPORAN_KARTU.md LAPORAN_OTAK.md LOG_TERAKHIR.txt
 
-      # Server Roblox mengunduh shard besar lewat CDN jsDelivr (gratis, tahan ribuan server). Cache cabang @main di CDN
+      - name: Bersihkan salinan lama di main (sekali setelah pindah ke cabang data)
+        if: success() && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        run: bash data_cabang.sh bersihkan-main
+
+      # Server Roblox mengunduh shard besar lewat CDN jsDelivr (gratis, tahan ribuan server). Cache cabang @data di CDN
       # dibersihkan supaya versi baru langsung terlihat (server tetap mengecek versi tiap shard & jatuh ke raw GitHub).
       - name: Segarkan cache CDN jsDelivr
         if: always()
         continue-on-error: true
         run: |
-          for f in model/info.json model/item_{0..7}.json meta/harga_{0..7}.json bank/outfit_{0..3}.json meta/badan.json meta/sepatu.json kartu/info.json kartu/kartu_{0..7}.json kartu/tema_graf.json kartu/badan_bukti.json; do
-            curl -s -m 20 -o /dev/null -w "%{http_code} $f\n" "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/$f" || true
-          done
+          bash data_cabang.sh segarkan model/info.json model/item_{0..7}.json meta/harga_{0..7}.json bank/outfit_{0..3}.json \
+            meta/badan.json meta/sepatu.json kartu/info.json kartu/kartu_{0..7}.json kartu/tema_graf.json kartu/badan_bukti.json

@@ -29,10 +29,8 @@ jobs:
           path: cache_motif
           key: motif-v1-${{ github.run_id }}
           restore-keys: motif-v1-
-      - name: Ambil data panen terbaru dari main
-        run: |
-          git fetch --depth 1 origin main
-          git checkout origin/main -- data/panen.json.gz
+      - name: Ambil data panen terbaru (cabang data / main selama masa pindah)
+        run: bash data_cabang.sh ambil otak data/panen.json.gz
       - name: Pasang dependensi
         run: pip install "numpy<2" scipy scikit-learn pillow requests
       - name: Ukur motif
@@ -43,14 +41,7 @@ jobs:
         with:
           path: cache_motif
           key: motif-v1-${{ github.run_id }}
-      - name: Simpan hasil uji ke branch
+      - name: Simpan hasil ke cabang data (satu commit, tidak menumpuk)
         if: success()
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git reset -q -- data
-          git checkout -- data 2>/dev/null || true
-          git add LAPORAN_MOTIF.md uji2d/motif_fitur.json kartu/lembar/motif_*.jpg
-          git commit -m "Motif: hasil uji (otomatis)" || echo "tidak ada perubahan"
-          git pull --rebase -q origin claude/kartu-item || true
-          git push origin HEAD:claude/kartu-item
+          bash data_cabang.sh simpan motif "Motif: hasil uji (otomatis)" LAPORAN_MOTIF.md uji2d/motif_fitur.json kartu/lembar/motif_baju.jpg kartu/lembar/motif_celana.jpg kartu/lembar/motif_3d.jpg

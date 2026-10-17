@@ -37,7 +37,7 @@ jobs:
       - name: Ambil data panen terbaru dari main
         run: |
           git fetch --depth 1 origin main
-          git checkout origin/main -- data/panen.json.gz model
+          bash data_cabang.sh ambil otak data/panen.json.gz model
       - name: Pasang dependensi
         run: |
           python -m pip install --upgrade pip

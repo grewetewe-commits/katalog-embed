@@ -31,6 +31,10 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      - name: Ambil data panen & hasil 3D terakhir (cabang data / main selama masa pindah)
+        run: |
+          bash data_cabang.sh ambil otak data/panen.json.gz
+          bash data_cabang.sh ambil mata3d fisik3d
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -50,13 +54,8 @@ jobs:
           BATAS_3D: "6000"
           PEKERJA_3D: "4"
         run: python mata3d.py --panen 2>&1 | tee mata3d_log.txt
-      - name: Simpan hasil ke cabang
+      - name: Simpan hasil ke cabang data (satu commit, tidak menumpuk)
         if: always()
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           mkdir -p fisik3d && tail -n 60 mata3d_log.txt > fisik3d/LOG.txt || true
-          git add fisik3d
-          git commit -m "Mata 3D: panen bentuk (otomatis)" || echo "tidak ada perubahan"
-          git pull --rebase -q origin "${GITHUB_REF_NAME}" || true
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          bash data_cabang.sh simpan mata3d "Mata 3D: panen bentuk (otomatis)" fisik3d

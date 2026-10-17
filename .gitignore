@@ -2,3 +2,22 @@ __pycache__/
 *.py[cod]
 node_modules/
 *.tmp
+
+# rev 33: hasil buatan workflow tinggal di cabang `data` (satu commit, ditimpa tiap putaran) -- bukan di cabang kode
+/model/
+/meta/
+/bank/outfit_*.json
+/bank/ready_outfits.json
+/data/panen.json.gz
+/data/ready_outfit_cursor.json
+/data/ready_outfit_report.json
+/out/
+/kartu/
+/fisik3d/
+/.sumber/
+/LAPORAN_*.md
+/LOG_*.txt
+/uji2d/motif_fitur.json
+cache/
+cache_bentuk/
+cache_motif/

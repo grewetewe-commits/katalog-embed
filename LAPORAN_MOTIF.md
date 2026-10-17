@@ -2,7 +2,7 @@
 
 Motif dibaca dari PIKSEL thumbnail resmi (motif.py: periodisitas/autokorelasi 2D, kisi, tepi, warna, sebaran).
 Model: hutan keputusan per grup, dilatih dari item yang namanya menunjuk tepat satu motif; NAMA TIDAK masuk fitur.
-Klaim hanya bila peluang >= 0.5; di bawahnya = tidak pasti (tidak dipakai generator).
+Klaim hanya bila peluang >= ambang per grup/kelas (motif.KLAIM, dasar 0.5); di bawahnya = tidak pasti.
 Catatan: label nama sendiri bisa salah ("striped" padahal kotak), jadi presisi di bawah = batas bawah.
 
 ## baju (uji silang, 1082 item bernama-motif)
@@ -12,7 +12,7 @@ Catatan: label nama sendiri bisa salah ("striped" padahal kotak), jadi presisi d
 | 0.5 | 110/122 = 90% (recall 55%) | 59/84 = 70% (recall 37%) | 101/110 = 92% (recall 50%) | 126/148 = 85% (recall 61%) | 81/90 = 90% (recall 40%) | 32/32 = 100% (recall 28%) |
 | 0.6 | 92/101 = 91% (recall 46%) | 35/49 = 71% (recall 22%) | 68/70 = 97% (recall 34%) | 110/126 = 87% (recall 53%) | 60/67 = 90% (recall 30%) | 20/20 = 100% (recall 17%) |
 
-Sebaran pada 336 item ACAK (nama tanpa kata motif): ? 215, grafis 61, polos 29, ramai 20, kotak 6, garis 4, taburan 1
+Sebaran pada 336 item ACAK (nama tanpa kata motif): ? 216, grafis 61, polos 29, ramai 20, kotak 6, garis 4
 
 ## celana (uji silang, 902 item bernama-motif)
 
@@ -21,7 +21,7 @@ Sebaran pada 336 item ACAK (nama tanpa kata motif): ? 215, grafis 61, polos 29, 
 | 0.5 | 43/49 = 88% (recall 30%) | 5/5 = 100% (recall 9%) | 75/82 = 91% (recall 37%) | 77/105 = 73% (recall 37%) | 72/88 = 82% (recall 36%) | 13/15 = 87% (recall 14%) |
 | 0.6 | 38/43 = 88% (recall 27%) | 3/3 = 100% (recall 5%) | 57/59 = 97% (recall 28%) | 56/69 = 81% (recall 27%) | 53/56 = 95% (recall 26%) | 4/4 = 100% (recall 4%) |
 
-Sebaran pada 326 item ACAK (nama tanpa kata motif): ? 259, polos 48, ramai 9, garis 6, kotak 4
+Sebaran pada 326 item ACAK (nama tanpa kata motif): ? 263, polos 48, ramai 9, kotak 4, garis 2
 
 ## 3D (uji silang, 803 item bernama-motif)
 
@@ -30,7 +30,7 @@ Sebaran pada 326 item ACAK (nama tanpa kata motif): ? 259, polos 48, ramai 9, ga
 | 0.5 | 33/35 = 94% (recall 28%) | 21/28 = 75% (recall 18%) | 63/83 = 76% (recall 30%) | 55/70 = 79% (recall 43%) | 35/48 = 73% (recall 22%) | 31/34 = 91% (recall 40%) |
 | 0.6 | 26/26 = 100% (recall 22%) | 9/11 = 82% (recall 8%) | 28/32 = 88% (recall 14%) | 42/55 = 76% (recall 33%) | 17/22 = 77% (recall 11%) | 25/27 = 93% (recall 32%) |
 
-Sebaran pada 269 item ACAK (nama tanpa kata motif): ? 203, polos 29, grafis 16, kotak 10, ramai 9, taburan 2
+Sebaran pada 269 item ACAK (nama tanpa kata motif): ? 234, polos 29, ramai 4, taburan 2
 
 ## Label emas (dinilai mata)
 
@@ -98,7 +98,7 @@ Sebaran pada 269 item ACAK (nama tanpa kata motif): ? 203, polos 29, grafis 16, 
 | 12 | 12787336716 | polos | ramai 0.53 X |
 | 12 | 72449581501449 | polos | tidak pasti (0.33) |
 | 12 | 15876489908 | loreng | ramai 0.83 |
-| 12 | 74480228427266 | polos | garis 0.55 X |
+| 12 | 74480228427266 | polos | tidak pasti (0.55) |
 | 12 | 76560904237091 | denim | tidak pasti (0.41) |
 | 12 | 112931572454830 | denim | tidak pasti (0.41) |
 | 12 | 6354131610 | grafis | tidak pasti (0.43) |
@@ -109,7 +109,7 @@ Sebaran pada 269 item ACAK (nama tanpa kata motif): ? 203, polos 29, grafis 16, 
 | 12 | 6369440433 | denim | kotak 0.52 X |
 | 12 | 98540796262697 | garis | tidak pasti (0.41) |
 | 12 | 110399493168289 | polos | tidak pasti (0.28) |
-| 12 | 72417705441468 | polos | garis 0.51 X |
+| 12 | 72417705441468 | polos | tidak pasti (0.51) |
 | 12 | 106062802480568 | polkadot | taburan 0.65 |
 | 12 | 7013246407 | denim | tidak pasti (0.38) |
 | 12 | 124132113820522 | garis | tidak pasti (0.26) |
@@ -135,5 +135,5 @@ Sebaran pada 269 item ACAK (nama tanpa kata motif): ? 203, polos 29, grafis 16, 
 | 12 | 2574521581 | polos | tidak pasti (0.28) |
 | 12 | 12727573197 | grafis | tidak pasti (0.2) |
 
-**Emas: 30/36 cocok saat diklaim (62 tidak pasti)**
+**Emas: 30/34 cocok saat diklaim (64 tidak pasti)**
 
